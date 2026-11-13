@@ -282,8 +282,8 @@ sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
         {
             if (_effects.Count > 0)
             {
-                var culprit = fn.Calls.Where(c => program.Fns.TryGetValue(c, out var f) && f.Effects.Count > 0).OrderBy(c => c).First();
-                Error(fn.EffectsLine, "const-not-pure", $"constant `{fn.Name}` calls `{culprit}`, which needs {program.Fns[culprit].EffectsText}",
+                var culprit = fn.Calls.Where(c => program.Fns.TryGetValue(c, out var f) && f.Effects.Count > 0).OrderBy(c => c).FirstOrDefault();
+                Error(fn.EffectsLine, "const-not-pure", culprit == null ? $"constant `{fn.Name}` uses `set`" : $"constant `{fn.Name}` calls `{culprit}`, which needs {program.Fns[culprit].EffectsText}",
                     "a constant must be pure; compute this value in a function that declares the effect");
             }
             return;
@@ -294,9 +294,10 @@ sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
         if (missing.Count > 0)
         {
             var needed = string.Join(", ", fn.Effects.Union(_effects).OrderBy(e => e));
-            var culprit = fn.Calls.Where(c => program.Fns.TryGetValue(c, out var f) && f.Effects.Intersect(missing).Any()).OrderBy(c => c).First();
+            var culprit = fn.Calls.Where(c => program.Fns.TryGetValue(c, out var f) && f.Effects.Intersect(missing).Any()).OrderBy(c => c).FirstOrDefault();
+            var because = culprit != null ? $"calls `{culprit}`, which needs {string.Join(", ", missing)}" : $"uses `set`, which needs {string.Join(", ", missing)}";
             Error(fn.EffectsLine, "effect-missing",
-                $"`{fn.Name}` is declared {(fn.Effects.Count == 0 ? "pure" : $"with effects {fn.EffectsText}")} but calls `{culprit}`, which needs {string.Join(", ", missing)}",
+                $"`{fn.Name}` is declared {(fn.Effects.Count == 0 ? "pure" : $"with effects {fn.EffectsText}")} but {because}",
                 $"declare `effects {needed}` or remove the call");
         }
         if (unused.Count > 0 && !_unknownCall)

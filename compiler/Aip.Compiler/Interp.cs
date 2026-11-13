@@ -114,6 +114,12 @@ sealed partial class Interp(ProgramModel program)
                 return new Val(program.Ctors[c.Name].Case, c.Args.Select(a => Eval(a, env)).ToArray());
             case Call c:
                 return CallFn(program.Fns[c.Name], c.Args.Select(a => Eval(a, env)).ToList());
+            case Assign a:
+                {
+                    var v = (Val)Eval(a.Target.Target, env)!;
+                    v.Fields[v.Case.Fields.FindIndex(p => p.Name == a.Target.Name)] = Eval(a.Value, env);
+                    return null;
+                }
             case Field f:
                 {
                     var v = (Val)Eval(f.Target, env)!;

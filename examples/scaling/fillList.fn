@@ -1,0 +1,5 @@
+fn fillList(l List<Int>, i Int, n Int) -> List<Int>
+  "Append the numbers i up to n - 1 to the list, one at a time."
+  pure
+body
+  if i >= n then l else fillList(listAppend(l, i), i + 1, n)

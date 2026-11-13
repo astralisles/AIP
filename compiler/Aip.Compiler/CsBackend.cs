@@ -26,7 +26,15 @@ sealed partial class CsBackend : IBackend
             Console.WriteLine($"error unsupported-target: the cs back end cannot build for `{target}` yet\n  fix: use one of: {string.Join(", ", Targets.Keys)}");
             return null;
         }
-        foreach (var fn in program.Fns.Values.Where(f => f.IsExtern && f.NativeLib == null && !Externs.ContainsKey(f.Name)))
+        // Only externs the program can reach need an implementation: the std library may declare functions this back end does not have yet.
+        var reach = new HashSet<string>();
+        var todo = new Stack<string>(program.Fns.Keys.Where(k => k == "main"));
+        while (todo.Count > 0)
+        {
+            var name = todo.Pop();
+            if (reach.Add(name) && program.Fns.TryGetValue(name, out var cur)) foreach (var callee in cur.Calls) todo.Push(callee);
+        }
+        foreach (var fn in program.Fns.Values.Where(f => f.IsExtern && f.NativeLib == null && !Externs.ContainsKey(f.Name) && reach.Contains(f.Name)))
         {
             Console.WriteLine($"error backend-missing-extern: the cs back end has no implementation of `{fn.Name}`");
             return null;
@@ -107,6 +115,7 @@ sealed partial class CsBackend : IBackend
         var files = new SortedDictionary<string, string>(StringComparer.Ordinal);
         foreach (var fn in program.ProjectFns) files[fn.Name + ".cs"] = fn.IsConst ? EmitConst(fn) : fn.NativeLib != null ? EmitNative(fn) : EmitFn(fn);
         files["Program.cs"] = ProgramCs;
+        files["Persistent.cs"] = PersistentRt.Source;
         foreach (var (name, source) in RuntimeParts) files[name] = source;
         if (program.Types.Count > 0) files["Types.cs"] = EmitTypes(program);
         files[program.Name + ".csproj"] = Csproj;
@@ -124,10 +133,12 @@ sealed partial class CsBackend : IBackend
         "Bytes" => "byte[]",
         "TcpListener" or "TcpConn" or "UdpSocket" => "object", // handles, opened by effectful std functions
         _ when t.Length == 1 && char.IsAsciiLetterUpper(t[0]) => "object", // a type parameter: erased
-        _ when t.StartsWith("List<", StringComparison.Ordinal) || t.StartsWith("Queue<", StringComparison.Ordinal) || t.StartsWith("PriorityQueue<", StringComparison.Ordinal) => "System.Collections.Generic.List<object>",
-        // Maps and sets are insertion-ordered dictionaries (a set maps each item to true); every change copies.
-        _ when t.StartsWith("Map<", StringComparison.Ordinal) || t.StartsWith("Set<", StringComparison.Ordinal) => "System.Collections.Generic.Dictionary<object, object>",
-        _ when t.StartsWith("SortedMap<", StringComparison.Ordinal) || t.StartsWith("SortedSet<", StringComparison.Ordinal) => "System.Collections.Generic.SortedDictionary<object, object>",
+        _ when t.StartsWith("List<", StringComparison.Ordinal) => "Aip.Persistent.PList",
+        _ when t.StartsWith("Queue<", StringComparison.Ordinal) => "Aip.Persistent.PFifo",
+        _ when t.StartsWith("PriorityQueue<", StringComparison.Ordinal) => "Aip.Persistent.PQueue",
+        // All collections are persistent (PersistentRt.cs): an update shares nearly all memory with the old value. A set maps each item to true.
+        _ when t.StartsWith("Map<", StringComparison.Ordinal) || t.StartsWith("Set<", StringComparison.Ordinal) => "Aip.Persistent.PMap",
+        _ when t.StartsWith("SortedMap<", StringComparison.Ordinal) || t.StartsWith("SortedSet<", StringComparison.Ordinal) => "Aip.Persistent.PSorted",
         "Unit" => "void",
         _ when t.IndexOf('<') is var lt and > 0 => t[..lt], // a generic struct or variant: one erased record
         _ => t, // a struct or variant: a C# record of the same name (see EmitTypes)
@@ -142,7 +153,12 @@ sealed partial class CsBackend : IBackend
         foreach (var def in program.Types.Values.OrderBy(d => d.Name, StringComparer.Ordinal))
         {
             sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"/// <summary>{System.Security.SecurityElement.Escape(def.Doc)}</summary>\n");
-            if (!def.IsVariant) sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"public sealed record @{def.Name}({Fields(def.Cases[0])});\n");
+            if (!def.IsVariant)
+            {
+                // Fields are settable (`set p.f = v`): a struct is a reference, so every holder sees the change.
+                var body = string.Concat(def.Cases[0].Fields.Select(f => $" public {CsType(f.Type.Name)} @{f.Name} {{ get; set; }} = @{f.Name};"));
+                sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"public sealed record @{def.Name}({Fields(def.Cases[0])}) {{{body} }}\n");
+            }
             else
             {
                 sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"public abstract record @{def.Name}\n{{\n    private @{def.Name}() {{ }}\n");
@@ -237,6 +253,7 @@ sealed partial class CsBackend : IBackend
             $"{indent}switch ({Emit(m.Subject)})\n{indent}{{\n"
             + string.Concat(m.Arms.Select(a => $"{indent}    case {Pattern(a)}:\n{EmitUnit(a.Body, indent + "        ")}{indent}        break;\n"))
             + $"{indent}    default: throw new System.InvalidOperationException();\n{indent}}}\n",
+        Assign a => $"{indent}{Emit(a.Target.Target)}.@{a.Target.Name} = {Emit(a.Value)};\n",
         _ => $"{indent}{Emit(e)};\n",
     };
 

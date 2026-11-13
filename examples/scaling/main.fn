@@ -1,0 +1,21 @@
+fn main() -> Unit
+  "Build collections of 100000 items one update at a time; every update must cost O(log n), not O(n)."
+  effects terminal.write
+body
+  let n = 100000
+  let s = fillSet(setEmpty(), 0, n)
+  let before = setAdd(setEmpty(), 1)
+  let after = setAdd(before, 2)
+  printLine("set {setSize(s)} has 99999: {setHas(s, 99999)} has 100000: {setHas(s, 100000)}")
+  printLine("old version still has {setSize(before)} item, new one has {setSize(after)}")
+  let m = fillMap(mapEmpty(), 0, n)
+  printLine("map {mapSize(m)} key 77777 -> {mapGet(m, 77777)}")
+  let l = fillList(listEmpty(), 0, n)
+  let l2 = listSet(l, 5, 42)
+  printLine("list {listLength(l)} item 99999 {listGet(l, 99999)} item 5 {listGet(l, 5)} -> {listGet(l2, 5)}")
+  let ss = fillSorted(sortedSetEmpty(), 0, n)
+  printLine("sorted {sortedSetSize(ss)} first {listGet(sortedSetItems(ss), 0)}")
+  let q = fillQueue(queueEmpty(), 0, n)
+  printLine("queue {queueSize(q)} front {queueFront(q)} drained sum {drainQueue(q, 0)}")
+  let p = fillPriority(priorityQueueEmpty(), 0, n)
+  printLine("priority {priorityQueueSize(p)} front {priorityQueueFront(p)}")

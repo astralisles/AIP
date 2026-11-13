@@ -108,7 +108,7 @@ sealed partial class Parser
             {
                 Lex(text);
                 _matchAllowed = false;
-                var line = ParseExpr();
+                var line = ParseSetOrExpr();
                 ExpectEnd();
                 ((BlockExpr)(inElse ? openIf.Else : openIf.Then)).Stmts.Add(line);
                 continue;
@@ -185,7 +185,7 @@ sealed partial class Parser
                 ExpectSym("=");
             }
             _matchAllowed = true;
-            stmt.Value = ParseExpr();
+            stmt.Value = stmt.Let == null ? ParseSetOrExpr() : ParseExpr();
             ExpectEnd();
             fn.Body.Add(stmt);
             pending.Clear();

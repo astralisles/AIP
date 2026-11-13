@@ -23,7 +23,7 @@ sealed partial class CsBackend
         d["textCompare"] = "(long)System.Math.Sign(string.CompareOrdinal({0}, {1}))";
         d["textFromInt"] = "({0}).ToString(System.Globalization.CultureInfo.InvariantCulture)";
         d["textRepeat"] = "string.Concat(System.Linq.Enumerable.Repeat({0}, (int)({1})))";
-        d["textSplit"] = "new System.Collections.Generic.List<object>(({0}).Split({1}, System.StringSplitOptions.None))";
+        d["textSplit"] = "Aip.Persistent.PList.From(({0}).Split({1}, System.StringSplitOptions.None))";
         d["textJoin"] = "string.Join({1}, System.Linq.Enumerable.Cast<string>({0}))";
         d["intMin"] = "System.Math.Min({0}, {1})";
         d["intMax"] = "System.Math.Max({0}, {1})";

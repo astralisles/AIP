@@ -1,0 +1,6 @@
+fn damage(h Health, amount Int, tick Int) -> Unit
+  "Lower the hit points of h in place and record the tick."
+  effects mutate
+body
+  set h.hp = h.hp - amount
+  set h.lastHit = tick

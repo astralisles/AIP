@@ -1,0 +1,6 @@
+fn join(a Node, b Node) -> Unit
+  "Make a and b point to each other (a cycle)."
+  effects mutate
+body
+  set a.next = To(b)
+  set b.next = To(a)

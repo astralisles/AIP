@@ -9,7 +9,6 @@ sealed partial class CsBackend
         ("Rt.Map.cs", RtMap),
         ("Rt.Net.cs", RtNet),
         ("Rt.Profile.cs", RtProfile),
-        ("Rt.Queue.cs", RtQueue),
         ("Rt.Sorted.cs", RtSorted),
     };
 
@@ -22,44 +21,7 @@ sealed partial class CsBackend
                 int a = (int)System.Math.Clamp(start, 0, s.Length), b = (int)System.Math.Clamp(end, a, s.Length);
                 return s.Substring(a, b - a);
             }
-            public static System.Collections.Generic.List<object> Append(System.Collections.Generic.List<object> l, object item)
-            {
-                var r = new System.Collections.Generic.List<object>(l.Count + 1);
-                r.AddRange(l);
-                r.Add(item);
-                return r;
-            }
-            public static System.Collections.Generic.List<object> ListSet(System.Collections.Generic.List<object> l, long i, object item)
-            {
-                var r = new System.Collections.Generic.List<object>(l);
-                r[(int)i] = item;
-                return r;
-            }
-            public static System.Collections.Generic.List<object> ListInsert(System.Collections.Generic.List<object> l, long i, object item)
-            {
-                var r = new System.Collections.Generic.List<object>(l);
-                r.Insert((int)i, item);
-                return r;
-            }
-            public static System.Collections.Generic.List<object> ListRemoveAt(System.Collections.Generic.List<object> l, long i)
-            {
-                var r = new System.Collections.Generic.List<object>(l);
-                r.RemoveAt((int)i);
-                return r;
-            }
-            public static System.Collections.Generic.List<object> ListConcat(System.Collections.Generic.List<object> a, System.Collections.Generic.List<object> b)
-            {
-                var r = new System.Collections.Generic.List<object>(a.Count + b.Count);
-                r.AddRange(a);
-                r.AddRange(b);
-                return r;
-            }
-            public static System.Collections.Generic.List<object> ListSlice(System.Collections.Generic.List<object> l, long start, long end)
-            {
-                int a = (int)System.Math.Clamp(start, 0, l.Count), b = (int)System.Math.Clamp(end, a, l.Count);
-                return l.GetRange(a, b - a);
-            }
-            static byte[] ToBytes(System.Collections.Generic.List<object> l)
+            static byte[] ToBytes(Aip.Persistent.PList l)
             {
                 var r = new byte[l.Count];
                 for (int i = 0; i < r.Length; i++)
@@ -70,39 +32,33 @@ sealed partial class CsBackend
                 }
                 return r;
             }
-            static System.Collections.Generic.List<object> FromBytes(byte[] b)
+            static Aip.Persistent.PList FromBytes(byte[] b)
             {
-                var r = new System.Collections.Generic.List<object>();
-                foreach (var x in b) r.Add((long)x);
+                var r = Aip.Persistent.PList.Empty;
+                foreach (var x in b) r = r.Append((long)x);
                 return r;
             }
-            public static System.Collections.Generic.List<object> HashSha256(System.Collections.Generic.List<object> d) => FromBytes(System.Security.Cryptography.SHA256.HashData(ToBytes(d)));
-            public static System.Collections.Generic.List<object> HashHmacSha256(System.Collections.Generic.List<object> k, System.Collections.Generic.List<object> d) => FromBytes(System.Security.Cryptography.HMACSHA256.HashData(ToBytes(k), ToBytes(d)));
-            public static System.Collections.Generic.List<object> BytesFromText(string t)
+            public static Aip.Persistent.PList HashSha256(Aip.Persistent.PList d) => FromBytes(System.Security.Cryptography.SHA256.HashData(ToBytes(d)));
+            public static Aip.Persistent.PList HashHmacSha256(Aip.Persistent.PList k, Aip.Persistent.PList d) => FromBytes(System.Security.Cryptography.HMACSHA256.HashData(ToBytes(k), ToBytes(d)));
+            public static Aip.Persistent.PList BytesFromText(string t)
             {
-                var r = new System.Collections.Generic.List<object>();
-                foreach (var x in System.Text.Encoding.UTF8.GetBytes(t)) r.Add((long)x);
+                var r = Aip.Persistent.PList.Empty;
+                foreach (var x in System.Text.Encoding.UTF8.GetBytes(t)) r = r.Append((long)x);
                 return r;
             }
-            public static string BytesToText(System.Collections.Generic.List<object> l) => System.Text.Encoding.UTF8.GetString(ToBytes(l));
-            public static string BytesToHex(System.Collections.Generic.List<object> l) => System.Convert.ToHexString(ToBytes(l)).ToLowerInvariant();
-            public static System.Collections.Generic.List<object> BytesFromHex(string h)
+            public static string BytesToText(Aip.Persistent.PList l) => System.Text.Encoding.UTF8.GetString(ToBytes(l));
+            public static string BytesToHex(Aip.Persistent.PList l) => System.Convert.ToHexString(ToBytes(l)).ToLowerInvariant();
+            public static Aip.Persistent.PList BytesFromHex(string h)
             {
                 if (h.Length % 2 != 0) throw new System.InvalidOperationException("hex text must have an even number of digits");
-                var r = new System.Collections.Generic.List<object>();
-                foreach (var x in System.Convert.FromHexString(h)) r.Add((long)x);
+                var r = Aip.Persistent.PList.Empty;
+                foreach (var x in System.Convert.FromHexString(h)) r = r.Append((long)x);
                 return r;
             }
-            public static System.Collections.Generic.List<object> ListReverse(System.Collections.Generic.List<object> l)
+            public static Aip.Persistent.PList ListRange(long start, long end)
             {
-                var r = new System.Collections.Generic.List<object>(l);
-                r.Reverse();
-                return r;
-            }
-            public static System.Collections.Generic.List<object> ListRange(long start, long end)
-            {
-                var r = new System.Collections.Generic.List<object>();
-                for (long i = start; i < end; i++) r.Add(i);
+                var r = Aip.Persistent.PList.Empty;
+                for (long i = start; i < end; i++) r = r.Append(i);
                 return r;
             }
             public static void Nop() { }
@@ -123,20 +79,8 @@ sealed partial class CsBackend
     const string RtMap = """
         public static partial class Rt
         {
-            public static object MapGet(System.Collections.Generic.Dictionary<object, object> m, object k) =>
+            public static object MapGet(Aip.Persistent.PMap m, object k) =>
                 m.TryGetValue(k, out var v) ? v : throw new System.Collections.Generic.KeyNotFoundException("mapGet: key not in the map");
-            public static System.Collections.Generic.Dictionary<object, object> MapSet(System.Collections.Generic.Dictionary<object, object> m, object k, object v)
-            {
-                var r = new System.Collections.Generic.Dictionary<object, object>(m);
-                r[k] = v;
-                return r;
-            }
-            public static System.Collections.Generic.Dictionary<object, object> MapRemove(System.Collections.Generic.Dictionary<object, object> m, object k)
-            {
-                var r = new System.Collections.Generic.Dictionary<object, object>();
-                foreach (var p in m) if (!p.Key.Equals(k)) r.Add(p.Key, p.Value);
-                return r;
-            }
         }
         """;
 
@@ -149,43 +93,8 @@ sealed partial class CsBackend
                 public int Compare(object? a, object? b) => a is string s ? string.CompareOrdinal(s, (string)b!) : ((long)a!).CompareTo((long)b!);
             }
             public static readonly System.Collections.Generic.IComparer<object> Order = new OrderCmp();
-            public static object SortedGet(System.Collections.Generic.SortedDictionary<object, object> m, object k) =>
+            public static object SortedGet(Aip.Persistent.PSorted m, object k) =>
                 m.TryGetValue(k, out var v) ? v : throw new System.Collections.Generic.KeyNotFoundException("sortedMapGet: key not in the map");
-            public static System.Collections.Generic.SortedDictionary<object, object> SortedPut(System.Collections.Generic.SortedDictionary<object, object> m, object k, object v)
-            {
-                var r = new System.Collections.Generic.SortedDictionary<object, object>(m, Order);
-                r[k] = v;
-                return r;
-            }
-            public static System.Collections.Generic.SortedDictionary<object, object> SortedRemove(System.Collections.Generic.SortedDictionary<object, object> m, object k)
-            {
-                var r = new System.Collections.Generic.SortedDictionary<object, object>(m, Order);
-                r.Remove(k);
-                return r;
-            }
-        }
-        """;
-
-    const string RtQueue = """
-        public static partial class Rt
-        {
-            // Queue is a List (front = index 0). PriorityQueue is a List of object[] { priority, item } kept in
-            // ascending priority, and equal priorities keep insertion order.
-            public static object Front(System.Collections.Generic.List<object> l, string fn) =>
-                l.Count > 0 ? l[0] : throw new System.Collections.Generic.KeyNotFoundException(fn + ": the queue is empty");
-            public static System.Collections.Generic.List<object> Pop(System.Collections.Generic.List<object> l, string fn)
-            {
-                if (l.Count == 0) throw new System.Collections.Generic.KeyNotFoundException(fn + ": the queue is empty");
-                return l.GetRange(1, l.Count - 1);
-            }
-            public static System.Collections.Generic.List<object> PqPush(System.Collections.Generic.List<object> l, object item, long priority)
-            {
-                int i = l.Count;
-                while (i > 0 && (long)((object[])l[i - 1])[0] > priority) i--;
-                var r = new System.Collections.Generic.List<object>(l);
-                r.Insert(i, new object[] { priority, item });
-                return r;
-            }
         }
         """;
 
@@ -313,7 +222,7 @@ sealed partial class CsBackend
             return d[a..b];
         }
         public static byte[] BytesJoin(byte[] a, byte[] b) { var r = new byte[a.Length + b.Length]; a.CopyTo(r, 0); b.CopyTo(r, a.Length); return r; }
-        public static byte[] BytesFromList(System.Collections.Generic.List<object> l)
+        public static byte[] BytesFromList(Aip.Persistent.PList l)
         {
             var r = new byte[l.Count];
             for (int i = 0; i < r.Length; i++) r[i] = checked((byte)(long)l[i]);

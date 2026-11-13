@@ -1,0 +1,5 @@
+fn fillQueue(q Queue<Int>, i Int, n Int) -> Queue<Int>
+  "Push the numbers i up to n - 1 onto the queue, one at a time."
+  pure
+body
+  if i >= n then q else fillQueue(queuePush(q, i), i + 1, n)

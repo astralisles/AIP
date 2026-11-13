@@ -24,6 +24,8 @@ sealed class NameRef : Expr { public string Name = ""; public bool Erased; publi
 sealed class Call : Expr { public string Name = ""; public List<Expr> Args = new(); public string? Ctor; public bool Erased; }
 /// <summary>`target.name`: reads a field of a struct.</summary>
 sealed class Field : Expr { public Expr Target = null!; public string Name = ""; public bool Erased; }
+/// <summary>`set target.name = value`: overwrites a field of a struct in place (needs the `mutate` effect). Unit.</summary>
+sealed class Assign : Expr { public Field Target = null!; public Expr Value = null!; }
 /// <summary>One line of a match: `Case(a, b) => body`. Path is the case's type path for the back end.</summary>
 sealed class Arm { public int Line; public string Case = ""; public List<string> Binds = new(); public Expr Body = null!; public string Path = ""; }
 /// <summary>`match subject` followed by one indented arm per case of a variant.</summary>

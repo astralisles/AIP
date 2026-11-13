@@ -16,6 +16,7 @@ sealed partial class Checker
             NameRef n => NameType(n, env, used),
             Call c => CallType(c, env, used),
             Field f => FieldType(f, env, used),
+            Assign a => AssignType(a, env, used),
             MatchExpr m => MatchType(m, env, used),
             Unary u => UnaryType(u, env, used),
             Binary b => BinaryType(b, env, used),
@@ -114,6 +115,17 @@ sealed partial class Checker
                 if (!Unify(cs.Fields[i].Type.Name, argTypes[i], vars) && !FitLiteral(c.Args[i], cs.Fields[i].Type.Name))
                     Error(c.Line, "type-mismatch", $"field `{cs.Fields[i].Name}` of `{c.Name}` must be {Subst(cs.Fields[i].Type.Name, vars)}, found {argTypes[i]}", $"signature: {sig}");
         return def.Params.Count == 0 ? def.Name : Join(def.Name, def.Params.Select(p => vars.GetValueOrDefault(p, "_")));
+    }
+
+    string AssignType(Assign a, Dictionary<string, string> env, HashSet<string> used)
+    {
+        var ft = FieldType(a.Target, env, used);
+        var vt = TypeOf(a.Value, env, used);
+        if (_inContract) Error(a.Line, "contract-not-pure", "`set` changes data and cannot be used in a contract or example");
+        else _effects.Add("mutate");
+        if (ft != "" && vt != "" && !Compat(vt, ft) && !Widens(vt, ft) && !FitLiteral(a.Value, ft))
+            Error(a.Line, "type-mismatch", $"field `{a.Target.Name}` is {ft} but the value is {vt}");
+        return "Unit";
     }
 
     string FieldType(Field f, Dictionary<string, string> env, HashSet<string> used)
