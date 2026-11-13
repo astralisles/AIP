@@ -1,0 +1,4 @@
+fn mapSet(m Map<K,V>, key K, value V) -> Map<K,V>
+  "A new map with the key set to the value; the original is unchanged."
+  pure
+extern

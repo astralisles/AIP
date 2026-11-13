@@ -1,0 +1,4 @@
+fn mapEmpty() -> Map<K,V>
+  "A map with no entries."
+  pure
+extern
