@@ -1,0 +1,10 @@
+sign(-4) = -1, sign(0) = 0, sign(9) = 1
+grade(95) = A, grade(72) = C, grade(10) = F
+sumTo(100) = 5050
+factorial(10) = 3628800
+countEven(1..20) = 10
+sumTo(1000000) = 500000500000
+3...
+2...
+1...
+Liftoff!

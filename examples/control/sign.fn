@@ -1,0 +1,7 @@
+fn sign(n Int) -> Int
+  "-1, 0 or 1 by the sign of the number."
+  pure
+  example sign(-4) == -1
+  example sign(0) == 0
+body
+  if n < 0 then -1 else if n == 0 then 0 else 1

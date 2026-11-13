@@ -25,6 +25,10 @@ Supported so far: `.fn` files; Int, Text, Bool, Unit; `List<T>`, `Set<T>`, `Map<
 per line, every case required). See `examples/shapes`. Ranges, `requires`, `ensures` and
 `example` are parsed and type-checked but not yet proved or run.
 
+Control flow: conditionals are `if c then a else b` (chainable with `else if`, one line, an expression; with Unit
+branches it is a statement) and `match`. Loops are recursion (no `while`/`for`); see `docs/design/control-flow-T-0943.md`
+and `examples/control`.
+
 ## Design decisions, features and roadmap
 
 Open questions and what was decided (`aip spec`, `aip find`, Result/Option, AI-first rule): `docs/design/open-questions-T-0944.md`.
