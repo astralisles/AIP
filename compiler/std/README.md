@@ -9,6 +9,8 @@ List them with `scripts\aip.ps1 std`.
 | `list/`     | `List<T>`                              | name starts with `list`      |
 | `map/`      | `Map<K,V>`                             | name starts with `map`       |
 | `set/`      | `Set<T>`                               | name starts with `set`       |
+| `sortedMap/` | `SortedMap<K,V>`, keys in order  | name starts with `sortedMap` |
+| `sortedSet/` | `SortedSet<T>`, items in order   | name starts with `sortedSet` |
 | `file/`     | read/write files                       | name starts with `file`      |
 | `terminal/` | normal output (`printLine`)            | effect `terminal.*`          |
 | `log/`      | diagnostics to stderr (`logLine`)      | effect `log.*`               |
