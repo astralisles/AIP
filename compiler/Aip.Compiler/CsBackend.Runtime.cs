@@ -216,16 +216,22 @@ sealed partial class CsBackend
             try { var ep = new System.Net.IPEndPoint(System.Net.IPAddress.Any, 0); return u.Receive(ref ep); }
             catch (System.Net.Sockets.SocketException) { return System.Array.Empty<byte>(); }
         }
-        public static byte[] BytesSlice(byte[] d, long start, long end)
-        {
-            int a = (int)System.Math.Clamp(start, 0, d.Length), b = (int)System.Math.Clamp(end, a, d.Length);
-            return d[a..b];
-        }
-        public static byte[] BytesJoin(byte[] a, byte[] b) { var r = new byte[a.Length + b.Length]; a.CopyTo(r, 0); b.CopyTo(r, a.Length); return r; }
-        public static byte[] BytesFromList(Aip.Persistent.PList l)
+        public static byte[] ToByteArray(Aip.Persistent.PList l)
         {
             var r = new byte[l.Count];
-            for (int i = 0; i < r.Length; i++) r[i] = checked((byte)(long)l[i]);
+            for (int i = 0; i < r.Length; i++) r[i] = (byte)l[i];
+            return r;
+        }
+        public static Aip.Persistent.PList FromByteArray(byte[] b)
+        {
+            var r = Aip.Persistent.PList.Empty;
+            foreach (var x in b) r = r.Append(x);
+            return r;
+        }
+        public static Aip.Persistent.PList BytesFromList(Aip.Persistent.PList l)
+        {
+            var r = Aip.Persistent.PList.Empty;
+            foreach (var x in l) r = r.Append(checked((byte)(long)x));
             return r;
         }
         }

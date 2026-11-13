@@ -1,4 +1,4 @@
-fn bytesFromList(values List<Int>) -> Bytes
-  "Bytes from a list of numbers 0 to 255."
+fn bytesFromList(values List<Int>) -> List<U8>
+  "List<U8> from a list of numbers 0 to 255."
   pure
 extern
