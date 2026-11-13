@@ -1,0 +1,7 @@
+fn canRetry(attempt Int) -> Bool
+  "True while another attempt is allowed; a function reads a constant like a value."
+  pure
+  example canRetry(1) == true
+  example canRetry(4) == false
+body
+  attempt < maxAttempts

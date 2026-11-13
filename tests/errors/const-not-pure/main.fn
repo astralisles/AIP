@@ -1,0 +1,5 @@
+fn main() -> Unit
+  "Print a constant that reads a file."
+  effects terminal.write
+body
+  printLine(settings)

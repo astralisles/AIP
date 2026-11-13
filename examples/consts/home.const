@@ -1,0 +1,3 @@
+const home Point
+  "Where every walk starts; a constant can be a struct."
+  value Point(3, 4)

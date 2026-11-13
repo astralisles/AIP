@@ -1,0 +1,5 @@
+fn parseBound(toks List<Text>, pos Int) -> Parsed
+  "Read an optional range bound at pos: a number, maybe negative; empty text if there is none."
+  pure
+body
+  if tokAt(toks, pos) == "Sym -" then Parsed("-{tokText(tokAt(toks, pos + 1))}", pos + 2) else if tokKind(tokAt(toks, pos)) == "Int" then Parsed(tokText(tokAt(toks, pos)), pos + 1) else Parsed("", pos)

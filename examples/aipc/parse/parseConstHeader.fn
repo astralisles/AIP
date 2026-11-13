@@ -1,0 +1,7 @@
+fn parseConstHeader(toks List<Text>) -> FnHeader
+  "Read the header of a .const file (`const name Type`, purpose) from its tokens; a constant is always pure."
+  pure
+body
+  let type = parseType(toks, 2)
+  let tail = parseHeaderLines(toks, lineEnd(toks, type.next) + 1, "", listEmpty())
+  FnHeader(tokText(tokAt(toks, 1)), listEmpty(), type.text, tail.doc, listEmpty(), true)

@@ -1,0 +1,3 @@
+const width Int
+  "The width."
+  value height + 1

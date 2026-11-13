@@ -1,0 +1,3 @@
+const maxRetries Int
+  "How many times a step is tried before giving up."
+  value 3

@@ -11,10 +11,11 @@ if (-not $Projects) { $Projects = Get-ChildItem (Join-Path $root 'examples') -Di
 $failed = 0
 foreach ($p in $Projects) {
   $rows = @()
-  foreach ($f in Get-ChildItem $p -Recurse -Filter *.fn | Where-Object { $_.FullName -notmatch '[\\/]build[\\/]' }) {
+  foreach ($f in Get-ChildItem $p -Recurse -Include *.fn, *.const -File | Where-Object { $_.FullName -notmatch '[\\/]build[\\/]' }) {
     $lines = Get-Content $f.FullName
-    $sig = $lines[0].Substring(3).Trim()
-    $name = ($sig -split '\(')[0]
+    # a .const file starts `const name Type`, a .fn file `fn name(...)`
+    if ($f.Extension -eq '.const') { $sig = $lines[0].Trim(); $name = ($sig -split ' ')[1] }
+    else { $sig = $lines[0].Substring(3).Trim(); $name = ($sig -split '\(')[0] }
     $eff = 'pure'
     foreach ($l in $lines) { if ($l -match '^  effects (.+)$') { $eff = ($Matches[1].Split(',') | ForEach-Object { $_.Trim() }) -join ', ' } }
     $rows += [pscustomobject]@{ Name = $name; Line = "$sig | $eff | checked, not proved" }

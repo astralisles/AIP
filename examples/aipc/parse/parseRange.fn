@@ -1,0 +1,7 @@
+fn parseRange(toks List<Text>, base Parsed) -> Parsed
+  "Read the range after the type base, `lo..hi` with either bound optional, and add it to the type text."
+  pure
+body
+  let lo = parseBound(toks, base.next)
+  let hi = parseBound(toks, lo.next + 1)
+  Parsed("{base.text} {lo.text}..{hi.text}", hi.next)
