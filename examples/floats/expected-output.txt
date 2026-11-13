@@ -1,0 +1,5 @@
+F64 math: 2.5
+F32 math: 0.3333333432674408
+Int to F64: 3.5
+F64 to Int drops the fraction: -2
+negative: -1.5

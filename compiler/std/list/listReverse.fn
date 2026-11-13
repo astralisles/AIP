@@ -1,0 +1,4 @@
+fn listReverse(items List<T>) -> List<T>
+  "A new list with the items in reverse order."
+  pure
+extern

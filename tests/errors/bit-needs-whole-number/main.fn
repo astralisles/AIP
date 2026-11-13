@@ -1,0 +1,5 @@
+fn main() -> Unit
+  "Bit operations need a whole number."
+  effects terminal.write
+body
+  printLine("{bitAnd(1.5, 2.5)}")

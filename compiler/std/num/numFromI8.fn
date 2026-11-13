@@ -1,0 +1,4 @@
+fn numFromI8(value I8) -> Int
+  "Convert a I8 to Int (64-bit signed); a U64 above 9223372036854775807 is a run-time error."
+  pure
+extern

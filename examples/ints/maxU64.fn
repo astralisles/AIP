@@ -1,0 +1,5 @@
+fn maxU64() -> U64
+  "The largest U64."
+  pure
+body
+  18446744073709551615

@@ -7,6 +7,7 @@ List them with `scripts\aip.ps1 std`.
 |-------------|----------------------------------------|------------------------------|
 | `text/`     | Text helpers (`textSlice`, ...)        | name starts with `text`      |
 | `list/`     | `List<T>`                              | name starts with `list`      |
+| `int/`      | Int math and bit operations            | name starts with `int`       |
 | `map/`      | `Map<K,V>`                             | name starts with `map`       |
 | `set/`      | `Set<T>`                               | name starts with `set`       |
 | `sortedMap/` | `SortedMap<K,V>`, keys in order  | name starts with `sortedMap` |
@@ -14,6 +15,8 @@ List them with `scripts\aip.ps1 std`.
 | `priorityQueue/` | `PriorityQueue<T>`, lowest priority first | name starts with `priorityQueue` |
 | `sortedSet/` | `SortedSet<T>`, items in order   | name starts with `sortedSet` |
 | `file/`     | read/write files                       | name starts with `file`      |
+| `bit/`      | bit operations (`bitAnd`, `bitShl`)    | name starts with `bit`       |
+| `num/`      | number conversions (`numToU8`, `numToF64`) | name starts with `num`       |
 | `terminal/` | normal output (`printLine`)            | effect `terminal.*`          |
 | `log/`      | diagnostics to stderr (`logLine`)      | effect `log.*`               |
 | `process/`  | command line (`arg`, `argCount`)       | effect `process.*`           |

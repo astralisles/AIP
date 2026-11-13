@@ -1,0 +1,4 @@
+fn numFromU64(value U64) -> Int
+  "Convert a U64 to Int (64-bit signed); a U64 above 9223372036854775807 is a run-time error."
+  pure
+extern

@@ -1,0 +1,35 @@
+fn main() -> Unit
+  "Show the text, Int and List helpers added in T-0957."
+  effects terminal.write
+body
+  let t = "  Hello, World  "
+  let c = textTrim(t)
+  let q1 = "World"
+  let q2 = "xyz"
+  printLine("trim: [{c}] find: {textFind(c, q1)} missing: {textFind(c, q2)}")
+  let q3 = "lo, W"
+  let q4 = "Hello"
+  let q5 = "Hello"
+  printLine("contains: {textContains(c, q3)} starts: {textStartsWith(c, q4)} ends: {textEndsWith(c, q5)}")
+  let q6 = "l"
+  let q7 = "L"
+  printLine("{textToUpper(c)} {textToLower(c)} {textReplace(c, q6, q7)}")
+  let q8 = "a"
+  let q9 = "b"
+  let q10 = "b"
+  let q11 = "b"
+  let q12 = "c"
+  let q13 = "b"
+  printLine("compare: {textCompare(q8, q9)} {textCompare(q10, q11)} {textCompare(q12, q13)}")
+  let q14 = "ab"
+  printLine("repeat: {textRepeat(q14, 3)} int: {textFromInt(-42)}")
+  let parts = textSplit("a,b,,c", ",")
+  let q15 = "|"
+  printLine("split: {listLength(parts)} join: {textJoin(parts, q15)}")
+  printLine("int: {intMin(3, 7)} {intMax(3, 7)} {intAbs(-5)} {intSign(-9)} {intClamp(15, 0, 10)} {intPow(2, 10)} {intGcd(12, 18)}")
+  printLine("bits: {intAnd(12, 10)} {intOr(12, 10)} {intXor(12, 10)} {intNot(0)} {intShiftLeft(1, 4)} {intShiftRight(-16, 2)}")
+  let r = listRange(0, 5)
+  let s = listSet(listInsert(listRemoveAt(r, 0), 1, 99), 0, 7)
+  printLine("range: {listLength(r)} set/insert/remove: {listGet(s, 0)} {listGet(s, 1)} {listGet(s, 2)} len {listLength(s)}")
+  let rev = listReverse(listConcat(r, listSlice(r, 1, 3)))
+  printLine("rev: {listGet(rev, 0)} {listGet(rev, 1)} {listGet(rev, 2)} index: {listIndexOf(r, 3)} {listIndexOf(r, 9)} has: {listContains(r, 4)}")

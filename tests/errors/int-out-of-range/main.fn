@@ -1,0 +1,5 @@
+fn main() -> Unit
+  "A literal that does not fit its type is an error."
+  effects terminal.write
+body
+  printLine("{small(300)}")
