@@ -1,3 +1,0 @@
-const starterPlayer Player
-  "The player every new match starts with."
-  Player("Rookie", 100, Armor(Leather, 100))

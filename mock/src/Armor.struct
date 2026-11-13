@@ -1,4 +1,0 @@
-struct Armor
-  "A piece of armor and how worn it is."
-  kind ArmorKind
-  durability Int 0..100

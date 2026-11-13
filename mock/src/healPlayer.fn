@@ -1,7 +1,0 @@
-fn healPlayer(p Player, amount Int 0..) -> Player
-  "Restore hp to a player, never above the maximum."
-  pure
-  ensures result.hp >= p.hp
-  example healPlayer(Player("Ann", 90, Armor(None, 0)), 30).hp == 100
-body
-  p with hp = todo Int 0..100

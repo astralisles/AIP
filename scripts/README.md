@@ -1,7 +1,7 @@
 # scripts
 
 - `render-files-to-frames.ps1` — renders text files as numbered PNG frames (one file per step) for an evidence GIF. Off-screen, opens no window.
-  `powershell -File scripts\render-files-to-frames.ps1 -Files mock\src\Player.struct,mock\src\applyDamage.fn -OutDir <evidence>\frames\<name> -Title "Mock files"`
+  `powershell -File scripts\render-files-to-frames.ps1 -Files mock\src\Player.struct,mock\src\applyDamage.fn -OutDir <evidence>\frames\<name> -Title "Hello files"`
 
 - `aip.ps1` - builds the compiler if needed and runs it (also `query`, see compiler/README.md): `scripts\aip.ps1 run examples\hello`, or `build examples\hello [--target linux-x64]`. How to run locally: see the root `README`.
 - `test.ps1` - builds and runs `examples\hello` (also through `aip run`), and checks every project in `tests\errors` is rejected with the text in its `expected.txt`.

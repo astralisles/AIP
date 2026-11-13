@@ -1,7 +1,0 @@
-fn alivePlayers(m Match) -> List<Player>
-  "The players of a match that are still alive."
-  pure
-  ensures result.count <= m.players.count
-  ensures all p in result: isAlive(p)
-body
-  filter(m.players, isAlive)
