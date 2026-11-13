@@ -16,10 +16,10 @@ optional unless said otherwise, and a violation is an error only when it is deci
 
 ## Candidates, best value first
 
-1. **`total` (never fails).** Declares: no `requires` can fail, no division by zero, no out-of-range index, terminates.
-   Checkable with the interval analysis planned in T-0950 step 2 plus `decreases`. Callers of a `total` function need no
-   proof obligations. Index shows `total`. Highest value; build after T-0950 steps 2-3.
-2. **`decreases expr` (termination).** Already planned (T-0950 step 3). Prerequisite for `total`. Replaces the
+1. **`cannot-fail`** (computer-science name: a "total function"; renamed because "total" is confusing). Declares: no `requires` can fail, no division by zero, no out-of-range index, terminates.
+   Checkable with the interval analysis planned in T-0950 step 2 plus `decreases`. Callers of a `cannot-fail` function need no
+   proof obligations. Index shows `cannot-fail`. Highest value; build after T-0950 steps 2-3.
+2. **`decreases expr` (termination).** Already planned (T-0950 step 3). Prerequisite for `cannot-fail`. Replaces the
    `unbounded-recursion` heuristic.
 3. **Parameter-level effect and capability limits.** `effects file.read` becomes path/host scoped (`file.read(root)`,
    see `security-T-0936.md`). Static analysis can then show *which* files a function can touch, not only that it can.
@@ -50,6 +50,6 @@ optional unless said otherwise, and a violation is an error only when it is deci
 
 ## Recommendation
 
-Do in this order: (7) size lints now (small, no syntax), then T-0950 steps 2 and 3, then (1) `total` on top, then (5) and (4).
+Do in this order: (7) size lints now (small, no syntax), then T-0950 steps 2 and 3, then (1) `cannot-fail` on top, then (5) and (4).
 Defer (3) and (6) until path-scoped effects and parallelism tickets land; skip (8)-(10) for now.
 No code was changed by this ticket.
