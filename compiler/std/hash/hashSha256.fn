@@ -1,0 +1,4 @@
+fn hashSha256(data List<Int>) -> List<Int>
+  "SHA-256 digest, 32 bytes."
+  pure
+extern

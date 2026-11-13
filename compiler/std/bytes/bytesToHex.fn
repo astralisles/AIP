@@ -1,0 +1,4 @@
+fn bytesToHex(data List<Int>) -> Text
+  "Lower-case hex text of bytes, two digits per byte."
+  pure
+extern
