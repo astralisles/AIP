@@ -184,9 +184,8 @@ sealed class CsBackend : IBackend
         for (int i = 0; i < fn.Body.Count; i++)
         {
             var s = fn.Body[i];
-            var e = Emit(s.Value);
-            if (s.Let != null) sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"        var @{s.Let} = {e};\n");
-            else if (i == fn.Body.Count - 1 && fn.Ret.Name != "Unit") sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"        return {e};\n");
+            if (s.Let != null) sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"        var @{s.Let} = {Emit(s.Value)};\n");
+            else if (i == fn.Body.Count - 1 && fn.Ret.Name != "Unit") sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"        return {Emit(s.Value)};\n");
             else sb.Append(EmitUnit(s.Value, "        "));
         }
         sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"        }}\n        finally {{ if (Rt.Prof) Rt.Leave(\"{fn.Name}\", __t); }}\n");
@@ -214,6 +213,7 @@ sealed class CsBackend : IBackend
     {
         IfExpr { Type: "Unit" } i =>
             $"{indent}if ({Emit(i.Cond)})\n{indent}{{\n{EmitUnit(i.Then, indent + "    ")}{indent}}}\n{indent}else\n{indent}{{\n{EmitUnit(i.Else, indent + "    ")}{indent}}}\n",
+        BlockExpr k => string.Concat(k.Stmts.Select(s => EmitUnit(s, indent))),
         MatchExpr { Type: "Unit" } m =>
             $"{indent}switch ({Emit(m.Subject)})\n{indent}{{\n"
             + string.Concat(m.Arms.Select(a => $"{indent}    case {Pattern(a)}:\n{EmitUnit(a.Body, indent + "        ")}{indent}        break;\n"))

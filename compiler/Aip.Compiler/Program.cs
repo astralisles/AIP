@@ -5,6 +5,7 @@ const string Usage = """
     usage:
       aip check <projectDir>                          check only
       aip index <projectDir>                          print the index: one line per function
+      aip query <projectDir> <verb> [arg]             ask the index (always fresh); verbs: list, fn NAME, find WORDS, callers NAME, calls NAME, effect NAME
       aip build <projectDir> [--target T] [--out D]   check, then build a program
       aip run <projectDir>                            check, build for this machine, then run it
       aip lint <projectDir>                           check, then warn about code that is probably wrong
@@ -32,7 +33,7 @@ if (args is ["spec"])
 string[] findWords = [];
 if (args.Length >= 3 && args[0] == "find") { findWords = args[2..]; args = args[..2]; }
 if (args is ["std"]) args = ["std", AppContext.BaseDirectory];
-if (args.Length < 2 || args[0] is not ("check" or "index" or "build" or "run" or "lint" or "test" or "emit" or "fuzz" or "std" or "find"))
+if (args.Length < 2 || args[0] is not ("check" or "index" or "query" or "build" or "run" or "lint" or "test" or "emit" or "fuzz" or "std" or "find"))
 {
     Console.WriteLine(Usage);
     return 2;
@@ -42,6 +43,8 @@ var command = args[0];
 var dir = Path.GetFullPath(args[1]);
 string? target = null, outDir = null;
 bool verbose = Environment.GetEnvironmentVariable("AIP_VERBOSE") is "1" or "true";
+string[] queryArgs = [];
+if (command == "query") { queryArgs = args[2..]; args = args[..2]; }
 for (int i = 2; i < args.Length; i++)
 {
     if (args[i] is "--verbose" or "-v") verbose = true;
@@ -54,9 +57,16 @@ outDir ??= Path.Combine(dir, "build");
 var clock = System.Diagnostics.Stopwatch.StartNew();
 void Log(string msg) { if (verbose) Console.Error.WriteLine($"[aip {clock.ElapsedMilliseconds,5} ms] {msg}"); }
 Log($"{command} {dir}");
+var phaseClock = System.Diagnostics.Stopwatch.StartNew();
+void Phase(string name) // AIP_TIMINGS=1 prints where the time goes, to stderr
+{
+    if (Environment.GetEnvironmentVariable("AIP_TIMINGS") == "1") Console.Error.WriteLine($"timing {name}: {phaseClock.ElapsedMilliseconds} ms");
+    phaseClock.Restart();
+}
 
 var diags = new List<Diagnostic>();
-var program = Project.Load(dir, diags, stdOnly: command == "std");
+var sources = new SourceCache(Path.Combine(dir, "build", "sources.cache"));
+var program = Project.Load(dir, diags, stdOnly: command == "std", cache: command == "std" ? null : sources, phase: Phase);
 Log($"loaded: {program.Fns.Count} function(s), {program.Types.Count} type(s)");
 if (command == "std")
 {
@@ -106,6 +116,12 @@ switch (command)
     case "index":
         Console.Write(Index());
         return 0;
+    case "query":
+        {
+            var code = Query.Run(program, queryArgs);
+            Phase("answer");
+            return code;
+        }
     case "lint":
         {
             var warnings = Lint.Run(program);

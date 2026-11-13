@@ -98,11 +98,16 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
     public void Check()
     {
         CheckTypes();
-        foreach (var fn in program.Fns.Values.OrderBy(f => f.Name, StringComparer.Ordinal))
+        // Each function is checked on its own (it only reads other functions' headers), so this runs on
+        // all cores; errors are collected per function and merged in name order, as a serial run would.
+        var fns = program.Fns.Values.OrderBy(f => f.Name, StringComparer.Ordinal).ToArray();
+        var found = new List<Diagnostic>[fns.Length];
+        Parallel.For(0, fns.Length, i =>
         {
-            _fn = fn;
-            CheckFn(fn);
-        }
+            var c = new Checker(program, found[i] = new List<Diagnostic>()) { _fn = fns[i] };
+            c.CheckFn(fns[i]);
+        });
+        foreach (var list in found) diags.AddRange(list);
         CheckConstCycles();
         CheckMainAndReachability();
     }
@@ -248,6 +253,7 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
             Unary u => UnaryType(u, env, used),
             Binary b => BinaryType(b, env, used),
             IfExpr i => IfType(i, env, used),
+            BlockExpr k => BlockType(k, env, used),
             _ => "",
         };
         return e.Type;
@@ -438,6 +444,16 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
                 if (known && (l != "Bool" || r != "Bool")) Error(b.Line, "type-mismatch", $"`{b.Op}` needs Bool on both sides, found {l} and {r}");
                 return "Bool";
         }
+    }
+
+    string BlockType(BlockExpr k, Dictionary<string, string> env, HashSet<string> used)
+    {
+        foreach (var s in k.Stmts)
+        {
+            var t = TypeOf(s, env, used);
+            if (t != "" && t != "Unit") Error(s.Line, "unused-value", $"this {t} value is not used", "a branch of an `if` block holds Unit statements; remove the line");
+        }
+        return "Unit";
     }
 
     string IfType(IfExpr i, Dictionary<string, string> env, HashSet<string> used)

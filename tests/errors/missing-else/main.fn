@@ -1,0 +1,6 @@
+fn main() -> Unit
+  "An if block without else."
+  effects terminal.write
+body
+  if 1 == 1 then
+    printLine("yes")

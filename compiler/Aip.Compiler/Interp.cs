@@ -108,6 +108,9 @@ sealed class Interp(ProgramModel program)
                     try { return u.Op == "-" ? checked(-(long)v!) : !(bool)v!; }
                     catch (OverflowException) { throw new Failed("arithmetic", "negation overflows Int"); }
                 }
+            case BlockExpr k:
+                foreach (var s in k.Stmts) Eval(s, env);
+                return null;
             case IfExpr i:
                 return (bool)Eval(i.Cond, env)! ? Eval(i.Then, env) : Eval(i.Else, env);
             case Binary b:

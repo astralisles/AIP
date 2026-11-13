@@ -29,6 +29,8 @@ sealed class Arm { public int Line; public string Case = ""; public List<string>
 sealed class MatchExpr : Expr { public Expr Subject = null!; public List<Arm> Arms = new(); }
 sealed class Unary : Expr { public string Op = ""; public Expr Operand = null!; }
 sealed class Binary : Expr { public string Op = ""; public Expr Left = null!; public Expr Right = null!; }
+/// <summary>The indented lines of one branch of a multi-line `if`: Unit statements run in order.</summary>
+sealed class BlockExpr : Expr { public List<Expr> Stmts = new(); }
 sealed class IfExpr : Expr { public Expr Cond = null!; public Expr Then = null!; public Expr Else = null!; }
 
 /// <summary>One shape of a type: all of a struct, or one case of a variant.</summary>
