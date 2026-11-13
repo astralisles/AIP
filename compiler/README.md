@@ -28,5 +28,5 @@ Supported so far: `.fn` files; Int, Text, Bool, Unit; `let`, calls, operators,
 Output is plain lines, one function per line, errors as `error code: message`.
 
 When is the index updated? Never stored, so never stale: every query re-reads and re-checks the
-sources (milliseconds at this size). `aip build` still writes `build/index.txt` as a snapshot.
+sources. Measured (`scripts/bench-query.ps1`): about 0.25 s per query for 10 to 100 functions (mostly .NET start-up), 0.36 s for 1,000, 1.1 s for 5,000. `aip build` still writes `build/index.txt` as a snapshot.
 Scaling later: cache keyed on file hashes, still rebuilt automatically, so no step to remember.
