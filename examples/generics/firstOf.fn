@@ -1,0 +1,7 @@
+fn firstOf(items List<T>) -> Option<T>
+  "The first item of a list, or None for an empty list."
+  pure
+  example orElse(firstOf(listAppend(listEmpty(), 7)), 0) == 7
+  example orElse(firstOf(listEmpty()), 5) == 5
+body
+  if listLength(items) == 0 then None() else Some(listGet(items, 0))

@@ -10,6 +10,8 @@ List them with `scripts\aip.ps1 std`.
 | `map/`      | `Map<K,V>`                             | name starts with `map`       |
 | `set/`      | `Set<T>`                               | name starts with `set`       |
 | `sortedMap/` | `SortedMap<K,V>`, keys in order  | name starts with `sortedMap` |
+| `queue/` | `Queue<T>`, first in first out | name starts with `queue` |
+| `priorityQueue/` | `PriorityQueue<T>`, lowest priority first | name starts with `priorityQueue` |
 | `sortedSet/` | `SortedSet<T>`, items in order   | name starts with `sortedSet` |
 | `file/`     | read/write files                       | name starts with `file`      |
 | `terminal/` | normal output (`printLine`)            | effect `terminal.*`          |

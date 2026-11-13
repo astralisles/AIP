@@ -1,0 +1,4 @@
+fn queueSize(q Queue<T>) -> Int
+  "How many items the queue has."
+  pure
+extern

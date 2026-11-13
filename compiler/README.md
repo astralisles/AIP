@@ -21,7 +21,7 @@ Standard library: `std/<group>/*.fn` are header-only `extern` functions, grouped
 
 Supported so far: `.fn` files; Int, Text, Bool, Unit; `List<T>`, `Set<T>`, `Map<K,V>` (immutable: every change returns a new value; see `examples/collections`); `let`, calls, operators,
 `if/then/else`, text with `{expr}` parts; `.struct` and `.variant` files (constructors `Point(1, 2)`,
-`.field` reads) and statement-level `match` (`let x = match v` or a Unit `match v`, one `Case(a, b) => expr` arm
+`.field` reads; generic ones such as `variant Option<T>`, and generic functions such as `fn firstOf(items List<T>) -> Option<T>`, see `examples/generics`) and statement-level `match` (`let x = match v` or a Unit `match v`, one `Case(a, b) => expr` arm
 per line, every case required). See `examples/shapes`. `.const` files (`docs/design/consts-T-0941.md`, `examples/consts`). Ranges, `requires`, `ensures` and
 `example` are type-checked, and `aip test` runs them (see below); they are not proved.
 
