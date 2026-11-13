@@ -48,6 +48,20 @@ sealed class CsBackend : IBackend
         ["setItems"] = "new System.Collections.Generic.List<object>(({0}).Keys)",
         ["fileRead"] = "System.IO.File.ReadAllText({0})",
         ["fileWrite"] = "Rt.Write({0}, {1})",
+        ["numToI8"] = "checked((sbyte)({0}))",
+        ["numFromI8"] = "checked((long)({0}))",
+        ["numToI16"] = "checked((short)({0}))",
+        ["numFromI16"] = "checked((long)({0}))",
+        ["numToI32"] = "checked((int)({0}))",
+        ["numFromI32"] = "checked((long)({0}))",
+        ["numToU8"] = "checked((byte)({0}))",
+        ["numFromU8"] = "checked((long)({0}))",
+        ["numToU16"] = "checked((ushort)({0}))",
+        ["numFromU16"] = "checked((long)({0}))",
+        ["numToU32"] = "checked((uint)({0}))",
+        ["numFromU32"] = "checked((long)({0}))",
+        ["numToU64"] = "checked((ulong)({0}))",
+        ["numFromU64"] = "checked((long)({0}))",
         ["noop"] = "Rt.Nop()",
         ["argCount"] = "(long)Rt.Args.Length",
         ["arg"] = "Rt.Args[(int)({0})]",
@@ -127,7 +141,8 @@ sealed class CsBackend : IBackend
     // Lists are type-erased at run time (List<object>); reads cast back to the element type.
     static string CsType(string t) => t switch
     {
-        "Int" => "long", "Text" => "string", "Bool" => "bool", "_" => "object",
+        "Int" => "long", "I8" => "sbyte", "I16" => "short", "I32" => "int",
+        "U8" => "byte", "U16" => "ushort", "U32" => "uint", "U64" => "ulong", "Text" => "string", "Bool" => "bool", "_" => "object",
         _ when t.StartsWith("List<") => "System.Collections.Generic.List<object>",
         // Maps and sets are insertion-ordered dictionaries (a set maps each item to true); every change copies.
         _ when t.StartsWith("Map<") || t.StartsWith("Set<") => "System.Collections.Generic.Dictionary<object, object>",
@@ -195,7 +210,11 @@ sealed class CsBackend : IBackend
 
     static string Emit(Expr e) => e switch
     {
-        IntLit i => i.Value + "L",
+        IntLit { Type: "U64" } i => i.Value + "UL",
+        IntLit { Type: "Int" or "" } i => i.Value + "L",
+        IntLit i => $"(({CsType(i.Type)}){i.Value})",
+        Unary { Op: "-", Type: not ("Int" or "") } u when u.Operand is IntLit n => $"(({CsType(u.Type)})(-{n.Value}))",
+        Unary { Op: "-", Type: not ("Int" or "") } u => $"checked(({CsType(u.Type)})(-{Emit(u.Operand)}))",
         BoolLit b => b.Value ? "true" : "false",
         NameRef n => "@" + n.Name,
         TextLit t => t.Parts.Count == 1 && t.Parts[0] is string only
@@ -213,6 +232,9 @@ sealed class CsBackend : IBackend
             "and" => $"({Emit(b.Left)} && {Emit(b.Right)})",
             "or" => $"({Emit(b.Left)} || {Emit(b.Right)})",
             "=>" => $"(!{Emit(b.Left)} || {Emit(b.Right)})",
+            // Sized integers: C# widens to int, so cast back; `checked` makes overflow a run-time error, never a silent wrap.
+            "+" or "-" or "*" or "/" or "%" when b.Type is not ("Int" or "") =>
+                $"checked(({CsType(b.Type)})({Emit(b.Left)} {b.Op} {Emit(b.Right)}))",
             _ => $"({Emit(b.Left)} {b.Op} {Emit(b.Right)})",
         },
         IfExpr i => $"({Emit(i.Cond)} ? {Emit(i.Then)} : {Emit(i.Else)})",
@@ -384,6 +406,7 @@ sealed class CsBackend : IBackend
             }
             public static void Write(string path, string content) => System.IO.File.WriteAllText(path, content);
             public static string Text(string v) => v;
+            public static string Text(ulong v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
             public static string Text(long v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
             public static string Text(bool v) => v ? "true" : "false";
         }

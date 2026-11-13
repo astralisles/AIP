@@ -1,0 +1,11 @@
+fn main() -> Unit
+  "Show the exact-size whole numbers: I8 I16 I32 (signed), U8 U16 U32 U64 (unsigned), and Int (64-bit signed)."
+  effects terminal.write
+body
+  let small = numToI8(100)
+  let byte = numToU8(200)
+  printLine("I8 holds -128..127: {small}")
+  printLine("U8 holds 0..255: {numFromU8(addBytes(byte, 55))}")
+  printLine("U64 max: {maxU64()}")
+  printLine("Int is 64-bit signed: {9223372036854775807}")
+  printLine("I32 math: {numFromI32(mulI32(46340, 46340))}")

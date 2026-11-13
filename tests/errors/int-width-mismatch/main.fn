@@ -1,0 +1,7 @@
+fn main() -> Unit
+  "Mixing widths is an error."
+  effects terminal.write
+body
+  let a = numToI32(1)
+  let b = numToI8(2)
+  printLine("{a + b}")

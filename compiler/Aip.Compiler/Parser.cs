@@ -366,7 +366,7 @@ sealed class Parser
         switch (t.Kind)
         {
             case T.Int:
-                if (!long.TryParse(t.Text, out var v)) throw Err("bad-number", $"`{t.Text}` is too large for Int");
+                if (!ulong.TryParse(t.Text, out var v)) throw Err("bad-number", $"`{t.Text}` is too large for any whole-number type (the largest is U64, 18446744073709551615)");
                 return new IntLit { Line = _line, Value = v };
             case T.Text:
                 return ParseText(t.Text);
