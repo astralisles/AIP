@@ -21,6 +21,9 @@ Open PowerShell in this folder, then:
        scripts\aip.ps1 check examples\hello
        scripts\aip.ps1 index examples\hello
 
+  3b. Write a file to disk (creates greeting.txt in the current folder):
+       scriptsip.ps1 run exampleswritefile
+
   4. Build for Linux from Windows (run the result on a Linux machine):
        scripts\aip.ps1 build examples\hello --target linux-x64
 

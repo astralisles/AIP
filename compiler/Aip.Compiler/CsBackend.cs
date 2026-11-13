@@ -22,6 +22,7 @@ sealed class CsBackend : IBackend
     static readonly Dictionary<string, string> Externs = new()
     {
         ["printLine"] = "System.Console.Out.Write({0} + \"\\n\")",
+        ["writeFile"] = "System.IO.File.WriteAllText({0}, {1})",
     };
 
     public string? Build(ProgramModel program, string outDir, string target)
