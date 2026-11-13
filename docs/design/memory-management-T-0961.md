@@ -33,6 +33,16 @@ Options, in order of preference:
 This guarantee holds only while we do not add: mutation, lazy or recursive `let` (`let a = S(b)` and `let b = S(a)`), or a
 cell/reference type. Any such feature needs a cycle collector, so it must be checked against this note first.
 
+**What really happens to a struct (worked example).** Take `struct Health` with `hp Int` and `lastHit Int` (same shape as
+`examples/shapes/Point.struct`). `let h = Health(10, 3)` makes one block of memory: a small header (size, reference count) followed by
+the two fields side by side, here `10` and `3`. `h` is just the address of that block. `h.hp` is a `.field` read: the compiler knows
+`hp` is field 0 of `Health`, so it loads the value at (address + header + 0). `h.lastHit` loads field 1. Nothing is searched by name
+at run time. Small values like `Int` are stored inside the block; bigger ones (`Text`, `List`, another struct) are stored as the
+address of their own block, which is the only kind of pointer there is.
+"Taking damage" does not edit the block. `Health(h.hp - 2, 5)` allocates a second block, and the old one is freed when nothing
+refers to it any more (phase 1: never; phase 2: its count reaches 0). If only one reference to the old block exists, the runtime may
+reuse it in place, which nobody can observe. Passing `h` to a function copies the address, not the fields.
+
 **Recommendation.**
 1. **Own runtime, not user-visible.** Allocation and release live in the runtime folder planned in `bootstrap-gaps-T-0954.md`,
    written in AIP plus a few raw-memory intrinsics that only that folder may use. Users still never see a pointer.
