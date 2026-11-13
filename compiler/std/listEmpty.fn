@@ -1,0 +1,4 @@
+fn listEmpty() -> List<_>
+  "A list with no items; its item type is taken from how it is used."
+  pure
+extern

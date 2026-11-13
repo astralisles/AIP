@@ -1,0 +1,4 @@
+fn textSlice(text Text, start Int, end Int) -> Text
+  "Characters from start up to (not including) end; out-of-range values are clamped."
+  pure
+extern

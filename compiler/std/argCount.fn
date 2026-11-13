@@ -1,0 +1,4 @@
+fn argCount() -> Int
+  "Number of command line arguments given to the program."
+  effects process.args
+extern

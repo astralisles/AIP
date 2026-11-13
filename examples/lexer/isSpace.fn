@@ -1,0 +1,6 @@
+fn isSpace(c Int) -> Bool
+  "Whether a character code is a space, tab or carriage return."
+  pure
+  example isSpace(32)
+body
+  c == 32 or c == 9 or c == 13

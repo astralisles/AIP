@@ -10,6 +10,11 @@ const string Usage = """
     targets: windows-x64, windows-arm64, linux-x64, linux-arm64, macos-arm64 (default: this machine)
     """;
 
+if (args.Length == 2 && args[0] == "tokens")
+{
+    Console.Write(Parser.Tokens(Path.GetFullPath(args[1])));
+    return 0;
+}
 if (args.Length < 2 || args[0] is not ("check" or "index" or "build" or "run"))
 {
     Console.WriteLine(Usage);

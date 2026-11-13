@@ -22,6 +22,20 @@ sealed class CsBackend : IBackend
     static readonly Dictionary<string, string> Externs = new()
     {
         ["printLine"] = "System.Console.Out.Write({0} + \"\\n\")",
+        ["textLength"] = "(long)({0}).Length",
+        ["textSlice"] = "Rt.Slice({0}, {1}, {2})",
+        ["textCode"] = "(long)({0})[(int)({1})]",
+        ["textFromCode"] = "((char)({0})).ToString()",
+        ["textToInt"] = "long.Parse({0}, System.Globalization.CultureInfo.InvariantCulture)",
+        ["listEmpty"] = "new System.Collections.Generic.List<object>()",
+        ["listLength"] = "(long)({0}).Count",
+        ["listGet"] = "({0})[(int)({1})]",
+        ["listAppend"] = "Rt.Append({0}, {1})",
+        ["fileRead"] = "System.IO.File.ReadAllText({0})",
+        ["fileWrite"] = "Rt.Write({0}, {1})",
+        ["noop"] = "Rt.Nop()",
+        ["argCount"] = "(long)Rt.Args.Length",
+        ["arg"] = "Rt.Args[(int)({0})]",
     };
 
     public string? Build(ProgramModel program, string outDir, string target)
@@ -71,7 +85,13 @@ sealed class CsBackend : IBackend
         return Path.Combine(binDir, program.Name + (target.StartsWith("windows") ? ".exe" : ""));
     }
 
-    static string CsType(string t) => t switch { "Int" => "long", "Text" => "string", "Bool" => "bool", _ => "void" };
+    // Lists are type-erased at run time (List<object>); reads cast back to the element type.
+    static string CsType(string t) => t switch
+    {
+        "Int" => "long", "Text" => "string", "Bool" => "bool", "_" => "object",
+        _ when t.StartsWith("List<") => "System.Collections.Generic.List<object>",
+        _ => "void",
+    };
 
     static string EmitFn(Fn fn)
     {
@@ -86,11 +106,16 @@ sealed class CsBackend : IBackend
             var e = Emit(s.Value);
             if (s.Let != null) sb.Append($"        var @{s.Let} = {e};\n");
             else if (i == fn.Body.Count - 1 && fn.Ret.Name != "Unit") sb.Append($"        return {e};\n");
-            else sb.Append($"        {e};\n");
+            else sb.Append(EmitUnit(s.Value, "        "));
         }
         sb.Append("    }\n}\n");
         return sb.ToString();
     }
+
+    /// <summary>A statement. A Unit `if` becomes an if statement because C# cannot use void in `?:`.</summary>
+    static string EmitUnit(Expr e, string indent) => e is IfExpr { Type: "Unit" } i
+        ? $"{indent}if ({Emit(i.Cond)})\n{indent}{{\n{EmitUnit(i.Then, indent + "    ")}{indent}}}\n{indent}else\n{indent}{{\n{EmitUnit(i.Else, indent + "    ")}{indent}}}\n"
+        : $"{indent}{Emit(e)};\n";
 
     static string Emit(Expr e) => e switch
     {
@@ -101,7 +126,7 @@ sealed class CsBackend : IBackend
             ? Quote(only)
             : "string.Concat(" + string.Join(", ", t.Parts.Select(p => p is string s ? Quote(s) : $"Rt.Text({Emit((Expr)p)})")) + ")",
         Call c => Externs.TryGetValue(c.Name, out var template)
-            ? string.Format(template, c.Args.Select(Emit).ToArray<object>())
+            ? (c.Name == "listGet" ? $"(({CsType(c.Type)})" : "") + string.Format(template, c.Args.Select(Emit).ToArray<object>()) + (c.Name == "listGet" ? ")" : "")
             : $"Fn.@{c.Name}({string.Join(", ", c.Args.Select(Emit))})",
         Unary u => u.Op == "-" ? $"(-{Emit(u.Operand)})" : $"(!{Emit(u.Operand)})",
         Binary b => b.Op switch
@@ -135,15 +160,34 @@ sealed class CsBackend : IBackend
         // Generated entry point. Do not edit.
         public static class Program
         {
-            public static void Main()
+            public static void Main(string[] args)
             {
+                Rt.Args = args;
                 System.Console.OutputEncoding = new System.Text.UTF8Encoding(false);
-                Fn.@main();
+                // Deep recursion is how loops are written, so run on a big stack.
+                var t = new System.Threading.Thread(() => Fn.@main(), 512 * 1024 * 1024);
+                t.Start();
+                t.Join();
             }
         }
 
         public static class Rt
         {
+            public static string[] Args = System.Array.Empty<string>();
+            public static string Slice(string s, long start, long end)
+            {
+                int a = (int)System.Math.Clamp(start, 0, s.Length), b = (int)System.Math.Clamp(end, a, s.Length);
+                return s.Substring(a, b - a);
+            }
+            public static System.Collections.Generic.List<object> Append(System.Collections.Generic.List<object> l, object item)
+            {
+                var r = new System.Collections.Generic.List<object>(l.Count + 1);
+                r.AddRange(l);
+                r.Add(item);
+                return r;
+            }
+            public static void Nop() { }
+            public static void Write(string path, string content) => System.IO.File.WriteAllText(path, content);
             public static string Text(string v) => v;
             public static string Text(long v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
             public static string Text(bool v) => v ? "true" : "false";

@@ -9,7 +9,7 @@ sealed record Tok(T Kind, string Text);
 /// <summary>Parses one .fn file. The format is line based: signature, header lines, then `body` or `extern`.</summary>
 sealed class Parser
 {
-    static readonly string[] Symbols = { "->", "=>", "==", "!=", "<=", ">=", "..", "(", ")", ",", "<", ">", "+", "-", "*", "/", "%", "=" };
+    static readonly string[] Symbols = { "->", "=>", "==", "!=", "<=", ">=", "..", ".", "(", ")", ",", "<", ">", "+", "-", "*", "/", "%", "=" };
 
     readonly string _file;
     int _line;
@@ -25,6 +25,23 @@ sealed class Parser
     {
         var p = new Parser(file);
         return p.ParseLines(File.ReadAllLines(file));
+    }
+
+    /// <summary>One line per token (`Kind text`), and `Newline` after each non-blank line. Used to compare with the lexer written in AIP.</summary>
+    public static string Tokens(string file)
+    {
+        var p = new Parser(file);
+        var sb = new StringBuilder();
+        foreach (var raw in File.ReadAllLines(file))
+        {
+            p._line++;
+            var text = raw.Trim();
+            if (text.Length == 0) continue;
+            p.Lex(text);
+            foreach (var t in p._toks.Where(t => t.Kind != T.End)) sb.Append($"{t.Kind} {t.Text}\n");
+            sb.Append("Newline\n");
+        }
+        return sb.ToString();
     }
 
     Fn ParseLines(string[] lines)
@@ -131,6 +148,14 @@ sealed class Parser
     TypeRef ParseType()
     {
         var name = Expect(T.Ident, "a type name").Text;
+        if (name == "List" && IsSym("<"))
+        {
+            _pos++;
+            var inner = ParseType();
+            if (inner.Range != "") throw Err("syntax", "a list element type cannot have a range");
+            ExpectSym(">");
+            name = $"List<{inner.Name}>";
+        }
         var range = new StringBuilder();
         if (Peek.Kind == T.Int || IsSym("-") || IsSym(".."))
         {

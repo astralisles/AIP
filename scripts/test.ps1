@@ -39,5 +39,7 @@ foreach ($case in Get-ChildItem (Join-Path $root 'tests\errors') -Directory | So
   $out = (& $aip check $case.FullName | Out-String).Trim()
   Report "error: $($case.Name)" ($LASTEXITCODE -ne 0 -and $out.Contains($expected)) "expected: $expected`n      got: $out"
 }
+$out = (& (Join-Path $PSScriptRoot "compare-lexers.ps1") | Out-String).Trim()
+Report "bootstrap: AIP lexer matches the C# lexer" ($LASTEXITCODE -eq 0) $out
 if ($failed -eq 0) { 'ALL PASSED' } else { "$failed FAILED" }
 exit $failed

@@ -1,0 +1,5 @@
+fn printAll(tokens List<Text>, i Int) -> Unit
+  "Print the tokens from position i on, one per line."
+  effects terminal.write
+body
+  if i >= listLength(tokens) then noop() else printThenRest(tokens, i)
