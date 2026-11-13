@@ -64,6 +64,10 @@ sealed partial class Parser
         new[] { "or" },
         new[] { "and" },
         new[] { "==", "!=", "<", "<=", ">", ">=" },
+        new[] { "|" },
+        new[] { "^" },
+        new[] { "&" },
+        new[] { "<<", ">>" },
         new[] { "+", "-" },
         new[] { "*", "/", "%" },
     };
@@ -84,6 +88,7 @@ sealed partial class Parser
     Expr ParseUnary()
     {
         if (IsSym("-")) { _pos++; return new Unary { Line = _line, Op = "-", Operand = ParseUnary() }; }
+        if (IsSym("~")) { _pos++; return new Unary { Line = _line, Op = "~", Operand = ParseUnary() }; }
         if (Peek.Kind == T.Ident && Peek.Text == "not") { _pos++; return new Unary { Line = _line, Op = "not", Operand = ParseUnary() }; }
         return ParsePostfix();
     }
