@@ -1,0 +1,9 @@
+fn show(e Expr) -> Text
+  "The expression as text."
+  pure
+body
+  match e
+    Num(value) => "{value}"
+    Neg(inner) => "-({show(inner)})"
+    Add(left, right) => "({show(left)} + {show(right)})"
+    Sum(items) => "sum of {listLength(items)} items"
