@@ -1,0 +1,4 @@
+fn listLength(items List<T>) -> Int
+  "Number of items in a list."
+  pure
+extern

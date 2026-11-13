@@ -1,0 +1,7 @@
+fn average(a Int, b Int) -> Int
+  "The average of two numbers, rounded toward zero."
+  pure
+  example average(4, 10) == 7
+  example average(3, 4) == 3
+body
+  (a + b) / 2

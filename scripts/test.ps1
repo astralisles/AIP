@@ -36,10 +36,22 @@ Pop-Location
 Remove-Item $tmp -Recurse -Force
 Report 'writefile: writes greeting.txt with "Hello from AIP!"' ($content -eq 'Hello from AIP!' -and $run -eq 'Wrote greeting.txt') "file: $content, output: $run"
 
+
+$expectedOut = @{
+  adding = "2 + 3 = 5|-7 + 10 = 3|1000000 + 2345678 = 3345678|1 + 2 + 3 = 6|Total: 65"
+  types  = "Int:  42|Text: hello|Bool: true|Bool from a comparison (count > 40): true|Bool from and/or/not: true|Text equality: true|Ann is 30. Adult: yes|Tim is 12. Adult: no"
+  math   = "7 - 10 = -3|6 * 7 = 42|17 / 5 = 3 (whole number division)|17 % 5 = 2 (the rest)|abs(-12) = 12|max(3, 9) = 9|min(3, 9) = 3|square(-4) = 16|clamp(15, 0, 10) = 10|average(4, 10) = 7|isEven(10) = true|isEven(7) = false"
+}
+foreach ($name in $expectedOut.Keys | Sort-Object) {
+  $lines = @(& $aip run "examples\$name")
+  Report "example $name`: output is as expected" ($LASTEXITCODE -eq 0 -and ($lines -join '|') -eq $expectedOut[$name]) "got: $($lines -join '|')"
+}
 foreach ($case in Get-ChildItem (Join-Path $root 'tests\errors') -Directory | Sort-Object Name) {
   $expected = (Get-Content (Join-Path $case.FullName 'expected.txt') -Raw).Trim()
   $out = (& $aip check $case.FullName | Out-String).Trim()
   Report "error: $($case.Name)" ($LASTEXITCODE -ne 0 -and $out.Contains($expected)) "expected: $expected`n      got: $out"
 }
+$out = (& (Join-Path $PSScriptRoot "compare-lexers.ps1") | Out-String).Trim()
+Report "bootstrap: AIP lexer matches the C# lexer" ($LASTEXITCODE -eq 0) $out
 if ($failed -eq 0) { 'ALL PASSED' } else { "$failed FAILED" }
 exit $failed

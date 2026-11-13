@@ -1,0 +1,4 @@
+fn textToInt(text Text) -> Int
+  "Parse a whole number written in decimal."
+  pure
+extern

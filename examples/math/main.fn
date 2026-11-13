@@ -1,0 +1,16 @@
+fn main() -> Unit
+  "Print the results of the basic math functions."
+  effects terminal.write
+body
+  printLine("7 - 10 = {7 - 10}")
+  printLine("6 * 7 = {6 * 7}")
+  printLine("17 / 5 = {17 / 5} (whole number division)")
+  printLine("17 % 5 = {17 % 5} (the rest)")
+  printLine("abs(-12) = {abs(-12)}")
+  printLine("max(3, 9) = {max(3, 9)}")
+  printLine("min(3, 9) = {min(3, 9)}")
+  printLine("square(-4) = {square(-4)}")
+  printLine("clamp(15, 0, 10) = {clamp(15, 0, 10)}")
+  printLine("average(4, 10) = {average(4, 10)}")
+  printLine("isEven(10) = {isEven(10)}")
+  printLine("isEven(7) = {isEven(7)}")

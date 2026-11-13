@@ -1,0 +1,6 @@
+fn max(a Int, b Int) -> Int
+  "The larger of two numbers."
+  pure
+  example max(3, 9) == 9
+body
+  if a > b then a else b

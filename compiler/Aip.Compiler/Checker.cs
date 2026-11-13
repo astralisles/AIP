@@ -5,6 +5,37 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
 {
     static readonly HashSet<string> KnownTypes = new() { "Int", "Text", "Bool", "Unit" };
 
+    static bool IsList(string t) => t.StartsWith("List<");
+    static string Inner(string t) => t[5..^1];
+    static bool IsVar(string t) => t.Length == 1 && char.IsAsciiLetterUpper(t[0]);
+
+    /// <summary>Types match; `_` (the element type of an empty list) matches anything.</summary>
+    static bool Compat(string a, string b) =>
+        a == b || a == "_" || b == "_" || (IsList(a) && IsList(b) && Compat(Inner(a), Inner(b)));
+
+    /// <summary>The more specific of two compatible types.</summary>
+    static string Merge(string a, string b) => a == "_" || (IsList(a) && Inner(a) == "_" && b != "_") ? b : a;
+
+    static bool Unify(string pattern, string actual, Dictionary<string, string> vars)
+    {
+        if (actual == "") return true;
+        if (IsVar(pattern))
+        {
+            if (!vars.TryGetValue(pattern, out var bound)) { vars[pattern] = actual; return true; }
+            if (!Compat(bound, actual)) return false;
+            vars[pattern] = Merge(bound, actual);
+            return true;
+        }
+        if (IsList(pattern)) return IsList(actual) ? Unify(Inner(pattern), Inner(actual), vars) : actual == "_";
+        return Compat(pattern, actual);
+    }
+
+    static string Subst(string t, Dictionary<string, string> vars) =>
+        IsVar(t) ? vars.GetValueOrDefault(t, "_") : IsList(t) ? $"List<{Subst(Inner(t), vars)}>" : t;
+
+    bool IsKnown(string t) =>
+        KnownTypes.Contains(t) || (IsList(t) && IsKnown(Inner(t))) || (_fn.IsStd && (t == "_" || IsVar(t)));
+
     Fn _fn = null!;
     HashSet<string> _effects = new();
     bool _inContract;
@@ -65,7 +96,7 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
             }
             else if (last)
             {
-                if (t != "" && t != fn.Ret.Name)
+                if (t != "" && !Compat(t, fn.Ret.Name))
                     Error(s.Line, "type-mismatch", $"the body ends with {t} but `{fn.Name}` returns {fn.Ret.Name}");
             }
             else if (t != "" && t != "Unit")
@@ -94,11 +125,11 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
 
     void CheckType(TypeRef t, bool allowUnit)
     {
-        if (!KnownTypes.Contains(t.Name))
-            Error(_fn.Line, "unknown-type", $"unknown type `{t.Name}`", "types supported so far: Int, Text, Bool, Unit");
+        if (!IsKnown(t.Name))
+            Error(_fn.Line, "unknown-type", $"unknown type `{t.Name}`", "types supported so far: Int, Text, Bool, Unit, List<T>");
         else if (t.Name == "Unit" && !allowUnit)
             Error(_fn.Line, "type-mismatch", "a parameter cannot be Unit");
-        else if (t.Range != "" && t.Name != "Int" && t.Name != "Text")
+        else if (t.Range != "" && t.Name != "Int" && t.Name != "Text" && !IsList(t.Name))
             Error(_fn.Line, "bad-range", $"`{t.Name}` cannot have a range");
     }
 
@@ -129,8 +160,11 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
     string TextType(TextLit t, Dictionary<string, string> env, HashSet<string> used)
     {
         foreach (var part in t.Parts.OfType<Expr>())
-            if (TypeOf(part, env, used) == "Unit")
-                Error(t.Line, "type-mismatch", "a Unit value cannot be put into a text");
+        {
+            var pt = TypeOf(part, env, used);
+            if (pt == "Unit") Error(t.Line, "type-mismatch", "a Unit value cannot be put into a text");
+            else if (IsList(pt)) Error(t.Line, "type-mismatch", "a List cannot be put into a text", "build the text from the items");
+        }
         return "Text";
     }
 
@@ -164,10 +198,14 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
         if (argTypes.Count != target.Params.Count)
             Error(c.Line, "wrong-arguments", $"`{c.Name}` takes {target.Params.Count} argument(s), found {argTypes.Count}", $"signature: {target.Signature}");
         else
+        {
+            var vars = new Dictionary<string, string>();
             for (int i = 0; i < argTypes.Count; i++)
-                if (argTypes[i] != "" && argTypes[i] != target.Params[i].Type.Name)
-                    Error(c.Line, "type-mismatch", $"argument `{target.Params[i].Name}` of `{c.Name}` must be {target.Params[i].Type.Name}, found {argTypes[i]}", $"signature: {target.Signature}");
-        return target.Ret.Name;
+                if (!Unify(target.Params[i].Type.Name, argTypes[i], vars))
+                    Error(c.Line, "type-mismatch", $"argument `{target.Params[i].Name}` of `{c.Name}` must be {Subst(target.Params[i].Type.Name, vars)}, found {argTypes[i]}", $"signature: {target.Signature}");
+            return Subst(target.Ret.Name, vars);
+        }
+        return Subst(target.Ret.Name, new Dictionary<string, string>());
     }
 
     string UnaryType(Unary u, Dictionary<string, string> env, HashSet<string> used)
@@ -194,7 +232,8 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
                 if (known && (l != "Int" || r != "Int")) Error(b.Line, "type-mismatch", $"`{b.Op}` needs Int on both sides, found {l} and {r}");
                 return "Bool";
             case "==" or "!=":
-                if (known && (l != r || l == "Unit")) Error(b.Line, "type-mismatch", $"`{b.Op}` compares {l} with {r}");
+                if (known && (!Compat(l, r) || l == "Unit" || IsList(l)))
+                    Error(b.Line, "type-mismatch", $"`{b.Op}` compares {l} with {r}", IsList(l) ? "lists cannot be compared; compare their lengths or items" : null);
                 return "Bool";
             default: // and, or, =>
                 if (known && (l != "Bool" || r != "Bool")) Error(b.Line, "type-mismatch", $"`{b.Op}` needs Bool on both sides, found {l} and {r}");
@@ -208,8 +247,8 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
         if (c != "" && c != "Bool") Error(i.Line, "type-mismatch", $"the `if` condition must be Bool, found {c}");
         var a = TypeOf(i.Then, env, used);
         var b = TypeOf(i.Else, env, used);
-        if (a != "" && b != "" && a != b) Error(i.Line, "type-mismatch", $"`then` gives {a} but `else` gives {b}");
-        return a;
+        if (a != "" && b != "" && !Compat(a, b)) Error(i.Line, "type-mismatch", $"`then` gives {a} but `else` gives {b}");
+        return a == "" || b == "" ? a + b : Merge(a, b);
     }
 
     void CheckMainAndReachability()

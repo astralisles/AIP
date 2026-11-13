@@ -1,0 +1,6 @@
+fn addLine(a Int, b Int) -> Text
+  "A sentence that shows a sum, such as: 2 + 3 = 5."
+  pure
+  example addLine(2, 3) == "2 + 3 = 5"
+body
+  "{a} + {b} = {add(a, b)}"

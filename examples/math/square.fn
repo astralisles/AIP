@@ -1,0 +1,6 @@
+fn square(n Int) -> Int
+  "A number multiplied by itself."
+  pure
+  example square(-4) == 16
+body
+  n * n

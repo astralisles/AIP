@@ -1,0 +1,4 @@
+fn textLength(text Text) -> Int
+  "Number of characters in a text."
+  pure
+extern

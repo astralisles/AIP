@@ -1,0 +1,7 @@
+fn isEven(n Int) -> Bool
+  "True when the number divides by 2 without a rest."
+  pure
+  example isEven(10)
+  example not isEven(7)
+body
+  n % 2 == 0

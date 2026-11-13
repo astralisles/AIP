@@ -1,0 +1,4 @@
+fn listGet(items List<T>, index Int) -> T
+  "The item at an index (first item is 0); the index must be inside the list."
+  pure
+extern

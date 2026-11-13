@@ -1,0 +1,6 @@
+fn addThree(a Int, b Int, c Int) -> Int
+  "The sum of three whole numbers, built from add."
+  pure
+  example addThree(1, 2, 3) == 6
+body
+  add(add(a, b), c)
