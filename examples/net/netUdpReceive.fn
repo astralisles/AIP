@@ -5,4 +5,4 @@ body
   let socket = udpOpen(port)
   let data = udpReceive(socket, 10000)
   udpClose(socket)
-  printLine("udp got: {bytesToText(data)}")
+  printLine("udp got: {bytesDecode(data)}")

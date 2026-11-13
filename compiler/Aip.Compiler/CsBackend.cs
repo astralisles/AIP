@@ -33,6 +33,47 @@ sealed class CsBackend : IBackend
         ["listLength"] = "(long)({0}).Count",
         ["listGet"] = "({0})[(int)({1})]",
         ["listAppend"] = "Rt.Append({0}, {1})",
+        ["textFind"] = "(long)({0}).IndexOf({1}, System.StringComparison.Ordinal)",
+        ["textContains"] = "({0}).Contains({1}, System.StringComparison.Ordinal)",
+        ["textStartsWith"] = "({0}).StartsWith({1}, System.StringComparison.Ordinal)",
+        ["textEndsWith"] = "({0}).EndsWith({1}, System.StringComparison.Ordinal)",
+        ["textTrim"] = "({0}).Trim()",
+        ["textReplace"] = "({0}).Replace({1}, {2}, System.StringComparison.Ordinal)",
+        ["textToUpper"] = "({0}).ToUpperInvariant()",
+        ["textToLower"] = "({0}).ToLowerInvariant()",
+        ["textCompare"] = "(long)System.Math.Sign(string.CompareOrdinal({0}, {1}))",
+        ["textFromInt"] = "({0}).ToString(System.Globalization.CultureInfo.InvariantCulture)",
+        ["textRepeat"] = "string.Concat(System.Linq.Enumerable.Repeat({0}, (int)({1})))",
+        ["textSplit"] = "new System.Collections.Generic.List<object>(({0}).Split({1}, System.StringSplitOptions.None))",
+        ["textJoin"] = "string.Join({1}, System.Linq.Enumerable.Cast<string>({0}))",
+        ["intMin"] = "System.Math.Min({0}, {1})",
+        ["intMax"] = "System.Math.Max({0}, {1})",
+        ["intAbs"] = "System.Math.Abs({0})",
+        ["intSign"] = "(long)System.Math.Sign({0})",
+        ["intClamp"] = "System.Math.Clamp({0}, {1}, {2})",
+        ["intPow"] = "(long)System.Numerics.BigInteger.Pow({0}, (int)({1}))",
+        ["intGcd"] = "(long)System.Numerics.BigInteger.GreatestCommonDivisor({0}, {1})",
+        ["intAnd"] = "(({0}) & ({1}))",
+        ["intOr"] = "(({0}) | ({1}))",
+        ["intXor"] = "(({0}) ^ ({1}))",
+        ["intNot"] = "(~({0}))",
+        ["intShiftLeft"] = "(({0}) << (int)({1}))",
+        ["intShiftRight"] = "(({0}) >> (int)({1}))",
+        ["listSet"] = "Rt.ListSet({0}, {1}, {2})",
+        ["listInsert"] = "Rt.ListInsert({0}, {1}, {2})",
+        ["listRemoveAt"] = "Rt.ListRemoveAt({0}, {1})",
+        ["listConcat"] = "Rt.ListConcat({0}, {1})",
+        ["listSlice"] = "Rt.ListSlice({0}, {1}, {2})",
+        ["listReverse"] = "Rt.ListReverse({0})",
+        ["hashSha256"] = "Rt.HashSha256({0})",
+        ["hashHmacSha256"] = "Rt.HashHmacSha256({0}, {1})",
+        ["bytesFromText"] = "Rt.BytesFromText({0})",
+        ["bytesToText"] = "Rt.BytesToText({0})",
+        ["bytesToHex"] = "Rt.BytesToHex({0})",
+        ["bytesFromHex"] = "Rt.BytesFromHex({0})",
+        ["listIndexOf"] = "(long)({0}).IndexOf({1})",
+        ["listContains"] = "({0}).Contains({1})",
+        ["listRange"] = "Rt.ListRange({0}, {1})",
         ["mapEmpty"] = "new System.Collections.Generic.Dictionary<object, object>()",
         ["mapSize"] = "(long)({0}).Count",
         ["mapHas"] = "({0}).ContainsKey({1})",
@@ -83,14 +124,41 @@ sealed class CsBackend : IBackend
         ["udpSend"] = "Rt.UdpSend({0}, {1}, {2}, {3})",
         ["udpReceive"] = "Rt.UdpReceive({0}, {1})",
         ["udpClose"] = "Rt.TcpClose({0})",
-        ["bytesFromText"] = "new System.Text.UTF8Encoding(false).GetBytes({0})",
-        ["bytesToText"] = "new System.Text.UTF8Encoding(false).GetString({0})",
+        ["bytesEncode"] = "new System.Text.UTF8Encoding(false).GetBytes({0})",
+        ["bytesDecode"] = "new System.Text.UTF8Encoding(false).GetString({0})",
         ["bytesLength"] = "(long)({0}).Length",
         ["bytesGet"] = "(long)({0})[(int)({1})]",
         ["bytesSlice"] = "Rt.BytesSlice({0}, {1}, {2})",
         ["bytesJoin"] = "Rt.BytesJoin({0}, {1})",
         ["bytesFromList"] = "Rt.BytesFromList({0})",
         ["bytesEmpty"] = "System.Array.Empty<byte>()",
+        ["numToI8"] = "checked((sbyte)({0}))",
+        ["numFromI8"] = "checked((long)({0}))",
+        ["numToI16"] = "checked((short)({0}))",
+        ["numFromI16"] = "checked((long)({0}))",
+        ["numToI32"] = "checked((int)({0}))",
+        ["numFromI32"] = "checked((long)({0}))",
+        ["numToU8"] = "checked((byte)({0}))",
+        ["numFromU8"] = "checked((long)({0}))",
+        ["numToU16"] = "checked((ushort)({0}))",
+        ["numFromU16"] = "checked((long)({0}))",
+        ["numToU32"] = "checked((uint)({0}))",
+        ["numFromU32"] = "checked((long)({0}))",
+        ["numToU64"] = "checked((ulong)({0}))",
+        ["numFromU64"] = "checked((long)({0}))",
+        ["numToF32"] = "((float)({0}))",
+        ["numToF64"] = "((double)({0}))",
+        ["numFromF32"] = "Rt.ToInt((double)({0}))",
+        ["numFromF64"] = "Rt.ToInt({0})",
+        ["numF32ToF64"] = "((double)({0}))",
+        ["numF64ToF32"] = "((float)({0}))",
+        // Bit operations on whole numbers; <T> is the C# type of the result. Shift counts outside 0..width-1 are errors.
+        ["bitAnd"] = "unchecked((<T>)({0} & {1}))",
+        ["bitOr"] = "unchecked((<T>)({0} | {1}))",
+        ["bitXor"] = "unchecked((<T>)({0} ^ {1}))",
+        ["bitNot"] = "unchecked((<T>)(~{0}))",
+        ["bitShl"] = "unchecked((<T>)({0} << Rt.Shift({1}, sizeof(<T>) * 8)))",
+        ["bitShr"] = "unchecked((<T>)({0} >> Rt.Shift({1}, sizeof(<T>) * 8)))",
         ["noop"] = "Rt.Nop()",
         ["argCount"] = "(long)Rt.Args.Length",
         ["arg"] = "Rt.Args[(int)({0})]",
@@ -195,12 +263,10 @@ sealed class CsBackend : IBackend
     // Lists are type-erased at run time (List<object>); reads cast back to the element type.
     static string CsType(string t) => t switch
     {
-        "Int" => "long",
-        "Text" => "string",
-        "Bool" => "bool",
         "Bytes" => "byte[]",
         "TcpListener" or "TcpConn" or "UdpSocket" => "object", // handles, opened by effectful std functions
-        "_" => "object",
+        "Int" => "long", "F32" => "float", "F64" => "double", "I8" => "sbyte", "I16" => "short", "I32" => "int",
+        "U8" => "byte", "U16" => "ushort", "U32" => "uint", "U64" => "ulong", "Text" => "string", "Bool" => "bool", "_" => "object",
         _ when t.Length == 1 && char.IsAsciiLetterUpper(t[0]) => "object", // a type parameter: erased
         _ when t.StartsWith("List<", StringComparison.Ordinal) || t.StartsWith("Queue<", StringComparison.Ordinal) || t.StartsWith("PriorityQueue<", StringComparison.Ordinal) => "System.Collections.Generic.List<object>",
         // Maps and sets are insertion-ordered dictionaries (a set maps each item to true); every change copies.
@@ -320,7 +386,13 @@ sealed class CsBackend : IBackend
 
     static string Emit(Expr e) => e switch
     {
-        IntLit i => i.Value + "L",
+        IntLit { Type: "U64" } i => i.Value + "UL",
+        IntLit { Type: "Int" or "" } i => i.Value + "L",
+        IntLit i => $"(({CsType(i.Type)}){i.Value})",
+        Unary { Op: "-", Type: not ("Int" or "" or "F32" or "F64") } u when u.Operand is IntLit n => $"(({CsType(u.Type)})(-{n.Value}))",
+        Unary { Op: "-", Type: not ("Int" or "" or "F32" or "F64") } u => $"checked(({CsType(u.Type)})(-{Emit(u.Operand)}))",
+        FloatLit { Type: "F32" } f => f.Value.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + "F",
+        FloatLit f => f.Value.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + "D",
         BoolLit b => b.Value ? "true" : "false",
         NameRef n => n.Const ? "Const.@" + n.Name : Cast(n.Erased, n.Type, "@" + n.Name),
         TextLit t => t.Parts.Count == 1 && t.Parts[0] is string only
@@ -330,7 +402,7 @@ sealed class CsBackend : IBackend
         Field f => Cast(f.Erased, f.Type, $"{Emit(f.Target)}.@{f.Name}"),
         MatchExpr m => $"({Emit(m.Subject)} switch {{ {string.Join(", ", m.Arms.Select(a => $"{Pattern(a)} => {Emit(a.Body)}"))}, _ => throw new System.InvalidOperationException() }})",
         Call c => Externs.TryGetValue(c.Name, out var template)
-            ? (c.Name is "listGet" or "mapGet" or "sortedMapGet" or "queueFront" or "priorityQueueFront" ? $"(({CsType(c.Type)})" : "") + string.Format(System.Globalization.CultureInfo.InvariantCulture, template, c.Args.Select(Emit).ToArray<object>()) + (c.Name is "listGet" or "mapGet" or "sortedMapGet" or "queueFront" or "priorityQueueFront" ? ")" : "")
+            ? (c.Name is "listGet" or "mapGet" or "sortedMapGet" or "queueFront" or "priorityQueueFront" ? $"(({CsType(c.Type)})" : "") + string.Format(System.Globalization.CultureInfo.InvariantCulture, template.Replace("<T>", CsType(c.Type)), c.Args.Select(Emit).ToArray<object>()) + (c.Name is "listGet" or "mapGet" or "sortedMapGet" or "queueFront" or "priorityQueueFront" ? ")" : "")
             : Cast(c.Erased, c.Type, $"Fn.@{c.Name}({string.Join(", ", c.Args.Select(Emit))})"),
         Unary u => u.Op == "-" ? $"(-{Emit(u.Operand)})" : $"(!{Emit(u.Operand)})",
         Binary b => b.Op switch
@@ -338,6 +410,9 @@ sealed class CsBackend : IBackend
             "and" => $"({Emit(b.Left)} && {Emit(b.Right)})",
             "or" => $"({Emit(b.Left)} || {Emit(b.Right)})",
             "=>" => $"(!{Emit(b.Left)} || {Emit(b.Right)})",
+            // Sized integers: C# widens to int, so cast back; `checked` makes overflow a run-time error, never a silent wrap.
+            "+" or "-" or "*" or "/" or "%" when b.Type is not ("Int" or "" or "F32" or "F64") =>
+                $"checked(({CsType(b.Type)})({Emit(b.Left)} {b.Op} {Emit(b.Right)}))",
             _ => $"({Emit(b.Left)} {b.Op} {Emit(b.Right)})",
         },
         IfExpr i => $"({Emit(i.Cond)} ? {Emit(i.Then)} : {Emit(i.Else)})",
@@ -408,6 +483,82 @@ sealed class CsBackend : IBackend
                 var r = new System.Collections.Generic.List<object>(l.Count + 1);
                 r.AddRange(l);
                 r.Add(item);
+                return r;
+            }
+            public static System.Collections.Generic.List<object> ListSet(System.Collections.Generic.List<object> l, long i, object item)
+            {
+                var r = new System.Collections.Generic.List<object>(l);
+                r[(int)i] = item;
+                return r;
+            }
+            public static System.Collections.Generic.List<object> ListInsert(System.Collections.Generic.List<object> l, long i, object item)
+            {
+                var r = new System.Collections.Generic.List<object>(l);
+                r.Insert((int)i, item);
+                return r;
+            }
+            public static System.Collections.Generic.List<object> ListRemoveAt(System.Collections.Generic.List<object> l, long i)
+            {
+                var r = new System.Collections.Generic.List<object>(l);
+                r.RemoveAt((int)i);
+                return r;
+            }
+            public static System.Collections.Generic.List<object> ListConcat(System.Collections.Generic.List<object> a, System.Collections.Generic.List<object> b)
+            {
+                var r = new System.Collections.Generic.List<object>(a.Count + b.Count);
+                r.AddRange(a);
+                r.AddRange(b);
+                return r;
+            }
+            public static System.Collections.Generic.List<object> ListSlice(System.Collections.Generic.List<object> l, long start, long end)
+            {
+                int a = (int)System.Math.Clamp(start, 0, l.Count), b = (int)System.Math.Clamp(end, a, l.Count);
+                return l.GetRange(a, b - a);
+            }
+            static byte[] ToBytes(System.Collections.Generic.List<object> l)
+            {
+                var r = new byte[l.Count];
+                for (int i = 0; i < r.Length; i++)
+                {
+                    long v = (long)l[i];
+                    if (v < 0 || v > 255) throw new System.InvalidOperationException("byte out of range 0..255: " + v);
+                    r[i] = (byte)v;
+                }
+                return r;
+            }
+            static System.Collections.Generic.List<object> FromBytes(byte[] b)
+            {
+                var r = new System.Collections.Generic.List<object>();
+                foreach (var x in b) r.Add((long)x);
+                return r;
+            }
+            public static System.Collections.Generic.List<object> HashSha256(System.Collections.Generic.List<object> d) => FromBytes(System.Security.Cryptography.SHA256.HashData(ToBytes(d)));
+            public static System.Collections.Generic.List<object> HashHmacSha256(System.Collections.Generic.List<object> k, System.Collections.Generic.List<object> d) => FromBytes(System.Security.Cryptography.HMACSHA256.HashData(ToBytes(k), ToBytes(d)));
+            public static System.Collections.Generic.List<object> BytesFromText(string t)
+            {
+                var r = new System.Collections.Generic.List<object>();
+                foreach (var x in System.Text.Encoding.UTF8.GetBytes(t)) r.Add((long)x);
+                return r;
+            }
+            public static string BytesToText(System.Collections.Generic.List<object> l) => System.Text.Encoding.UTF8.GetString(ToBytes(l));
+            public static string BytesToHex(System.Collections.Generic.List<object> l) => System.Convert.ToHexString(ToBytes(l)).ToLowerInvariant();
+            public static System.Collections.Generic.List<object> BytesFromHex(string h)
+            {
+                if (h.Length % 2 != 0) throw new System.InvalidOperationException("hex text must have an even number of digits");
+                var r = new System.Collections.Generic.List<object>();
+                foreach (var x in System.Convert.FromHexString(h)) r.Add((long)x);
+                return r;
+            }
+            public static System.Collections.Generic.List<object> ListReverse(System.Collections.Generic.List<object> l)
+            {
+                var r = new System.Collections.Generic.List<object>(l);
+                r.Reverse();
+                return r;
+            }
+            public static System.Collections.Generic.List<object> ListRange(long start, long end)
+            {
+                var r = new System.Collections.Generic.List<object>();
+                for (long i = start; i < end; i++) r.Add(i);
                 return r;
             }
             public static object MapGet(System.Collections.Generic.Dictionary<object, object> m, object k) =>
@@ -586,6 +737,13 @@ sealed class CsBackend : IBackend
                 return r;
             }
             public static string Text(string v) => v;
+            public static string Text(double v) => v.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+            public static string Text(float v) => v.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+            public static string Text(int v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            public static string Text(uint v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            public static int Shift(long count, int width) => count >= 0 && count < width ? (int)count : throw new System.ArgumentOutOfRangeException("count", $"shift count {count} must be 0 to {width - 1}");
+            public static long ToInt(double v) => double.IsNaN(v) || v >= 9223372036854775808.0 || v < -9223372036854775808.0 ? throw new System.OverflowException($"{v} does not fit in Int") : (long)v;
+            public static string Text(ulong v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
             public static string Text(long v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
             public static string Text(bool v) => v ? "true" : "false";
         }

@@ -1,4 +1,4 @@
-fn bytesFromText(text Text) -> Bytes
-  "The UTF-8 bytes of a text."
+fn bytesFromText(text Text) -> List<Int>
+  "UTF-8 bytes of a text, each an Int 0..255."
   pure
 extern

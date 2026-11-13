@@ -1,0 +1,4 @@
+fn bytesFromHex(hex Text) -> List<Int>
+  "Bytes from hex text; fails when the text is not an even number of hex digits."
+  pure
+extern

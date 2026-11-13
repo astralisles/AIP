@@ -1,0 +1,4 @@
+fn bytesDecode(data Bytes) -> Text
+  "Decode UTF-8 bytes as text."
+  pure
+extern

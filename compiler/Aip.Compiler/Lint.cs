@@ -67,7 +67,7 @@ static class Lint
                     {
                         var range = target.Params[k].Type.Range;
                         if (range == "") continue;
-                        long? n = c.Args[k] switch { IntLit il => il.Value, TextLit { Parts: [string s] } => s.Length, TextLit { Parts.Count: 0 } => 0, _ => null };
+                        long? n = c.Args[k] switch { IntLit il => il.Value <= long.MaxValue ? (long?)(long)il.Value : null, TextLit { Parts: [string s] } => s.Length, TextLit { Parts.Count: 0 } => 0, _ => null };
                         if (n == null) continue;
                         var parts = range.Split("..");
                         if ((parts[0] != "" && n < long.Parse(parts[0], CultureInfo.InvariantCulture)) || (parts[1] != "" && n > long.Parse(parts[1], CultureInfo.InvariantCulture)))

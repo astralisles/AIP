@@ -31,7 +31,7 @@ function Compare-Lines($name, [string[]]$expected, [string[]]$actual) {
 }
 $bad = 0; $count = 0
 
-foreach ($project in Get-ChildItem examples -Directory | Sort-Object Name) {
+foreach ($project in Get-ChildItem examples -Directory | Where-Object { Get-ChildItem $_.FullName -Recurse -File -Include *.fn, *.const | Where-Object { $_.FullName -notmatch "[\/]build[\/]" } } | Sort-Object Name) {  # skips leftover folders holding only build output
   $expected = @(& $cs index $project.FullName | ForEach-Object { $_ -replace ' \| checked, not proved$', '' })
   if ($LASTEXITCODE -ne 0) { $bad++; "FAIL  $($project.Name): aip index failed: $expected"; continue }
   $actual = @(& $aipc index @(SourceFiles $project.FullName))

@@ -7,6 +7,7 @@ List them with `scripts\aip.ps1 std`.
 |-------------|----------------------------------------|------------------------------|
 | `text/`     | Text helpers (`textSlice`, ...)        | name starts with `text`      |
 | `list/`     | `List<T>`                              | name starts with `list`      |
+| `int/`      | Int math and bit operations            | name starts with `int`       |
 | `map/`      | `Map<K,V>`                             | name starts with `map`       |
 | `set/`      | `Set<T>`                               | name starts with `set`       |
 | `sortedMap/` | `SortedMap<K,V>`, keys in order  | name starts with `sortedMap` |
@@ -18,6 +19,8 @@ List them with `scripts\aip.ps1 std`.
 | `terminal/` | console I/O (`printLine`, `readLine`) | effect `terminal.*`          |
 | `tcp/`      | TCP connections that stay open (bytes)  | effect `tcp.*`               |
 | `udp/`      | UDP sockets (bytes)                     | effect `udp.*`               |
+| `bit/`      | bit operations (`bitAnd`, `bitShl`)    | name starts with `bit`       |
+| `num/`      | number conversions (`numToU8`, `numToF64`) | name starts with `num`       |
 | `log/`      | diagnostics to stderr (`logLine`)      | effect `log.*`               |
 | `process/`  | command line (`arg`, `argCount`)       | effect `process.*`           |
 | `core/`     | language helpers (`noop`)              | only for what fits no group  |

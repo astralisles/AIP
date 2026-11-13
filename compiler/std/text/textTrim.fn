@@ -1,0 +1,4 @@
+fn textTrim(text Text) -> Text
+  "The text without leading and trailing white space."
+  pure
+extern

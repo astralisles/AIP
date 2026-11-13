@@ -4,7 +4,7 @@ fn netServe(port Int) -> Unit
 body
   let listener = tcpListen(port)
   let conn = tcpAccept(listener)
-  tcpSend(conn, bytesFromText("welcome"))
+  tcpSend(conn, bytesEncode("welcome"))
   netEchoLoop(conn)
   tcpClose(conn)
   tcpStop(listener)

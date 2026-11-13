@@ -1,0 +1,10 @@
+fn main() -> Unit
+  "Build an expression, simplify it and print it with its value."
+  effects terminal.write
+body
+  let tree = Add(Neg(Neg(Num(7))), Neg(Num(3)))
+  let small = simplify(tree)
+  printLine(show(tree))
+  printLine(show(small))
+  printLine("{eval(tree)} {eval(small)}")
+  printLine("{eval(Sum(listAppend(listAppend(listEmpty(), tree), small)))}")

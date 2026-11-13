@@ -8,5 +8,5 @@ body
     printLine("server: client closed")
   else
     printLine("server: got {size} bytes")
-    tcpSend(conn, bytesJoin(bytesFromText("echo:"), data))
+    tcpSend(conn, bytesJoin(bytesEncode("echo:"), data))
     netEchoLoop(conn)

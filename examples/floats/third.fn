@@ -1,0 +1,5 @@
+fn third(x F32) -> F32
+  "A third of a 32-bit float."
+  pure
+body
+  x / 3.0

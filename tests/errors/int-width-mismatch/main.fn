@@ -1,0 +1,7 @@
+fn main() -> Unit
+  "I32 and U32 do not fit in each other."
+  effects terminal.write
+body
+  let a = numToU32(1)
+  let b = numToI32(2)
+  printLine("{a + b}")

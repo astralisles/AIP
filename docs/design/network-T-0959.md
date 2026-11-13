@@ -1,6 +1,6 @@
 # Console, TCP, UDP and bytes (T-0959)
 
-- `Bytes` is a built-in immutable byte array (C# `byte[]`). Pure helpers in `std/bytes/`: `bytesFromText`/`bytesToText` (UTF-8),
+- `Bytes` is a built-in immutable byte array (C# `byte[]`). Pure helpers in `std/bytes/`: `bytesEncode`/`bytesDecode` (UTF-8),
   `bytesLength`, `bytesGet` (0..255), `bytesSlice`, `bytesJoin`, `bytesFromList`, `bytesEmpty`. Network code only sees bytes, never text.
 - Handle types `TcpListener`, `TcpConn`, `UdpSocket` are built in. Only effectful std functions create them
   (`tcp.listen`, `tcp.connect`, `udp.open`), so holding one is proof that effect was declared somewhere in the call chain.

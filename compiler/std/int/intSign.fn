@@ -1,0 +1,4 @@
+fn intSign(value Int) -> Int
+  "-1, 0 or 1 for a negative, zero or positive number."
+  pure
+extern

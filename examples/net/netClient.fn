@@ -3,8 +3,8 @@ fn netClient(port Int) -> Unit
   effects tcp.connect, tcp.send, tcp.receive, tcp.close, terminal.write
 body
   let conn = tcpConnect("127.0.0.1", port)
-  let greeting = bytesToText(tcpReceive(conn, 1024))
+  let greeting = bytesDecode(tcpReceive(conn, 1024))
   printLine("client: greeting {greeting}")
-  netExchange(conn, bytesFromText("one"))
+  netExchange(conn, bytesEncode("one"))
   netExchange(conn, bytesFromList(listAppend(listAppend(listAppend(listEmpty(), 0), 255), 10)))
   tcpClose(conn)

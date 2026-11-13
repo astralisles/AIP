@@ -1,0 +1,13 @@
+fn main() -> Unit
+  "Show bit operations on sized whole numbers."
+  effects terminal.write
+body
+  let flags = numToU8(12)
+  printLine("and: {bitAnd(flags, 10)}")
+  printLine("or: {bitOr(flags, 3)}")
+  printLine("xor: {bitXor(flags, 5)}")
+  printLine("not U8: {bitNot(flags)}")
+  printLine("shl: {bitShl(flags, 4)}")
+  printLine("shr signed keeps sign: {bitShr(numToI8(-16), 2)}")
+  printLine("shl U32: {bitShl(numToU32(1), 31)}")
+  printLine("mask Int: {bitAnd(255, 4095)}")

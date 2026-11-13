@@ -1,0 +1,4 @@
+fn intXor(a Int, b Int) -> Int
+  "Bitwise exclusive or."
+  pure
+extern
