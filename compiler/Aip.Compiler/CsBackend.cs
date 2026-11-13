@@ -66,17 +66,32 @@ sealed class CsBackend : IBackend
         }
 
         var srcDir = Path.Combine(outDir, "cs");
-        if (Directory.Exists(srcDir)) Directory.Delete(srcDir, true);
-        Directory.CreateDirectory(srcDir);
-        foreach (var fn in program.ProjectFns)
-            File.WriteAllText(Path.Combine(srcDir, fn.Name + ".cs"), EmitFn(fn));
-        File.WriteAllText(Path.Combine(srcDir, "Program.cs"), ProgramCs);
-        if (program.Types.Count > 0)
-            File.WriteAllText(Path.Combine(srcDir, "Types.cs"), EmitTypes(program));
         var csproj = Path.Combine(srcDir, program.Name + ".csproj");
-        File.WriteAllText(csproj, Csproj);
-
         var binDir = Path.Combine(outDir, "bin", target);
+        var exePath = Path.Combine(binDir, program.Name + (target.StartsWith("windows") ? ".exe" : ""));
+
+        // Speed: the slow part is `dotnet publish` (~2.5 s). Skip it when the generated C# is identical
+        // to the last build for this target and its output is still there; otherwise keep the cs/obj
+        // folder so the publish is incremental instead of restoring from scratch.
+        var files = new SortedDictionary<string, string>(StringComparer.Ordinal);
+        foreach (var fn in program.ProjectFns) files[fn.Name + ".cs"] = EmitFn(fn);
+        files["Program.cs"] = ProgramCs;
+        if (program.Types.Count > 0) files["Types.cs"] = EmitTypes(program);
+        files[program.Name + ".csproj"] = Csproj;
+        var hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
+            Encoding.UTF8.GetBytes(rid + "\0" + string.Join("\0", files.Select(p => p.Key + "\0" + p.Value)))));
+        var stamp = Path.Combine(binDir, ".aip-build-hash");
+        if (File.Exists(exePath) && File.Exists(stamp) && File.ReadAllText(stamp) == hash) return exePath;
+
+        Directory.CreateDirectory(srcDir);
+        foreach (var old in Directory.EnumerateFiles(srcDir, "*.cs").Where(p => !files.ContainsKey(Path.GetFileName(p))))
+            File.Delete(old);
+        foreach (var (name, content) in files)
+        {
+            var path = Path.Combine(srcDir, name);
+            if (!File.Exists(path) || File.ReadAllText(path) != content) File.WriteAllText(path, content);
+        }
+        if (File.Exists(stamp)) File.Delete(stamp);
         var psi = new ProcessStartInfo("dotnet")
         {
             RedirectStandardOutput = true,
@@ -98,7 +113,8 @@ sealed class CsBackend : IBackend
                 Console.WriteLine("  " + line.Trim());
             return null;
         }
-        return Path.Combine(binDir, program.Name + (target.StartsWith("windows") ? ".exe" : ""));
+        File.WriteAllText(stamp, hash);
+        return exePath;
     }
 
     // Lists are type-erased at run time (List<object>); reads cast back to the element type.
