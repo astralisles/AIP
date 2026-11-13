@@ -1,0 +1,6 @@
+fn tokText(t Text) -> Text
+  "The text of a token after its kind, or empty for `Newline` and `End`."
+  pure
+  example tokText("Ident main") == "main"
+body
+  textSlice(t, spaceAt(t, 0) + 1, textLength(t))

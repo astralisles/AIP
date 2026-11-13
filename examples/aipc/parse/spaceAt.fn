@@ -1,0 +1,5 @@
+fn spaceAt(t Text, pos Int) -> Int
+  "The position of the first space in t at or after pos, or the length of t if there is none."
+  pure
+body
+  if pos >= textLength(t) then pos else if textCode(t, pos) == 32 then pos else spaceAt(t, pos + 1)
