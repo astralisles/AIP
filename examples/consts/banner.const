@@ -1,0 +1,3 @@
+const banner Text
+  "The first line the program prints; a text built from other constants."
+  value "{appName}: up to {maxAttempts} attempts"

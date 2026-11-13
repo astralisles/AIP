@@ -84,7 +84,7 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
         return s != null && Generics.TryGetValue(s.Value.Name, out var n) && n == s.Value.Args.Count && s.Value.Args.All(IsKnown);
     }
 
-    static readonly HashSet<string> ReservedTypeNames = new() { "Fn", "Rt", "Program" };
+    static readonly HashSet<string> ReservedTypeNames = new() { "Fn", "Rt", "Program", "Const", "ConstCell" };
     HashSet<string> _patNames = new();
 
     Fn _fn = null!;
@@ -103,23 +103,28 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
             _fn = fn;
             CheckFn(fn);
         }
+        CheckConstCycles();
         CheckMainAndReachability();
     }
 
     void CheckFn(Fn fn)
     {
         var fileName = Path.GetFileNameWithoutExtension(fn.File);
+        var ext = Path.GetExtension(fn.File);
+        var kind = fn.IsConst ? "constant" : "function";
         if (fileName != fn.Name)
-            Error(fn.Line, "name-mismatch", $"file `{fileName}.fn` declares `{fn.Name}`", $"rename the function to `{fileName}` or the file to `{fn.Name}.fn`");
+            Error(fn.Line, "name-mismatch", $"file `{fileName}{ext}` declares `{fn.Name}`", $"rename the {kind} to `{fileName}` or the file to `{fn.Name}{ext}`");
 
         _patNames = new HashSet<string>();
         var env = new Dictionary<string, string>();
         foreach (var p in fn.Params)
         {
             CheckType(p.Type, allowUnit: false);
-            if (!env.TryAdd(p.Name, p.Type.Name)) Error(fn.Line, "duplicate-name", $"parameter `{p.Name}` is declared twice");
+            if (IsConstName(p.Name)) Error(fn.Line, "duplicate-name", $"parameter `{p.Name}` has the name of a constant ({Path.GetFileName(program.Fns[p.Name].File)})", "choose a different name");
+            else if (!env.TryAdd(p.Name, p.Type.Name)) Error(fn.Line, "duplicate-name", $"parameter `{p.Name}` is declared twice");
         }
-        CheckType(fn.Ret, allowUnit: true);
+        if (fn.IsConst && fn.Ret.Name == "Unit") Error(fn.Line, "type-mismatch", "a constant cannot be Unit", "give it a value type such as Int, Text, Bool or a struct");
+        else CheckType(fn.Ret, allowUnit: true);
 
         _inContract = true;
         foreach (var e in fn.Requires) ExpectType(e, env, "Bool", "a `requires` condition");
@@ -143,7 +148,8 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
             if (s.Let != null)
             {
                 if (t == "Unit") Error(s.Line, "type-mismatch", $"`{s.Let}` would hold Unit, which is not a value");
-                if (_patNames.Contains(s.Let)) Error(s.Line, "duplicate-name", $"`{s.Let}` is already used by a match case", "choose a different name");
+                if (IsConstName(s.Let)) Error(s.Line, "duplicate-name", $"`{s.Let}` is a constant ({Path.GetFileName(program.Fns[s.Let].File)})", "choose a different name");
+                else if (_patNames.Contains(s.Let)) Error(s.Line, "duplicate-name", $"`{s.Let}` is already used by a match case", "choose a different name");
                 else if (!env.TryAdd(s.Let, t)) Error(s.Line, "duplicate-name", $"`{s.Let}` is already defined", "choose a different name");
                 else lets[s.Let] = s.Line;
                 if (last) Error(s.Line, "missing-result", "the body ends with `let`", $"end the body with an expression of type {fn.Ret.Name}");
@@ -151,13 +157,24 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
             else if (last)
             {
                 if (t != "" && !Compat(t, fn.Ret.Name))
-                    Error(s.Line, "type-mismatch", $"the body ends with {t} but `{fn.Name}` returns {fn.Ret.Name}");
+                    Error(s.Line, "type-mismatch", fn.IsConst ? $"the value is {t} but constant `{fn.Name}` is {fn.Ret.Name}" : $"the body ends with {t} but `{fn.Name}` returns {fn.Ret.Name}");
             }
             else if (t != "" && t != "Unit")
                 Error(s.Line, "unused-value", $"this {t} value is not used", "bind it with `let` or remove the line");
         }
         foreach (var (name, line) in lets)
             if (!used.Contains(name)) Error(line, "unused-let", $"`{name}` is never used", "remove the line");
+
+        if (fn.IsConst)
+        {
+            if (_effects.Count > 0)
+            {
+                var culprit = fn.Calls.Where(c => program.Fns.TryGetValue(c, out var f) && f.Effects.Count > 0).OrderBy(c => c).First();
+                Error(fn.EffectsLine, "const-not-pure", $"constant `{fn.Name}` calls `{culprit}`, which needs {program.Fns[culprit].EffectsText}",
+                    "a constant must be pure; compute this value in a function that declares the effect");
+            }
+            return;
+        }
 
         var missing = _effects.Except(fn.Effects).OrderBy(e => e).ToList();
         var unused = fn.Effects.Except(_effects).OrderBy(e => e).ToList();
@@ -188,7 +205,7 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
             foreach (var c in def.Cases)
             {
                 if (c.Name.Length < 2 || !char.IsAsciiLetterUpper(c.Name[0]) || ReservedTypeNames.Contains(c.Name) || KnownTypes.Contains(c.Name))
-                    Err(c.Line, "bad-type-name", $"`{c.Name}` is not a valid type or case name", "use two or more letters starting with a capital, not Fn, Rt, Program or a built-in type");
+                    Err(c.Line, "bad-type-name", $"`{c.Name}` is not a valid type or case name", "use two or more letters starting with a capital, not Fn, Rt, Program, Const, ConstCell or a built-in type");
                 var seen = new HashSet<string>();
                 foreach (var f in c.Fields)
                 {
@@ -251,6 +268,13 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
     string NameType(NameRef n, Dictionary<string, string> env, HashSet<string> used)
     {
         if (env.TryGetValue(n.Name, out var t)) { used.Add(n.Name); return t; }
+        if (program.Fns.TryGetValue(n.Name, out var k) && k.IsConst)
+        {
+            // A constant reads like a value; it counts as a call so reachability and cycle checks see it.
+            n.Const = true;
+            _fn.Calls.Add(n.Name);
+            return k.Ret.Name;
+        }
         if (program.Ctors.ContainsKey(n.Name))
             Error(n.Line, "unknown-name", $"`{n.Name}` is a constructor, not a value", $"call it: `{n.Name}(...)`");
         else if (program.Fns.ContainsKey(n.Name))
@@ -268,6 +292,11 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
             if (program.Ctors.TryGetValue(c.Name, out var ctor)) return CtorType(c, ctor.Def, ctor.Case, argTypes);
             Error(c.Line, "unknown-name", $"there is no function `{c.Name}`", Suggest(c.Name, program.Fns.Keys));
             _unknownCall = true;
+            return "";
+        }
+        if (target.IsConst)
+        {
+            Error(c.Line, "type-mismatch", $"`{c.Name}` is a constant, not a function", $"write `{c.Name}` without parentheses");
             return "";
         }
         _fn.Calls.Add(c.Name);
@@ -358,7 +387,8 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
             for (int i = 0; i < arm.Binds.Count; i++)
             {
                 var type = cs != null && i < cs.Fields.Count ? cs.Fields[i].Type.Name : "";
-                if (!armEnv.TryAdd(arm.Binds[i], type)) Error(arm.Line, "duplicate-name", $"`{arm.Binds[i]}` is already defined", "choose a different name");
+                if (IsConstName(arm.Binds[i])) Error(arm.Line, "duplicate-name", $"`{arm.Binds[i]}` is a constant ({Path.GetFileName(program.Fns[arm.Binds[i]].File)})", "choose a different name");
+                else if (!armEnv.TryAdd(arm.Binds[i], type)) Error(arm.Line, "duplicate-name", $"`{arm.Binds[i]}` is already defined", "choose a different name");
                 _patNames.Add(arm.Binds[i]);
             }
             var bt = TypeOf(arm.Body, armEnv, used);
@@ -444,7 +474,40 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
         foreach (var fn in program.ProjectFns.Where(f => !reached.Contains(f.Name)))
         {
             _fn = fn;
-            Error(fn.Line, "unused-function", $"`{fn.Name}` is never used by `main`", "call it or delete the file");
+            if (fn.IsConst) Error(fn.Line, "unused-const", $"constant `{fn.Name}` is never used by `main`", "use it or delete the file");
+            else Error(fn.Line, "unused-function", $"`{fn.Name}` is never used by `main`", "call it or delete the file");
+        }
+    }
+
+    bool IsConstName(string name) => program.Fns.TryGetValue(name, out var f) && f.IsConst;
+
+    /// <summary>A constant's value may not depend on itself, directly or through functions and other constants.</summary>
+    void CheckConstCycles()
+    {
+        var reported = new HashSet<string>();
+        foreach (var k in program.Fns.Values.Where(f => f.IsConst).OrderBy(f => f.Name, StringComparer.Ordinal))
+        {
+            if (reported.Contains(k.Name)) continue; // one error per cycle, not one per constant in it
+            // Breadth-first from the constant's direct uses; keep the path to report it.
+            var from = new Dictionary<string, string>();
+            var queue = new Queue<string>();
+            foreach (var c in k.Calls.OrderBy(c => c, StringComparer.Ordinal)) if (from.TryAdd(c, k.Name)) queue.Enqueue(c);
+            while (queue.Count > 0)
+            {
+                var name = queue.Dequeue();
+                if (name == k.Name)
+                {
+                    var path = new List<string> { k.Name };
+                    for (var at = from[k.Name]; at != k.Name; at = from[at]) path.Insert(0, at);
+                    path.Insert(0, k.Name);
+                    reported.UnionWith(path);
+                    _fn = k;
+                    Error(k.Line, "const-cycle", $"constant `{k.Name}` depends on itself: {string.Join(" -> ", path)}", "compute one of the values without the other");
+                    break;
+                }
+                if (!program.Fns.TryGetValue(name, out var f)) continue;
+                foreach (var c in f.Calls.OrderBy(c => c, StringComparer.Ordinal)) if (from.TryAdd(c, name)) queue.Enqueue(c);
+            }
         }
     }
 

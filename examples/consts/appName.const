@@ -1,0 +1,3 @@
+const appName Text
+  "The name shown in every message."
+  value "aip demo"

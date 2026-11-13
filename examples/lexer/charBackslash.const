@@ -1,0 +1,3 @@
+const charBackslash Int
+  "The character code of a backslash, which escapes the next character in a text."
+  value 92

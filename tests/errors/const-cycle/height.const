@@ -1,0 +1,3 @@
+const height Int
+  "The height."
+  value width * 2

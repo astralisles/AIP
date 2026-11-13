@@ -47,21 +47,36 @@ Standard library: `std/<group>/*.fn` are header-only `extern` functions, grouped
 Supported so far: `.fn` files; Int, Text, Bool, Unit; `List<T>`, `Set<T>`, `Map<K,V>` (immutable: every change returns a new value; see `examples/collections`); `let`, calls, operators,
 `if/then/else`, text with `{expr}` parts; `.struct` and `.variant` files (constructors `Point(1, 2)`,
 `.field` reads) and statement-level `match` (`let x = match v` or a Unit `match v`, one `Case(a, b) => expr` arm
-per line, every case required). See `examples/shapes`. Ranges, `requires`, `ensures` and
+per line, every case required). See `examples/shapes`. `.const` files (see below). Ranges, `requires`, `ensures` and
 `example` are parsed and type-checked but not yet proved or run.
+
+## Constants (`.const` files)
+
+One named, typed, immutable value per file (`maxRetries.const`), read by name anywhere like a value. See `examples/consts`.
+
+    const maxRetries Int
+      "How many times a step is tried before giving up."
+      value 3
+
+- The value is any expression: literals, other constants, structs, pure calls (`listAppend(listEmpty(), 2)`).
+- Always pure, so no effect is needed to read one (T-0925). A value that calls a function with effects is `const-not-pure`.
+- A constant may use other constants, but not itself (`const-cycle`, also through functions).
+- Names are unique across functions, constants and types; a parameter, `let` or match name cannot reuse a constant's name.
+  Like functions, a constant must be used from `main` (`unused-const`). The index shows `const name Type | pure`.
+- C# back end: a static `Const.name` property backed by `System.Lazy`, so it is computed once, on first use, and the order of files does not matter.
 
 ## Road to bootstrapping (compiler written in AIP)
 
-Done: `struct`, `variant`, `match`; `List<T>` (type-erased at run time), text helpers (`textLength`, `textSlice`, `textCode`, ...), file and
+Done: `struct`, `variant`, `match`, `.const` (the lexer uses `charNewline`, `charQuote`, `charBackslash`); `List<T>` (type-erased at run time), text helpers (`textLength`, `textSlice`, `textCode`, ...), file and
 argument access, Unit `if` statements, deep recursion (512 MB stack). `examples/lexer` is the first compiler stage
 written in AIP; `scripts\compare-lexers.ps1` checks it prints the same tokens as the C# lexer (`aip tokens <file>`)
-for every `.fn` file, including its own source. It is part of `scripts\test.ps1`.
+for every `.fn` and `.const` file, including its own source. It is part of `scripts\test.ps1`.
 
-Still missing before the compiler can compile itself:
-1. `.const` files (`.struct`/`.variant`/`match` are done; a match is only allowed as a whole statement or `let` value, not nested in other expressions).
-2. Parser in AIP (lines to AST), then checker, then an emitter that writes the C# text.
-3. (`Map` and `Set` now exist.) A way to run `dotnet publish` (a `process.run` effect) from AIP.
-4. Then: C# compiler builds the AIP compiler (stage 1), stage 1 builds itself (stage 2), stage 2 output must equal stage 1.
+Still missing before the compiler can compile itself (a match is still only allowed as a whole statement or `let` value, not nested in other expressions):
+1. Parser in AIP (lines to AST), then checker, then an emitter that writes the C# text. Next step: parse one `.fn`
+   header (signature, purpose, effects) into a struct, using the lexer's tokens.
+2. (`Map` and `Set` now exist.) A way to run `dotnet publish` (a `process.run` effect) from AIP.
+3. Then: C# compiler builds the AIP compiler (stage 1), stage 1 builds itself (stage 2), stage 2 output must equal stage 1.
 
 ## Design decision: global state (T-0925)
 

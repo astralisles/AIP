@@ -66,20 +66,17 @@ void Load(string root, bool isStd)
     foreach (var file in files)
     {
         var ext = Path.GetExtension(file);
-        if (ext != ".fn")
+        if (ext is ".struct" or ".variant")
         {
-            if (ext is ".struct" or ".variant")
-            {
-                try { AddType(Parser.ParseTypeFile(file)); }
-                catch (CompileException e) { diags.Add(e.Diagnostic); }
-            }
-            else if (ext == ".const")
-                diags.Add(new Diagnostic(file, 1, "unsupported-file", $"`{ext}` files are not supported by the compiler yet"));
+            try { AddType(Parser.ParseTypeFile(file)); }
+            catch (CompileException e) { diags.Add(e.Diagnostic); }
             continue;
         }
+        if (ext is not (".fn" or ".const")) continue;
         try
         {
-            var fn = Parser.ParseFile(file);
+            // A constant is kept as a parameterless pure Fn (IsConst), so names, reachability and the index are shared.
+            var fn = ext == ".const" ? Parser.ParseConstFile(file) : Parser.ParseFile(file);
             fn.IsStd = isStd;
             if (isStd && StdLayoutError(root, file, fn) is { } layout)
                 diags.Add(new Diagnostic(file, fn.Line, "std-layout", layout, "see compiler/std/README.md"));
