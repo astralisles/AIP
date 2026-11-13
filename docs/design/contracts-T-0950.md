@@ -34,7 +34,7 @@ Costs and risks:
 
 ## Plan (each step is useful alone, in order)
 
-1. **Constant call-site check (cheap, do first).** If all arguments of a call to a pure function are literals/constants,
+1. **Constant call-site check (cheap, do first). DONE in T-0950 #3 (`aip lint`, `Interp.FirstBrokenRequires`).** If all arguments of a call to a pure function are literals/constants,
    evaluate `requires` and ranges with the existing interpreter at check time. Failure is the warning
    `requires-always-false`. Needs no new theory.
 2. **Facts from conditions (own small analysis, no dependency).** Interval + simple comparison facts for Int,
@@ -78,9 +78,9 @@ Contract syntax does not change. A function with all three kinds of contract:
 `main.fn:5: warning literal-out-of-range: argument `b` of `safeDiv` is 0, outside 1..`, `aip test` runs the one example.
 Anything not a literal only fails when the program runs.
 
-**After step 1 (proposed wording, not implemented)**
+**After step 1 (implemented; real wording)**
 
-    main.fn:5: warning requires-always-false: call safeDiv(-3, 2) breaks `requires a >= 0`
+    main.fn:5: warning requires-always-false: call `f(10, 1)` breaks `requires` of `f` (f.fn:4) and always fails at run time
 
 **After step 2 (proposed wording, not implemented)**
 

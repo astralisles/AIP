@@ -28,7 +28,7 @@ per line, every case required). See `examples/shapes`. Ranges, `requires`, `ensu
 ## Static analysis and consistency checks (T-0933)
 
     scripts\aip.ps1 lint <project>   warnings: unused-param, self-comparison, constant-condition,
-                                     division-by-zero, literal-out-of-range, unbounded-recursion (Lint.cs)
+                                     division-by-zero, literal-out-of-range, requires-always-false, unbounded-recursion (Lint.cs)
     scripts\aip.ps1 test <project>   runs every `example` line of pure functions in an interpreter
                                      (Interp.cs), checking requires / ensures / Int ranges on every call
     scripts\aip.ps1 fuzz <project>   damages each source file many ways; the compiler must report
