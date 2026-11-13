@@ -1,0 +1,12 @@
+fn area(shape Shape) -> Int
+  "The area of a shape, using 3 for pi."
+  pure
+  example area(Rect(Point(0, 0), 4, 5)) == 20
+  example area(Circle(Point(1, 1), 2)) == 12
+  example area(Dot(Point(3, 3))) == 0
+body
+  match shape
+    Circle(center, radius) => 3 * radius * radius
+    Rect(corner, width, height) => width * height
+    Dot(at) => 0
+    Nothing() => 0

@@ -1,0 +1,4 @@
+struct Point
+  "A position on a grid."
+  x Int
+  y Int
