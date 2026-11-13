@@ -10,33 +10,6 @@ The only back end so far is `CsBackend.cs`: it emits C# and builds it with the .
     scripts\aip.ps1 build examples\hello [--target linux-x64]
     scripts\test.ps1
 
-## Logging and debugging
-
-- `--verbose` / `-v` (or env `AIP_VERBOSE=1`) on any `aip` command logs steps with timings to stderr: files loaded, check result, whether `dotnet publish` ran or was skipped, program exit code. stdout stays unchanged.
-- `logLine(text)` (std, effect `log.write`) writes a diagnostic line to stderr, so it never mixes with program output. See `examples/logging`.
-- A crashing program prints `runtime error: <type>: <message>` to stderr and exits with code 1. Set `AIP_TRACE=1` to also print the stack (generated C# frames `Fn.<function>`). See `examples/crash`.
-
-## Profiling and inspection for an LLM (T-0938)
-
-Answer: yes, a machine-readable mode, but as plain environment variables on the built program, not a separate
-build or a debugger. An LLM cannot drive an interactive debugger well; it can read a JSON file. Because values are
-immutable and there are no globals (T-0925), "the state" of a run is just the arguments of each call, so a call log
-answers "what was the state when X happened" without breakpoints.
-
-- `AIP_PROFILE=<file>` (or `-` for stderr): at exit writes one JSON object: `exitCode`, `error` (the runtime error, if any),
-  `wallMs`, `cpuMs`, `peakWorkingSetBytes`, `allocatedBytes`, `gcCollections` (gen 0/1/2), `maxCallDepth`, and `functions`:
-  per AIP function `calls` and `selfMs` (time excluding callees), slowest first. Also written when the program crashes.
-- `AIP_CALLS=<file>` (or `-`): one JSON line per function call, in call order: `n`, `depth`, `fn`, `args` (as text, cut at 120 chars).
-  Capped by `AIP_CALLS_MAX` (default 10000); a final `{"truncated":true,...}` line says how many calls were not logged.
-- Both off by default: the cost is one bool check per call. They work with `aip run` and with a built program, no rebuild needed.
-  Example: `$env:AIP_PROFILE="p.json"; scripts\aip.ps1 run examples\adding`.
-- Existing aids stay: `--verbose` (compiler steps), `logLine` (program messages), `AIP_TRACE=1` (stack of a crash).
-
-Limits and next steps: List/Map/Struct arguments print as their C# type name, not their contents (add a `Rt.Show`
-that prints values); return values are not logged; the stats are for one thread, so tasks (T-0935) need per-task
-tables merged at `taskAwait`; a sampling mode (per-line, not per-function) and `ensures` failures as structured
-errors are not done. `index.txt` (function list with effects) plus `profile.json` is the intended pair of files to give an LLM.
-
 Entry point: a function named `main`, no parameters, returns Unit. Its `effects`
 line lists everything the program can do. Every function must be reachable from `main`.
 
@@ -50,6 +23,7 @@ Supported so far: `.fn` files; Int, Text, Bool, Unit; `List<T>`, `Set<T>`, `Map<
 per line, every case required). See `examples/shapes`. `.const` files (see below). Ranges, `requires`, `ensures` and
 `example` are parsed and type-checked but not yet proved or run.
 
+<<<<<<< HEAD
 ## Constants (`.const` files)
 
 One named, typed, immutable value per file (`maxRetries.const`), read by name anywhere like a value. See `examples/consts`.
@@ -181,3 +155,10 @@ Shape (builds on `Fn` from T-0928):
 
 Not implemented. Needs `Fn` first. Immediate use: compiling the files of a project in the
 bootstrapped compiler (parse each `.fn` in parallel, check and emit in order).
+=======
+## Design decisions, features and roadmap
+
+One file per topic in `docs/design/` (for example `security-T-0936.md`, `bootstrapping.md`).
+Logging and debugging: `docs/design/logging-T-0934.md`; profiling: `docs/design/profiling-T-0938.md`.
+A new decision is a new file there; do not append it to this README.
+>>>>>>> origin/master
