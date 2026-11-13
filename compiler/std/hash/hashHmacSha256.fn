@@ -1,0 +1,4 @@
+fn hashHmacSha256(key List<Int>, data List<Int>) -> List<Int>
+  "HMAC-SHA-256 of data under key, 32 bytes."
+  pure
+extern
