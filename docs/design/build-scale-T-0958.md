@@ -77,6 +77,27 @@ Practically no, and we can remove even that.
 - The native back end (step 5) has the same shape: one object file per unit, then link; link-time optimisation in
   release inlines across units.
 
+## Rule: no run-time cost for build speed (decision after review)
+Units exist to make BUILDS fast. They must never cost frame time in anything we ship.
+1. **Shipping/performance builds are whole-program.** Units are merged (one assembly, or native link-time optimisation
+   with cross-unit inlining) before optimising. The optimiser sees every call as it would in a single file, so a unit
+   boundary adds zero indirection. Many-DLL builds are for dev/debug only and are never what players run.
+2. **No indirection is ever introduced by the build system.** Cross-unit calls stay direct static calls: no
+   interfaces, delegates, plug-in lookup or DLL-per-call stubs. Hot-reload style indirection is opt-in, dev only.
+3. **It is enforced, not promised.** A gate in `scripts	est.ps1` (step 8): the same program built as one unit and as
+   release-merged units must produce identical output and the same call graph (a release build with an unmerged
+   cross-unit call fails), and timing must match within noise. A function marked hot in future (`@hot`-style marker,
+   not designed yet) must resolve to a direct call or an inline.
+4. **The C# back end is not the AAA back end.** Bigger run-time costs than DLL calls: the garbage collector (frame
+   hitches), bounds checks, boxed generics, JIT warm-up, and our immutable collections (`List`/`Map` copy on every
+   change). AAA graphics needs the native back end (step 5, LLVM/C) with: value types and arrays laid out in memory
+   without boxing, in-place update when the old value is provably unused (so immutable is not a copy), explicit
+   memory budgets instead of a GC, and SIMD/GPU data types. These are separate tickets; the build design above must
+   not block them, which rule 1 guarantees. Recommendation: treat C# as the tools/dev back end and write the native
+   back end before any performance claim for games.
+5. Justification test for any future indirection: it needs a measured win larger than its cost in a shipping build,
+   written in a design file. Otherwise it is rejected.
+
 ## Targets to hold ourselves to
 | Case | Goal at 1M functions |
 |---|---|
