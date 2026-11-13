@@ -1,0 +1,4 @@
+fn logLine(text Text) -> Unit
+  "Write one line of diagnostic text to the error stream (stderr), not to the normal output."
+  effects log.write
+extern

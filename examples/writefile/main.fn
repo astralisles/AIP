@@ -1,0 +1,7 @@
+fn main() -> Unit
+  "Write a greeting to a file on disk, then say so on the terminal."
+  effects file.write, terminal.write
+body
+  let path = "greeting.txt"
+  fileWrite(path, "Hello from AIP!")
+  printLine("Wrote {path}")

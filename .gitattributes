@@ -1,0 +1,2 @@
+# CLAUDE.md is a short list of @imports; union merge lets parallel branches each add a line without a conflict.
+CLAUDE.md merge=union

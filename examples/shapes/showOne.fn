@@ -1,0 +1,11 @@
+fn showOne(shapes List<Shape>, i Int) -> Unit
+  "Print shape i, then the rest."
+  effects terminal.write
+body
+  let shape = listGet(shapes, i)
+  match shape
+    Nothing() => printLine("(skipping an empty shape)")
+    Circle(center, radius) => printLine(describe(shape))
+    Rect(corner, width, height) => printLine(describe(shape))
+    Dot(at) => printLine(describe(shape))
+  showAll(shapes, i + 1)

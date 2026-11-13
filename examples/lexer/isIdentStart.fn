@@ -1,0 +1,6 @@
+fn isIdentStart(c Int) -> Bool
+  "Whether a character code is a letter or underscore."
+  pure
+  example isIdentStart(95)
+body
+  (c >= 65 and c <= 90) or (c >= 97 and c <= 122) or c == 95

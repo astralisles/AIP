@@ -1,0 +1,7 @@
+fn isAdult(age Int 0..150) -> Bool
+  "True when the age is 18 or more."
+  pure
+  example isAdult(18)
+  example not isAdult(17)
+body
+  age >= 18

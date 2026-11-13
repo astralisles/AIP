@@ -1,0 +1,5 @@
+fn showAll(shapes List<Shape>, i Int) -> Unit
+  "Print a line for each shape from position i on."
+  effects terminal.write
+body
+  if i >= listLength(shapes) then noop() else showOne(shapes, i)

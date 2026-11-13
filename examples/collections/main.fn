@@ -1,0 +1,24 @@
+fn main() -> Unit
+  "Show the data structures: List, Map and Set."
+  effects terminal.write
+body
+  let items = listAppend(listAppend(listEmpty(), "pear"), "apple")
+  printLine("List size: {listLength(items)}, first: {listGet(items, 0)}")
+  let ages = mapSet(mapSet(mapEmpty(), "Ann", 30), "Tim", 12)
+  printLine("Map size: {mapSize(ages)}")
+  let ann = mapGet(ages, "Ann")
+  printLine("Ann is {ann}")
+  let hasBob = mapHas(ages, "Bob")
+  printLine("Has Bob: {hasBob}")
+  let older = mapSet(ages, "Ann", 31)
+  let newAnn = mapGet(older, "Ann")
+  printLine("Updated Ann: {newAnn}, original still {ann}")
+  printLine("Keys: {listLength(mapKeys(older))}, first key: {listGet(mapKeys(older), 0)}")
+  let smaller = mapRemove(older, "Tim")
+  printLine("After remove: {mapSize(smaller)}")
+  let seen = setAdd(setAdd(setAdd(setEmpty(), 3), 5), 3)
+  printLine("Set size (3, 5, 3): {setSize(seen)}")
+  printLine("Has 5: {setHas(seen, 5)}, has 4: {setHas(seen, 4)}")
+  printLine("Set items: {listLength(setItems(seen))}, first: {listGet(setItems(seen), 0)}")
+  let lookup = mapSet(mapEmpty(), 1, items)
+  printLine("Map of lists: {listGet(mapGet(lookup, 1), 1)}")

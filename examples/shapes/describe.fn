@@ -1,0 +1,10 @@
+fn describe(shape Shape) -> Text
+  "One sentence about a shape, including where it is."
+  pure
+body
+  let label = match shape
+    Circle(center, radius) => "circle of radius {radius} at {center.x},{center.y}"
+    Rect(corner, width, height) => "{width} by {height} rectangle at {corner.x},{corner.y}"
+    Dot(at) => "dot at {at.x},{at.y}"
+    Nothing() => "nothing"
+  "{label}, area {area(shape)}"

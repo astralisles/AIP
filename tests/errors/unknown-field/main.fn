@@ -1,0 +1,7 @@
+fn main() -> Unit
+  "Read a field that does not exist."
+  effects terminal.write
+body
+  let car = Car(50)
+  printLine("{car.speeed}")
+  printLine("{car.speed} {Red()}")

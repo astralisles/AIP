@@ -1,0 +1,4 @@
+fn setAdd(s Set<T>, item T) -> Set<T>
+  "A new set with the item added; the original is unchanged."
+  pure
+extern

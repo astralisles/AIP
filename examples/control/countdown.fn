@@ -1,0 +1,5 @@
+fn countdown(n Int) -> Unit
+  "Loop with an effect: print n down to 1, then Liftoff."
+  effects terminal.write
+body
+  if n == 0 then printLine("Liftoff!") else countdownStep(n)

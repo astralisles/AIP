@@ -1,0 +1,4 @@
+fn noop() -> Unit
+  "Do nothing; for the branch of an `if` that has nothing to do."
+  pure
+extern

@@ -1,0 +1,4 @@
+fn setSize(s Set<T>) -> Int
+  "How many items the set has."
+  pure
+extern

@@ -1,0 +1,7 @@
+fn add(a Int, b Int) -> Int
+  "The sum of two whole numbers."
+  pure
+  example add(2, 3) == 5
+  example add(-4, 4) == 0
+body
+  a + b

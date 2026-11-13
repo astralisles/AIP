@@ -7,17 +7,22 @@ The only back end so far is `CsBackend.cs`: it emits C# and builds it with the .
     scripts\aip.ps1 run examples\hello
     scripts\aip.ps1 check examples\hello
     scripts\aip.ps1 index examples\hello
+    scripts\aip.ps1 find examples\shapes area      search project + std functions
+    scripts\aip.ps1 spec                           one-page language spec for a model
     scripts\aip.ps1 build examples\hello [--target linux-x64]
     scripts\test.ps1
 
 Entry point: a function named `main`, no parameters, returns Unit. Its `effects`
 line lists everything the program can do. Every function must be reachable from `main`.
 
-Standard library: `std/*.fn` are header-only `extern` functions; each back end
-supplies the implementation (see `Externs` in `CsBackend.cs`).
+Standard library: `std/<group>/*.fn` are header-only `extern` functions, grouped by type or effect
+(`text`, `list`, `map`, `set`, `file`, `terminal`, `log`, `process`, `core`; see `std/README.md`).
+`scripts\aip.ps1 std` lists them. Each back end supplies the implementation (see `Externs` in `CsBackend.cs`).
 
-Supported so far: `.fn` files; Int, Text, Bool, Unit; `let`, calls, operators,
-`if/then/else`, text with `{expr}` parts. Ranges, `requires`, `ensures` and
+Supported so far: `.fn` files; Int, Text, Bool, Unit; `List<T>`, `Set<T>`, `Map<K,V>` (immutable: every change returns a new value; see `examples/collections`); `let`, calls, operators,
+`if/then/else`, text with `{expr}` parts; `.struct` and `.variant` files (constructors `Point(1, 2)`,
+`.field` reads) and statement-level `match` (`let x = match v` or a Unit `match v`, one `Case(a, b) => expr` arm
+per line, every case required). See `examples/shapes`. Ranges, `requires`, `ensures` and
 `example` are parsed and type-checked but not yet proved or run.
 
 ## Asking questions (for an LLM or a person)
@@ -38,3 +43,14 @@ Measured (`python scripts/bench-query.py <dir>`, generated projects, query after
 1,000 functions 0.19 s, 5,000 0.29 s, 20,000 0.46 s, 50,000 1.1 s, 200,000 3.7 s.
 Next step if engine-sized projects need faster answers: a long-running `aip serve` that keeps the
 checked program in memory and re-checks only changed files.
+
+Control flow: conditionals are `if c then a else b` (chainable with `else if`, one line, an expression; with Unit
+branches it is a statement) and `match`. Loops are recursion (no `while`/`for`); see `docs/design/control-flow-T-0943.md`
+and `examples/control`.
+
+## Design decisions, features and roadmap
+
+Open questions and what was decided (`aip spec`, `aip find`, Result/Option, AI-first rule): `docs/design/open-questions-T-0944.md`.
+One file per topic in `docs/design/` (for example `security-T-0936.md`, `bootstrapping.md`).
+Logging and debugging: `docs/design/logging-T-0934.md`; profiling: `docs/design/profiling-T-0938.md`.
+A new decision is a new file there; do not append it to this README.

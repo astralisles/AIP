@@ -1,0 +1,4 @@
+fn setItems(s Set<T>) -> List<T>
+  "The items in the order they were first added."
+  pure
+extern

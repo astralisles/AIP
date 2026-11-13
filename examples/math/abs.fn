@@ -1,0 +1,7 @@
+fn abs(n Int) -> Int
+  "The distance of a number from zero."
+  pure
+  example abs(-5) == 5
+  example abs(5) == 5
+body
+  if n < 0 then -n else n

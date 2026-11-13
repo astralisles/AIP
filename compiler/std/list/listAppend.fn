@@ -1,0 +1,4 @@
+fn listAppend(items List<T>, item T) -> List<T>
+  "A new list with the item added at the end; the original is unchanged."
+  pure
+extern

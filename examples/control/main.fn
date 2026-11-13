@@ -1,0 +1,11 @@
+fn main() -> Unit
+  "Show conditionals and loops (loops are recursion)."
+  effects terminal.write
+body
+  printLine("sign(-4) = {sign(-4)}, sign(0) = {sign(0)}, sign(9) = {sign(9)}")
+  printLine("grade(95) = {grade(95)}, grade(72) = {grade(72)}, grade(10) = {grade(10)}")
+  printLine("sumTo(100) = {sumTo(100, 0)}")
+  printLine("factorial(10) = {factorial(10)}")
+  printLine("countEven(1..20) = {countEven(1, 20, 0)}")
+  printLine("sumTo(1000000) = {sumTo(1000000, 0)}")
+  countdown(3)

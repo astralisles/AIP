@@ -1,0 +1,4 @@
+fn mapSize(m Map<K,V>) -> Int
+  "How many entries the map has."
+  pure
+extern

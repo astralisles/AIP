@@ -5,6 +5,88 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
 {
     static readonly HashSet<string> KnownTypes = new() { "Int", "Text", "Bool", "Unit" };
 
+    static readonly Dictionary<string, int> Generics = new() { ["List"] = 1, ["Set"] = 1, ["Map"] = 2 };
+
+    /// <summary>Splits `Map<Text,List<Int>>` into its name and argument types; null for a plain type.</summary>
+    static (string Name, List<string> Args)? Split(string t)
+    {
+        int lt = t.IndexOf('<');
+        if (lt < 0 || !t.EndsWith('>')) return null;
+        var args = new List<string>();
+        int depth = 0, start = lt + 1;
+        for (int i = start; i < t.Length - 1; i++)
+        {
+            if (t[i] == '<') depth++;
+            else if (t[i] == '>') depth--;
+            else if (t[i] == ',' && depth == 0) { args.Add(t[start..i]); start = i + 1; }
+        }
+        args.Add(t[start..^1]);
+        return (t[..lt], args);
+    }
+
+    static bool IsList(string t) => Split(t) != null; // any generic container (List, Set, Map)
+    static string Join(string name, IEnumerable<string> args) => $"{name}<{string.Join(",", args)}>";
+    static bool IsVar(string t) => t.Length == 1 && char.IsAsciiLetterUpper(t[0]);
+
+    /// <summary>Types match; `_` (an element type not known yet, e.g. in an empty list) matches anything.</summary>
+    static bool Compat(string a, string b)
+    {
+        if (a == b || a == "_" || b == "_") return true;
+        var x = Split(a); var y = Split(b);
+        return x != null && y != null && x.Value.Name == y.Value.Name && x.Value.Args.Count == y.Value.Args.Count
+            && x.Value.Args.Zip(y.Value.Args).All(p => Compat(p.First, p.Second));
+    }
+
+    /// <summary>The more specific of two compatible types.</summary>
+    static string Merge(string a, string b)
+    {
+        if (a == "_") return b;
+        var x = Split(a); var y = Split(b);
+        if (x != null && y != null && x.Value.Args.Count == y.Value.Args.Count)
+            return Join(x.Value.Name, x.Value.Args.Zip(y.Value.Args).Select(p => Merge(p.First, p.Second)));
+        return a;
+    }
+
+    static bool Unify(string pattern, string actual, Dictionary<string, string> vars)
+    {
+        if (actual == "") return true;
+        if (IsVar(pattern))
+        {
+            if (!vars.TryGetValue(pattern, out var bound)) { vars[pattern] = actual; return true; }
+            if (!Compat(bound, actual)) return false;
+            vars[pattern] = Merge(bound, actual);
+            return true;
+        }
+        var p = Split(pattern);
+        if (p != null)
+        {
+            if (actual == "_") return true;
+            var a = Split(actual);
+            if (a == null || a.Value.Name != p.Value.Name || a.Value.Args.Count != p.Value.Args.Count) return false;
+            for (int i = 0; i < p.Value.Args.Count; i++)
+                if (!Unify(p.Value.Args[i], a.Value.Args[i], vars)) return false;
+            return true;
+        }
+        return Compat(pattern, actual);
+    }
+
+    static string Subst(string t, Dictionary<string, string> vars)
+    {
+        if (IsVar(t)) return vars.GetValueOrDefault(t, "_");
+        var s = Split(t);
+        return s == null ? t : Join(s.Value.Name, s.Value.Args.Select(a => Subst(a, vars)));
+    }
+
+    bool IsKnown(string t)
+    {
+        if (KnownTypes.Contains(t) || program.Types.ContainsKey(t) || (_fn?.IsStd == true && (t == "_" || IsVar(t)))) return true;
+        var s = Split(t);
+        return s != null && Generics.TryGetValue(s.Value.Name, out var n) && n == s.Value.Args.Count && s.Value.Args.All(IsKnown);
+    }
+
+    static readonly HashSet<string> ReservedTypeNames = new() { "Fn", "Rt", "Program" };
+    HashSet<string> _patNames = new();
+
     Fn _fn = null!;
     HashSet<string> _effects = new();
     bool _inContract;
@@ -15,6 +97,7 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
 
     public void Check()
     {
+        CheckTypes();
         // Each function is checked on its own (it only reads other functions' headers), so this runs on
         // all cores; errors are collected per function and merged in name order, as a serial run would.
         var fns = program.Fns.Values.OrderBy(f => f.Name, StringComparer.Ordinal).ToArray();
@@ -34,6 +117,7 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
         if (fileName != fn.Name)
             Error(fn.Line, "name-mismatch", $"file `{fileName}.fn` declares `{fn.Name}`", $"rename the function to `{fileName}` or the file to `{fn.Name}.fn`");
 
+        _patNames = new HashSet<string>();
         var env = new Dictionary<string, string>();
         foreach (var p in fn.Params)
         {
@@ -64,13 +148,14 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
             if (s.Let != null)
             {
                 if (t == "Unit") Error(s.Line, "type-mismatch", $"`{s.Let}` would hold Unit, which is not a value");
-                if (!env.TryAdd(s.Let, t)) Error(s.Line, "duplicate-name", $"`{s.Let}` is already defined", "choose a different name");
+                if (_patNames.Contains(s.Let)) Error(s.Line, "duplicate-name", $"`{s.Let}` is already used by a match case", "choose a different name");
+                else if (!env.TryAdd(s.Let, t)) Error(s.Line, "duplicate-name", $"`{s.Let}` is already defined", "choose a different name");
                 else lets[s.Let] = s.Line;
                 if (last) Error(s.Line, "missing-result", "the body ends with `let`", $"end the body with an expression of type {fn.Ret.Name}");
             }
             else if (last)
             {
-                if (t != "" && t != fn.Ret.Name)
+                if (t != "" && !Compat(t, fn.Ret.Name))
                     Error(s.Line, "type-mismatch", $"the body ends with {t} but `{fn.Name}` returns {fn.Ret.Name}");
             }
             else if (t != "" && t != "Unit")
@@ -97,13 +182,36 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
         }
     }
 
+    void CheckTypes()
+    {
+        foreach (var def in program.Types.Values.OrderBy(d => d.Name, StringComparer.Ordinal))
+        {
+            void Err(int line, string code, string message, string? fix = null) => diags.Add(new Diagnostic(def.File, line, code, message, fix));
+            var fileName = Path.GetFileNameWithoutExtension(def.File);
+            if (fileName != def.Name)
+                Err(def.Line, "name-mismatch", $"file `{Path.GetFileName(def.File)}` declares `{def.Name}`", $"rename the type to `{fileName}` or the file to `{def.Name}{Path.GetExtension(def.File)}`");
+            foreach (var c in def.Cases)
+            {
+                if (c.Name.Length < 2 || !char.IsAsciiLetterUpper(c.Name[0]) || ReservedTypeNames.Contains(c.Name) || KnownTypes.Contains(c.Name))
+                    Err(c.Line, "bad-type-name", $"`{c.Name}` is not a valid type or case name", "use two or more letters starting with a capital, not Fn, Rt, Program or a built-in type");
+                var seen = new HashSet<string>();
+                foreach (var f in c.Fields)
+                {
+                    if (!seen.Add(f.Name)) Err(c.Line, "duplicate-name", $"field `{f.Name}` is declared twice in `{c.Name}`");
+                    if (!IsKnown(f.Type.Name)) Err(c.Line, "unknown-type", $"unknown type `{f.Type.Name}` for field `{f.Name}`", "types: Int, Text, Bool, List<T>, and your structs and variants");
+                    else if (f.Type.Name == "Unit") Err(c.Line, "type-mismatch", $"field `{f.Name}` cannot be Unit");
+                }
+            }
+        }
+    }
+
     void CheckType(TypeRef t, bool allowUnit)
     {
-        if (!KnownTypes.Contains(t.Name))
-            Error(_fn.Line, "unknown-type", $"unknown type `{t.Name}`", "types supported so far: Int, Text, Bool, Unit");
+        if (!IsKnown(t.Name))
+            Error(_fn.Line, "unknown-type", $"unknown type `{t.Name}`", "types supported so far: Int, Text, Bool, Unit, List<T>, Set<T>, Map<K,V>, structs and variants");
         else if (t.Name == "Unit" && !allowUnit)
             Error(_fn.Line, "type-mismatch", "a parameter cannot be Unit");
-        else if (t.Range != "" && t.Name != "Int" && t.Name != "Text")
+        else if (t.Range != "" && t.Name != "Int" && t.Name != "Text" && !IsList(t.Name))
             Error(_fn.Line, "bad-range", $"`{t.Name}` cannot have a range");
     }
 
@@ -123,6 +231,8 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
             TextLit t => TextType(t, env, used),
             NameRef n => NameType(n, env, used),
             Call c => CallType(c, env, used),
+            Field f => FieldType(f, env, used),
+            MatchExpr m => MatchType(m, env, used),
             Unary u => UnaryType(u, env, used),
             Binary b => BinaryType(b, env, used),
             IfExpr i => IfType(i, env, used),
@@ -134,15 +244,21 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
     string TextType(TextLit t, Dictionary<string, string> env, HashSet<string> used)
     {
         foreach (var part in t.Parts.OfType<Expr>())
-            if (TypeOf(part, env, used) == "Unit")
-                Error(t.Line, "type-mismatch", "a Unit value cannot be put into a text");
+        {
+            var pt = TypeOf(part, env, used);
+            if (pt == "Unit") Error(t.Line, "type-mismatch", "a Unit value cannot be put into a text");
+            else if (IsList(pt)) Error(t.Line, "type-mismatch", "a List, Set or Map cannot be put into a text", "build the text from the items");
+            else if (program.Types.ContainsKey(pt)) Error(t.Line, "type-mismatch", $"a {pt} cannot be put into a text", "put its fields into the text instead");
+        }
         return "Text";
     }
 
     string NameType(NameRef n, Dictionary<string, string> env, HashSet<string> used)
     {
         if (env.TryGetValue(n.Name, out var t)) { used.Add(n.Name); return t; }
-        if (program.Fns.ContainsKey(n.Name))
+        if (program.Ctors.ContainsKey(n.Name))
+            Error(n.Line, "unknown-name", $"`{n.Name}` is a constructor, not a value", $"call it: `{n.Name}(...)`");
+        else if (program.Fns.ContainsKey(n.Name))
             Error(n.Line, "unknown-name", $"`{n.Name}` is a function, not a value", $"call it: `{n.Name}(...)`");
         else
             Error(n.Line, "unknown-name", $"`{n.Name}` is not defined", Suggest(n.Name, env.Keys));
@@ -154,6 +270,7 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
         var argTypes = c.Args.Select(a => TypeOf(a, env, used)).ToList();
         if (!program.Fns.TryGetValue(c.Name, out var target))
         {
+            if (program.Ctors.TryGetValue(c.Name, out var ctor)) return CtorType(c, ctor.Def, ctor.Case, argTypes);
             Error(c.Line, "unknown-name", $"there is no function `{c.Name}`", Suggest(c.Name, program.Fns.Keys));
             _unknownCall = true;
             return "";
@@ -169,10 +286,99 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
         if (argTypes.Count != target.Params.Count)
             Error(c.Line, "wrong-arguments", $"`{c.Name}` takes {target.Params.Count} argument(s), found {argTypes.Count}", $"signature: {target.Signature}");
         else
+        {
+            var vars = new Dictionary<string, string>();
             for (int i = 0; i < argTypes.Count; i++)
-                if (argTypes[i] != "" && argTypes[i] != target.Params[i].Type.Name)
-                    Error(c.Line, "type-mismatch", $"argument `{target.Params[i].Name}` of `{c.Name}` must be {target.Params[i].Type.Name}, found {argTypes[i]}", $"signature: {target.Signature}");
-        return target.Ret.Name;
+                if (!Unify(target.Params[i].Type.Name, argTypes[i], vars))
+                    Error(c.Line, "type-mismatch", $"argument `{target.Params[i].Name}` of `{c.Name}` must be {Subst(target.Params[i].Type.Name, vars)}, found {argTypes[i]}", $"signature: {target.Signature}");
+            return Subst(target.Ret.Name, vars);
+        }
+        return Subst(target.Ret.Name, new Dictionary<string, string>());
+    }
+
+    string CtorType(Call c, TypeDef def, Case cs, List<string> argTypes)
+    {
+        c.Ctor = def.IsVariant ? $"{def.Name}.{cs.Name}" : def.Name;
+        var sig = $"{cs.Name}({string.Join(", ", cs.Fields.Select(f => $"{f.Name} {f.Type.Name}"))})";
+        if (argTypes.Count != cs.Fields.Count)
+            Error(c.Line, "wrong-arguments", $"`{c.Name}` takes {cs.Fields.Count} argument(s), found {argTypes.Count}", $"signature: {sig}");
+        else
+            for (int i = 0; i < argTypes.Count; i++)
+                if (argTypes[i] != "" && !Compat(cs.Fields[i].Type.Name, argTypes[i]))
+                    Error(c.Line, "type-mismatch", $"field `{cs.Fields[i].Name}` of `{c.Name}` must be {cs.Fields[i].Type.Name}, found {argTypes[i]}", $"signature: {sig}");
+        return def.Name;
+    }
+
+    string FieldType(Field f, Dictionary<string, string> env, HashSet<string> used)
+    {
+        var t = TypeOf(f.Target, env, used);
+        if (t == "") return "";
+        if (!program.Types.TryGetValue(t, out var def))
+        {
+            Error(f.Line, "type-mismatch", $"{t} has no fields");
+            return "";
+        }
+        if (def.IsVariant)
+        {
+            Error(f.Line, "type-mismatch", $"`{def.Name}` is a variant, so `.{f.Name}` cannot read it", "use `match` to look inside a variant");
+            return "";
+        }
+        var field = def.Cases[0].Fields.FirstOrDefault(p => p.Name == f.Name);
+        if (field == null)
+        {
+            Error(f.Line, "unknown-field", $"`{def.Name}` has no field `{f.Name}`", Suggest(f.Name, def.Cases[0].Fields.Select(p => p.Name)) ?? $"fields: {string.Join(", ", def.Cases[0].Fields.Select(p => p.Name))}");
+            return "";
+        }
+        return field.Type.Name;
+    }
+
+    string MatchType(MatchExpr m, Dictionary<string, string> env, HashSet<string> used)
+    {
+        var st = TypeOf(m.Subject, env, used);
+        TypeDef? def = null;
+        if (st != "" && (!program.Types.TryGetValue(st, out def) || !def.IsVariant))
+        {
+            Error(m.Line, "type-mismatch", $"`match` needs a variant, found {st}", def != null ? "read the fields of a struct with `.name`" : null);
+            def = null;
+        }
+        if (m.Arms.Count == 0) Error(m.Line, "match-empty", "this match has no cases", "add one line per case, indented by four spaces: `Case(a, b) => result`");
+        string? result = null;
+        var handled = new HashSet<string>();
+        foreach (var arm in m.Arms)
+        {
+            var armEnv = new Dictionary<string, string>(env);
+            Case? cs = null;
+            if (def != null)
+            {
+                cs = def.Cases.FirstOrDefault(c => c.Name == arm.Case);
+                if (cs == null) Error(arm.Line, "unknown-case", $"`{arm.Case}` is not a case of `{def.Name}`", Suggest(arm.Case, def.Cases.Select(c => c.Name)) ?? $"cases: {string.Join(", ", def.Cases.Select(c => c.Name))}");
+                else
+                {
+                    arm.Path = $"{def.Name}.{cs.Name}";
+                    if (!handled.Add(cs.Name)) Error(arm.Line, "duplicate-case", $"`{cs.Name}` is handled twice", "remove one of the lines");
+                    if (arm.Binds.Count != cs.Fields.Count)
+                        Error(arm.Line, "wrong-arguments", $"`{cs.Name}` has {cs.Fields.Count} field(s) but this line names {arm.Binds.Count}", $"write `{cs.Name}({string.Join(", ", cs.Fields.Select(f => f.Name))})`");
+                }
+            }
+            for (int i = 0; i < arm.Binds.Count; i++)
+            {
+                var type = cs != null && i < cs.Fields.Count ? cs.Fields[i].Type.Name : "";
+                if (!armEnv.TryAdd(arm.Binds[i], type)) Error(arm.Line, "duplicate-name", $"`{arm.Binds[i]}` is already defined", "choose a different name");
+                _patNames.Add(arm.Binds[i]);
+            }
+            var bt = TypeOf(arm.Body, armEnv, used);
+            if (bt == "") continue;
+            if (result == null) result = bt;
+            else if (!Compat(result, bt)) Error(arm.Line, "type-mismatch", $"this case gives {bt} but earlier cases give {result}");
+            else result = Merge(result, bt);
+        }
+        if (def != null)
+        {
+            var missing = def.Cases.Where(c => !handled.Contains(c.Name)).Select(c => c.Name).ToList();
+            if (missing.Count > 0 && m.Arms.Count > 0)
+                Error(m.Line, "match-incomplete", $"this match does not handle: {string.Join(", ", missing)}", "add a line for each missing case");
+        }
+        return result ?? "";
     }
 
     string UnaryType(Unary u, Dictionary<string, string> env, HashSet<string> used)
@@ -199,7 +405,9 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
                 if (known && (l != "Int" || r != "Int")) Error(b.Line, "type-mismatch", $"`{b.Op}` needs Int on both sides, found {l} and {r}");
                 return "Bool";
             case "==" or "!=":
-                if (known && (l != r || l == "Unit")) Error(b.Line, "type-mismatch", $"`{b.Op}` compares {l} with {r}");
+                if (known && (!Compat(l, r) || l == "Unit" || IsList(l) || program.Types.ContainsKey(l)))
+                    Error(b.Line, "type-mismatch", $"`{b.Op}` compares {l} with {r}",
+                        IsList(l) ? "lists, sets and maps cannot be compared; compare their sizes or items" : program.Types.ContainsKey(l) ? "structs and variants cannot be compared; compare their fields, or use `match`" : null);
                 return "Bool";
             default: // and, or, =>
                 if (known && (l != "Bool" || r != "Bool")) Error(b.Line, "type-mismatch", $"`{b.Op}` needs Bool on both sides, found {l} and {r}");
@@ -213,8 +421,8 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
         if (c != "" && c != "Bool") Error(i.Line, "type-mismatch", $"the `if` condition must be Bool, found {c}");
         var a = TypeOf(i.Then, env, used);
         var b = TypeOf(i.Else, env, used);
-        if (a != "" && b != "" && a != b) Error(i.Line, "type-mismatch", $"`then` gives {a} but `else` gives {b}");
-        return a;
+        if (a != "" && b != "" && !Compat(a, b)) Error(i.Line, "type-mismatch", $"`then` gives {a} but `else` gives {b}");
+        return a == "" || b == "" ? a + b : Merge(a, b);
     }
 
     void CheckMainAndReachability()

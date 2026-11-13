@@ -1,0 +1,4 @@
+fn textCode(text Text, index Int) -> Int
+  "Character code at an index; the index must be inside the text."
+  pure
+extern

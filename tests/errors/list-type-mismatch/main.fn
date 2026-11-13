@@ -1,0 +1,6 @@
+fn main() -> Unit
+  "Add a text to a list of numbers."
+  effects terminal.write
+body
+  let xs = listAppend(listAppend(listEmpty(), 1), "two")
+  printLine("{listLength(xs)}")

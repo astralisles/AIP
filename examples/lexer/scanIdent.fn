@@ -1,0 +1,5 @@
+fn scanIdent(src Text, pos Int) -> Int
+  "The position after the run of name characters that starts at pos."
+  pure
+body
+  if pos < textLength(src) and isIdentChar(textCode(src, pos)) then scanIdent(src, pos + 1) else pos
