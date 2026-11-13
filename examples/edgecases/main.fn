@@ -1,0 +1,21 @@
+fn main() -> Unit
+  "Edge cases: empty and out-of-range input, boundaries, and negative numbers across the std library and small recursive functions."
+  effects terminal.write
+  fails
+body
+  let none = ""
+  let a = "a"
+  let car = "racecar"
+  let abca = "abca"
+  let ab = "ab"
+  let aaaa = "aaaa"
+  let aabaa = "aabaa"
+  let abab = "abab"
+  printLine("palindrome: {isPalindrome(none)} {isPalindrome(a)} {isPalindrome(car)} {isPalindrome(abca)} {isPalindrome(ab)}")
+  printLine("digitSum: {digitSum(0, 0)} {digitSum(9, 0)} {digitSum(-1234, 0)} {digitSum(1000000, 0)}")
+  printLine("collatz: {collatzSteps(1, 0)} {collatzSteps(2, 0)} {collatzSteps(27, 0)}")
+  printLine("runs: {countRuns(none, 0, 0)} {countRuns(a, 0, 0)} {countRuns(aaaa, 0, 0)} {countRuns(aabaa, 0, 0)} {countRuns(abab, 0, 0)}")
+  sliceEdges()
+  splitEdges()
+  intEdges()
+  collectionEdges()

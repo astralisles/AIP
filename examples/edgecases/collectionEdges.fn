@@ -1,0 +1,18 @@
+fn collectionEdges() -> Unit
+  "Print Map, Set, Queue behaviour on empty collections, repeated adds and removing absent keys."
+  effects terminal.write
+  fails
+body
+  let k = "k"
+  let z = "z"
+  let m0 = mapEmpty()
+  let m1 = mapSet(mapSet(m0, k, 1), k, 2)
+  printLine("map size after overwrite: {mapSize(m1)} value: {mapGet(m1, k)} has missing: {mapHas(m1, z)}")
+  printLine("map remove absent: {mapSize(mapRemove(m1, z))} remove present: {mapSize(mapRemove(m1, k))} original kept: {mapSize(m1)} empty keys: {listLength(mapKeys(m0))}")
+  let s1 = setAdd(setAdd(setEmpty(), 3), 3)
+  printLine("set duplicate: {setSize(s1)} remove absent: {setSize(setRemove(s1, 9))} remove last: {setSize(setRemove(s1, 3))}")
+  let ss = sortedSetAdd(sortedSetAdd(sortedSetAdd(sortedSetEmpty(), 5), -2), 5)
+  let items = sortedSetItems(ss)
+  printLine("sorted set: {listLength(items)} first: {listGet(items, 0)} last: {listGet(items, 1)}")
+  let q = queuePush(queuePush(queueEmpty(), 1), 2)
+  printLine("queue: {queueSize(q)} front: {queueFront(q)} after pop: {queueFront(queuePop(q))} drained: {queueSize(queuePop(queuePop(q)))}")
