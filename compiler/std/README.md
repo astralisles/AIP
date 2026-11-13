@@ -7,6 +7,7 @@ List them with `scripts\aip.ps1 std`.
 |-------------|----------------------------------------|------------------------------|
 | `text/`     | Text helpers (`textSlice`, ...)        | name starts with `text`      |
 | `list/`     | `List<T>`                              | name starts with `list`      |
+| `int/`      | Int math and bit operations            | name starts with `int`       |
 | `map/`      | `Map<K,V>`                             | name starts with `map`       |
 | `set/`      | `Set<T>`                               | name starts with `set`       |
 | `sortedMap/` | `SortedMap<K,V>`, keys in order  | name starts with `sortedMap` |

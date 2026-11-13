@@ -1,0 +1,4 @@
+fn listInsert(items List<T>, index Int, item T) -> List<T>
+  "A new list with the item inserted before an index (index = length appends)."
+  pure
+extern

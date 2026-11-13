@@ -1,0 +1,4 @@
+fn intGcd(a Int, b Int) -> Int
+  "Greatest common divisor (never negative)."
+  pure
+extern

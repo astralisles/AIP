@@ -188,6 +188,45 @@ sealed class Interp(ProgramModel program)
                 case "listLength": return (long)L(0).Count;
                 case "listGet": return L(0)[(int)(long)a[1]!];
                 case "listAppend": return new List<object?>(L(0)) { a[1] };
+                case "textFind": return (long)((string)a[0]!).IndexOf((string)a[1]!, StringComparison.Ordinal);
+                case "textContains": return ((string)a[0]!).Contains((string)a[1]!, StringComparison.Ordinal);
+                case "textStartsWith": return ((string)a[0]!).StartsWith((string)a[1]!, StringComparison.Ordinal);
+                case "textEndsWith": return ((string)a[0]!).EndsWith((string)a[1]!, StringComparison.Ordinal);
+                case "textTrim": return ((string)a[0]!).Trim();
+                case "textReplace": return ((string)a[0]!).Replace((string)a[1]!, (string)a[2]!, StringComparison.Ordinal);
+                case "textToUpper": return ((string)a[0]!).ToUpperInvariant();
+                case "textToLower": return ((string)a[0]!).ToLowerInvariant();
+                case "textCompare": return (long)Math.Sign(string.CompareOrdinal((string)a[0]!, (string)a[1]!));
+                case "textFromInt": return ((long)a[0]!).ToString(CultureInfo.InvariantCulture);
+                case "textRepeat": return string.Concat(Enumerable.Repeat((string)a[0]!, (int)(long)a[1]!));
+                case "textSplit": return ((string)a[0]!).Split((string)a[1]!, StringSplitOptions.None).Select(x => (object?)x).ToList();
+                case "textJoin": return string.Join((string)a[1]!, L(0).Cast<string>());
+                case "intMin": return Math.Min((long)a[0]!, (long)a[1]!);
+                case "intMax": return Math.Max((long)a[0]!, (long)a[1]!);
+                case "intAbs": return Math.Abs((long)a[0]!);
+                case "intSign": return (long)Math.Sign((long)a[0]!);
+                case "intClamp": return Math.Clamp((long)a[0]!, (long)a[1]!, (long)a[2]!);
+                case "intPow": return (long)System.Numerics.BigInteger.Pow((long)a[0]!, (int)(long)a[1]!);
+                case "intGcd": return (long)System.Numerics.BigInteger.GreatestCommonDivisor((long)a[0]!, (long)a[1]!);
+                case "intAnd": return (long)a[0]! & (long)a[1]!;
+                case "intOr": return (long)a[0]! | (long)a[1]!;
+                case "intXor": return (long)a[0]! ^ (long)a[1]!;
+                case "intNot": return ~(long)a[0]!;
+                case "intShiftLeft": return (long)a[0]! << (int)(long)a[1]!;
+                case "intShiftRight": return (long)a[0]! >> (int)(long)a[1]!;
+                case "listSet": { var r = new List<object?>(L(0)); r[(int)(long)a[1]!] = a[2]; return r; }
+                case "listInsert": { var r = new List<object?>(L(0)); r.Insert((int)(long)a[1]!, a[2]); return r; }
+                case "listRemoveAt": { var r = new List<object?>(L(0)); r.RemoveAt((int)(long)a[1]!); return r; }
+                case "listConcat": return L(0).Concat(L(1)).ToList();
+                case "listSlice":
+                    {
+                        int st = (int)Math.Clamp((long)a[1]!, 0, L(0).Count), en = (int)Math.Clamp((long)a[2]!, st, L(0).Count);
+                        return L(0).GetRange(st, en - st);
+                    }
+                case "listReverse": { var r = new List<object?>(L(0)); r.Reverse(); return r; }
+                case "listIndexOf": return (long)L(0).FindIndex(x => Equals(x, a[1]));
+                case "listContains": return L(0).Any(x => Equals(x, a[1]));
+                case "listRange": { var r = new List<object?>(); for (long i = (long)a[0]!; i < (long)a[1]!; i++) r.Add(i); return r; }
                 case "queueEmpty" or "priorityQueueEmpty": return new List<object?>();
                 case "queueSize" or "priorityQueueSize": return (long)L(0).Count;
                 case "queuePush": return new List<object?>(L(0)) { a[1] };
@@ -218,7 +257,7 @@ sealed class Interp(ProgramModel program)
                 case "mapKeys" or "setItems": return M(0).Keys.Select(k => (object?)k).ToList();
             }
         }
-        catch (Exception ex) when (ex is ArgumentOutOfRangeException or KeyNotFoundException or FormatException or OverflowException)
+        catch (Exception ex) when (ex is ArgumentException or KeyNotFoundException or FormatException or OverflowException)
         {
             throw new Failed("extern-failed", $"`{name}`: {ex.Message}");
         }

@@ -1,0 +1,4 @@
+fn textFromInt(value Int) -> Text
+  "The number written in decimal."
+  pure
+extern

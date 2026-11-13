@@ -1,0 +1,4 @@
+fn textFind(text Text, part Text) -> Int
+  "Index of the first occurrence of part, or -1 when it is not there."
+  pure
+extern
