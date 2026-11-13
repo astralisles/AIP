@@ -20,7 +20,25 @@ Supported so far: `.fn` files; Int, Text, Bool, Unit; `List<T>`, `Set<T>`, `Map<
 `if/then/else`, text with `{expr}` parts; `.struct` and `.variant` files (constructors `Point(1, 2)`,
 `.field` reads) and statement-level `match` (`let x = match v` or a Unit `match v`, one `Case(a, b) => expr` arm
 per line, every case required). See `examples/shapes`. Ranges, `requires`, `ensures` and
-`example` are parsed and type-checked but not yet proved or run.
+`example` are type-checked, and `aip test` runs them (see below); they are not proved.
+
+## Static analysis and consistency checks (T-0933)
+
+    scripts\aip.ps1 lint <project>   warnings: unused-param, self-comparison, constant-condition,
+                                     division-by-zero, literal-out-of-range, unbounded-recursion (Lint.cs)
+    scripts\aip.ps1 test <project>   runs every `example` line of pure functions in an interpreter
+                                     (Interp.cs), checking requires / ensures / Int ranges on every call
+    scripts\aip.ps1 fuzz <project>   damages each source file many ways; the compiler must report
+                                     errors, never crash (Fuzz.cs)
+    scripts\aip.ps1 emit <project>   writes the generated C# and index without building
+
+Gates in `scripts\` (all run by `scripts\test.ps1`):
+`check-error-coverage.ps1` (every error code and lint warning has a test case, and no test names a
+removed code), `check-externs.ps1` (std headers, C# templates and interpreter agree; `pure` is never a lie),
+`check-index.ps1` (the index matches the headers, rebuilt independently of the compiler),
+`check-determinism.ps1` (two `emit` runs give byte-identical output).
+Test cases: `tests\errors` (`aip check` must reject), `tests\lint` (`aip lint` must warn),
+`tests\contracts` (`aip test` must fail); each has an `expected.txt` with the message.
 
 ## Road to bootstrapping (compiler written in AIP)
 

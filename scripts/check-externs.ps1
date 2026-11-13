@@ -42,4 +42,5 @@ foreach ($n in $templates.Keys | Sort-Object) {
 foreach ($n in $interpNames.Keys | Sort-Object) { if (-not $std.ContainsKey($n)) { $problems += "Interp.cs implements $n but there is no std/$n.fn" } }
 if ($problems) { $problems; exit 1 }
 "std library is consistent: $($std.Count) functions, $($templates.Count) C# templates, $($interpNames.Count) interpreter implementations"
+exit 0
 

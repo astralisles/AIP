@@ -38,3 +38,4 @@ if ($noLint) { "lint warnings without a tests\lint case: $($noLint -join ', ')" 
 if ($staleLint) { "tests\lint names warnings the compiler does not have: $($staleLint -join ', ')" }
 if ($untested -or $stale -or $noLint -or $staleLint) { exit 1 }
 "all $($codes.Count) error codes and $($warn.Count) lint warnings have a test case"
+exit 0

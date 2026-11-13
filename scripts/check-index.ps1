@@ -6,7 +6,8 @@ param([string[]]$Projects)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 $aip = Join-Path $PSScriptRoot 'aip.ps1'
-if (-not $Projects) { $Projects = Get-ChildItem (Join-Path $root 'examples') -Directory | ForEach-Object { $_.FullName } }
+# (folders with no .fn source, such as a leftover build\ folder, are not projects)
+if (-not $Projects) { $Projects = Get-ChildItem (Join-Path $root 'examples') -Directory | Where-Object { Get-ChildItem $_.FullName -Filter *.fn -File } | ForEach-Object { $_.FullName } }
 $failed = 0
 foreach ($p in $Projects) {
   $rows = @()
