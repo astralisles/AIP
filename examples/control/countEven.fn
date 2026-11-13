@@ -1,0 +1,6 @@
+fn countEven(i Int, last Int, count Int) -> Int
+  "Loop with a condition inside: how many even numbers from i to last."
+  pure
+  example countEven(1, 10, 0) == 5
+body
+  if i > last then count else countEven(i + 1, last, if i % 2 == 0 and i > 0 then count + 1 else count)

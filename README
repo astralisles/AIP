@@ -35,6 +35,7 @@ Open PowerShell in this folder, then:
        scripts\aip.ps1 run examples\types
        scripts\aip.ps1 run examples\math
        scripts\aip.ps1 run examples\consts      (named constants: .const files)
+       scripts\aip.ps1 run examples\control   (if/else if/else, loops by recursion)
 
   6. Run the tests:
        scripts\test.ps1
