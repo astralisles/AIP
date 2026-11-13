@@ -1,0 +1,4 @@
+fn sortedMapSet(m SortedMap<K,V>, key K, value V) -> SortedMap<K,V>
+  "A new map with the key set to the value; the original is unchanged."
+  pure
+extern

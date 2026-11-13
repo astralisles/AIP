@@ -1,0 +1,4 @@
+fn sortedSetAdd(s SortedSet<T>, item T) -> SortedSet<T>
+  "A new set that also has the item; the original is unchanged."
+  pure
+extern

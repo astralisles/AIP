@@ -5,7 +5,7 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
 {
     static readonly HashSet<string> KnownTypes = new() { "Int", "Text", "Bool", "Unit" };
 
-    static readonly Dictionary<string, int> Generics = new() { ["List"] = 1, ["Set"] = 1, ["Map"] = 2 };
+    static readonly Dictionary<string, int> Generics = new() { ["List"] = 1, ["Set"] = 1, ["Map"] = 2, ["SortedSet"] = 1, ["SortedMap"] = 2 };
 
     /// <summary>Splits `Map<Text,List<Int>>` into its name and argument types; null for a plain type.</summary>
     static (string Name, List<string> Args)? Split(string t)

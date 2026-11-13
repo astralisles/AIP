@@ -1,0 +1,4 @@
+fn sortedSetSize(s SortedSet<T>) -> Int
+  "How many items the set has."
+  pure
+extern
