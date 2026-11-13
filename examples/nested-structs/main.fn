@@ -1,0 +1,28 @@
+fn main() -> Unit
+  "Show collections holding collections, structs, variants and plain values."
+  effects terminal.write
+  fails
+body
+  let row1 = listAppend(listAppend(listEmpty(), 1), 2)
+  let row2 = listAppend(listEmpty(), 3)
+  let grid = listAppend(listAppend(listEmpty(), row1), row2)
+  printLine("List of lists: {listLength(grid)} rows, grid[0][1] = {listGet(listGet(grid, 0), 1)}")
+  let points = listAppend(listAppend(listEmpty(), Point(1, 2)), Point(3, 4))
+  let second = listGet(points, 1)
+  printLine("List of structs: second point is {second.x},{second.y}")
+  let byName = mapSet(mapSet(mapEmpty(), "home", Point(0, 0)), "work", Point(5, 6))
+  let work = mapGet(byName, "work")
+  printLine("Map of structs: work is {work.x},{work.y}")
+  let inner = mapSet(mapEmpty(), "a", 1)
+  let outer = mapSet(mapEmpty(), "first", inner)
+  let deep = mapGet(mapGet(outer, "first"), "a")
+  printLine("Map of maps: {deep}")
+  let sets = listAppend(listEmpty(), setAdd(setEmpty(), 7))
+  printLine("List of sets: {setHas(listGet(sets, 0), 7)}")
+  let pts = setAdd(setAdd(setEmpty(), Point(1, 2)), Point(1, 2))
+  printLine("Set of structs (same point twice): {setSize(pts)}")
+  let team = Team("red", listAppend(listEmpty(), "Ann"), mapSet(mapEmpty(), "Ann", 9))
+  let ann = mapGet(team.scores, "Ann")
+  printLine("Struct with collections: {team.name} {listGet(team.members, 0)} {ann}")
+  let shapes = listAppend(listAppend(listEmpty(), Dot(Point(1, 1))), Line(Point(0, 0), Point(2, 2)))
+  printLine("List of variants: {listLength(shapes)}")
