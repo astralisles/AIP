@@ -43,6 +43,32 @@ address of their own block, which is the only kind of pointer there is.
 refers to it any more (phase 1: never; phase 2: its count reaches 0). If only one reference to the old block exists, the runtime may
 reuse it in place, which nobody can observe. Passing `h` to a function copies the address, not the fields.
 
+**Does it scale? A server with a player and a fish that point at each other.**
+Written with ids, the data is: `Player(id, luredFishId: Option<Int>, ...)`, `Fish(id, targetId: Option<Int>, ...)`, and a world
+`World(players: Map<Int, Player>, fish: Map<Int, Fish>)`. Neither struct holds the other, only the other's id, so there is no cycle
+and no problem for memory management. This is the same layout most game engines use (entity ids plus component tables), so the
+*shape* scales. What decides whether the *speed* scales:
+- **Updates must not copy the collection.** Today `listAppend` and `mapSet` copy everything (`bootstrap-gaps-T-0954.md`). With 100,000
+  fish, moving one fish per tick would copy 100,000 entries. A server needs persistent collections (a tree or hash trie) where an
+  update builds only the changed path (about log n nodes, ~17 for 100,000) and shares the rest with the old version. This is a back-end
+  change, not a language change, but for a server it is required, not optional.
+- **Cost per hop.** `world.players` -> lookup -> `luredFishId` -> lookup is two tree/hash lookups instead of two pointer follows,
+  and it touches more cache lines. Expect a constant factor slower than pointers, not a different big-O.
+- **Garbage per tick.** Each tick allocates new path nodes and new structs for everything that changed, and frees the old ones.
+  Reference counting makes that steady and predictable (no long GC pauses), but it is real allocator work. Keep a tick's changes
+  small (change only what moved) and measure.
+- **Dangling ids.** If the fish despawns, `player.luredFishId` still holds its id. The lookup returns `Option`, so the code must handle
+  "gone"; this is a bug class pointers do not have (they have use-after-free instead, which AIP rules out).
+- **Parallelism.** Split the world into regions (each its own `Map`), update regions as tasks (`parallelism-T-0935.md`), then merge
+  results in a fixed order. Tasks share nothing, so no locks. Two things that point across regions use ids, resolved at merge.
+- **Where it would not scale:** a very hot single object that thousands of entities all update each tick (one global counter or
+  one huge shared struct). That serialises through one value; split it (per-region counters, summed at merge).
+What is not yet shown: no measurement exists. Before committing, build one benchmark (100k fish, 10k players, 1 tick) on the
+current C# back end with persistent maps, and compare to a mutable C# version.
+If the numbers are bad, the escape hatch is a *store*: an effect-gated mutable table (for example effect `store`) shown in the
+signature and the index, so the mutation stays visible and out of pure code. That breaks the "no mutation" rule in `compiler.md`,
+so it is a decision for the owner, not something to add quietly.
+
 **Recommendation.**
 1. **Own runtime, not user-visible.** Allocation and release live in the runtime folder planned in `bootstrap-gaps-T-0954.md`,
    written in AIP plus a few raw-memory intrinsics that only that folder may use. Users still never see a pointer.
