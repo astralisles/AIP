@@ -95,7 +95,7 @@ sealed partial class Parser
             case T.Text:
                 return ParseText(t.Text);
             case T.Ident:
-                if (t.Text == "match") throw Err("syntax", "a `match` must start a line or follow `let name =`", "move it to its own line, or call a function that does the match");
+                if (t.Text == "match") throw Err("syntax", "a `match` must start a line, follow `let name =`, or be the whole of a case after `=>`", "move it to its own line, or call a function that does the match");
                 if (t.Text == "true" || t.Text == "false") return new BoolLit { Line = _line, Value = t.Text == "true" };
                 if (IsSym("("))
                 {

@@ -1,0 +1,11 @@
+fn eval(e Expr) -> Int
+  "The value of an expression."
+  pure
+  example eval(Add(Num(2), Neg(Num(5)))) == -3
+  example eval(Sum(listAppend(listAppend(listEmpty(), Num(4)), Num(6)))) == 10
+body
+  match e
+    Num(value) => value
+    Neg(inner) => 0 - eval(inner)
+    Add(left, right) => eval(left) + eval(right)
+    Sum(items) => evalItems(items, 0, 0)

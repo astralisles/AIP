@@ -1,0 +1,5 @@
+fn main() -> Unit
+  "A nested match that forgets the case Sum."
+  effects terminal.write
+body
+  printLine("{flip(Neg(Num(1)))}")

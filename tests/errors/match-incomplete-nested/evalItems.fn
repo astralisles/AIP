@@ -1,0 +1,5 @@
+fn evalItems(items List<Expr>, i Int, total Int) -> Int
+  "The total of the items from position i on, added to total."
+  pure
+body
+  if i >= listLength(items) then total else evalItems(items, i + 1, total + eval(listGet(items, i)))

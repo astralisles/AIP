@@ -1,0 +1,13 @@
+fn simplify(e Expr) -> Expr
+  "Remove double negation and fold the negation of a number; shows a `match` inside a `match` case."
+  pure
+body
+  match e
+    Neg(inner) => match inner
+      Neg(again) => simplify(again)
+      Num(value) => Num(0 - value)
+      Add(left, right) => e
+      Sum(items) => e
+    Num(value) => e
+    Add(left, right) => Add(simplify(left), simplify(right))
+    Sum(items) => e
