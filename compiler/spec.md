@@ -17,6 +17,7 @@ GENERICS  variant Option<T> / struct Pair<A,B>: declare parameters (single capit
 VARIANT   Shape.variant: variant Shape / "doc" / Circle(r Int) / Nothing    one case per line
 STATEMENTS  let x = expr        if c then a else b       match v  (one `Case(a, b) => expr` arm per line, every case)
           last expression is the return value. Text: "total {a + b}". Operators: + - * / % == != < <= > >= and or not.
+FUNCTIONS `Fn<Int,Int>` is a function type; `&name` (pure, non-generic fn) is a value; call it `f(x)`. std: listMap/Filter/Fold/Sort.
 EFFECTS   a function may call only functions whose effects are in its own effects line. No globals, no mutation.
 ERRORS    compiler prints `error <code> <file>:<line> ...` then `fix: ...`. Fix and re-run `aip check`.
 LOOP      write files -> `aip check <dir>` -> `aip run <dir>`. `aip index <dir>` lists one line per function.

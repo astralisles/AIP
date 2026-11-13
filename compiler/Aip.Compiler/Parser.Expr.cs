@@ -85,6 +85,7 @@ sealed partial class Parser
     {
         if (IsSym("-")) { _pos++; return new Unary { Line = _line, Op = "-", Operand = ParseUnary() }; }
         if (Peek.Kind == T.Ident && Peek.Text == "not") { _pos++; return new Unary { Line = _line, Op = "not", Operand = ParseUnary() }; }
+        if (IsSym("&")) { _pos++; return new FnRef { Line = _line, Name = Expect(T.Ident, "a function name after `&`").Text }; }
         return ParsePostfix();
     }
 

@@ -1,0 +1,5 @@
+fn shout(n Int) -> Unit
+  "Prints a number."
+  effects terminal.write
+body
+  printLine("{n}")

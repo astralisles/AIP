@@ -113,7 +113,7 @@ sealed partial class CsBackend : IBackend
     public static SortedDictionary<string, string> EmitFiles(ProgramModel program)
     {
         var files = new SortedDictionary<string, string>(StringComparer.Ordinal);
-        foreach (var fn in program.ProjectFns) files[fn.Name + ".cs"] = fn.IsConst ? EmitConst(fn) : fn.NativeLib != null ? EmitNative(fn) : EmitFn(fn);
+        foreach (var fn in program.ProjectFns.Concat(program.Fns.Values.Where(f => f.IsStd && !f.IsExtern))) files[fn.Name + ".cs"] = fn.IsConst ? EmitConst(fn) : fn.NativeLib != null ? EmitNative(fn) : EmitFn(fn);
         files["Program.cs"] = ProgramCs;
         files["Persistent.cs"] = PersistentRt.Source;
         foreach (var (name, source) in RuntimeParts) files[name] = source;
@@ -140,6 +140,7 @@ sealed partial class CsBackend : IBackend
         _ when t.StartsWith("Map<", StringComparison.Ordinal) || t.StartsWith("Set<", StringComparison.Ordinal) => "Aip.Persistent.PMap",
         _ when t.StartsWith("SortedMap<", StringComparison.Ordinal) || t.StartsWith("SortedSet<", StringComparison.Ordinal) => "Aip.Persistent.PSorted",
         "Unit" => "void",
+        _ when t.StartsWith("Fn<", StringComparison.Ordinal) => "System.Func<object[], object>", // a function value: arguments boxed, result boxed
         _ when t.IndexOf('<') is var lt and > 0 => t[..lt], // a generic struct or variant: one erased record
         _ => t, // a struct or variant: a C# record of the same name (see EmitTypes)
     };
@@ -271,11 +272,13 @@ sealed partial class CsBackend : IBackend
         TextLit t => t.Parts.Count == 1 && t.Parts[0] is string only
             ? Quote(only)
             : "string.Concat(" + string.Join(", ", t.Parts.Select(p => p is string s ? Quote(s) : $"Rt.Text({Emit((Expr)p)})")) + ")",
+        FnRef r => EmitFnRef(r),
+        Call { Indirect: true } c => EmitIndirect(c),
         Call { Ctor: not null } c => $"new {c.Ctor}({string.Join(", ", c.Args.Select(Emit))})",
         Field f => Cast(f.Erased, f.Type, $"{Emit(f.Target)}.@{f.Name}"),
         MatchExpr m => $"({Emit(m.Subject)} switch {{ {string.Join(", ", m.Arms.Select(a => $"{Pattern(a)} => {Emit(a.Body)}"))}, _ => throw new System.InvalidOperationException() }})",
         Call c => Externs.TryGetValue(c.Name, out var template)
-            ? (c.Name is "listGet" or "mapGet" or "sortedMapGet" or "queueFront" or "priorityQueueFront" ? $"(({CsType(c.Type)})" : "") + string.Format(System.Globalization.CultureInfo.InvariantCulture, template.Replace("<T>", CsType(c.Type)), c.Args.Select(Emit).ToArray<object>()) + (c.Name is "listGet" or "mapGet" or "sortedMapGet" or "queueFront" or "priorityQueueFront" ? ")" : "")
+            ? (c.Name is "listGet" or "listFold" or "mapGet" or "sortedMapGet" or "queueFront" or "priorityQueueFront" ? $"(({CsType(c.Type)})" : "") + string.Format(System.Globalization.CultureInfo.InvariantCulture, template.Replace("<T>", CsType(c.Type)), c.Args.Select(Emit).ToArray<object>()) + (c.Name is "listGet" or "listFold" or "mapGet" or "sortedMapGet" or "queueFront" or "priorityQueueFront" ? ")" : "")
             : Cast(c.Erased, c.Type, $"Fn.@{c.Name}({string.Join(", ", c.Args.Select(Emit))})"),
         Unary u => u.Op == "-" ? $"(-{Emit(u.Operand)})" : $"(!{Emit(u.Operand)})",
         Binary b => b.Op switch

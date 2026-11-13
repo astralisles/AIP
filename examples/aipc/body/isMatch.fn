@@ -11,6 +11,7 @@ body
     TextParts(parts) => false
     NameRef(name) => false
     CallFn(name, args) => false
+    FnOf(name) => false
     FieldOf(target, name) => false
     UnaryOp(op, operand) => false
     BinaryOp(op, left, right) => false

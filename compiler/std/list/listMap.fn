@@ -1,0 +1,4 @@
+fn listMap(items List<T>, f Fn<T,U>) -> List<U>
+  "A new list with f applied to every item, in order."
+  pure
+extern

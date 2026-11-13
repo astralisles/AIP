@@ -17,6 +17,7 @@ foreach ($f in Get-ChildItem (Join-Path $root 'compiler\std') -Recurse -Filter *
   $lines = Get-Content $f.FullName
   $eff = 'pure'
   foreach ($l in $lines) { if ($l -match '^  effects (.+)$') { $eff = $Matches[1].Trim() } }
+  if (-not ($lines -contains 'extern')) { continue } # a std function written in AIP (listTryGet) has no template
   $std[[IO.Path]::GetFileNameWithoutExtension($f.Name)] = @{ Effects = $eff; Extern = ($lines -contains 'extern'); First = $lines[0] }
 }
 $interpNames = @{}

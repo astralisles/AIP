@@ -10,6 +10,7 @@ body
     TextParts(parts) => "(text{sexprItems(parts, 0)})"
     NameRef(name) => "(name {name})"
     CallFn(name, args) => "(call {name}{sexprItems(args, 0)})"
+    FnOf(name) => "(fnref {name})"
     FieldOf(target, name) => "(field {sexpr(target)} {name})"
     UnaryOp(op, operand) => "(unary {op} {sexpr(operand)})"
     BinaryOp(op, left, right) => "(binary {op} {sexpr(left)} {sexpr(right)})"

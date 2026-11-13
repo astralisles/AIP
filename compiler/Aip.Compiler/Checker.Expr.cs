@@ -14,6 +14,7 @@ sealed partial class Checker
             BoolLit => "Bool",
             TextLit t => TextType(t, env, used),
             NameRef n => NameType(n, env, used),
+            FnRef r => FnRefType(r),
             Call c => CallType(c, env, used),
             Field f => FieldType(f, env, used),
             Assign a => AssignType(a, env, used),
@@ -33,6 +34,7 @@ sealed partial class Checker
         {
             var pt = TypeOf(part, env, used);
             if (pt == "Unit") Error(t.Line, "type-mismatch", "a Unit value cannot be put into a text");
+            else if (IsFnType(pt)) Error(t.Line, "type-mismatch", "a function value cannot be put into a text");
             else if (IsList(pt)) Error(t.Line, "type-mismatch", "a List, Set or Map cannot be put into a text", "build the text from the items");
             else if (IsVar(pt)) Error(t.Line, "type-mismatch", $"a value of type parameter `{pt}` cannot be put into a text", "a generic function can only store, pass and return such values");
             else if (UserType(pt) != null) Error(t.Line, "type-mismatch", $"a {pt} cannot be put into a text", "put its fields into the text instead");
@@ -62,6 +64,7 @@ sealed partial class Checker
     string CallType(Call c, Dictionary<string, string> env, HashSet<string> used)
     {
         var argTypes = c.Args.Select(a => TypeOf(a, env, used)).ToList();
+        if (env.TryGetValue(c.Name, out var localType) && IsFnType(localType)) { used.Add(c.Name); return IndirectCallType(c, localType, argTypes); }
         if (!program.Fns.TryGetValue(c.Name, out var target))
         {
             if (program.Ctors.TryGetValue(c.Name, out var ctor)) return CtorType(c, ctor.Def, ctor.Case, argTypes);
@@ -246,7 +249,7 @@ sealed partial class Checker
                     IsNum(l) && IsNum(r) ? "neither type fits in the other; convert one side first, for example with numFromI32 / numToF64" : null);
                 return "Bool";
             case "==" or "!=":
-                if (known && (!Compat(l, r) || l == "Unit" || IsList(l) || IsVar(l) || UserType(l) != null))
+                if (known && (!Compat(l, r) || l == "Unit" || IsFnType(l) || IsList(l) || IsVar(l) || UserType(l) != null))
                     Error(b.Line, "type-mismatch", $"`{b.Op}` compares {l} with {r}",
                         IsList(l) ? "lists, sets and maps cannot be compared; compare their sizes or items" : IsVar(l) ? "a value of a type parameter cannot be compared" : UserType(l) != null ? "structs and variants cannot be compared; compare their fields, or use `match`" : null);
                 return "Bool";

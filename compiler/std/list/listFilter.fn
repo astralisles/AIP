@@ -1,0 +1,4 @@
+fn listFilter(items List<T>, keep Fn<T,Bool>) -> List<T>
+  "The items for which keep returns true, in order."
+  pure
+extern

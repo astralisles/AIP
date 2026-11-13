@@ -1,0 +1,4 @@
+variant Result<T,E>
+  "The outcome of something that can fail: Ok(value) or Err(error)."
+  Ok(value T)
+  Err(error E)

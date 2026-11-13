@@ -1,0 +1,6 @@
+fn main() -> Unit
+  "Takes a function with effects as a value, which is not allowed."
+  effects terminal.write
+body
+  let f = &shout
+  f(1)

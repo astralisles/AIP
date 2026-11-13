@@ -162,6 +162,7 @@ sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
         var s = Split(t);
         if (s == null) return program.Types.TryGetValue(t, out var plain) && plain.Params.Count == 0;
         if (!s.Value.Args.All(IsKnown)) return false;
+        if (s.Value.Name == "Fn") return s.Value.Args.Count >= 1; // Fn<A,B,R>: the last type is the result
         if (GenericTypes.Arity.TryGetValue(s.Value.Name, out var n)) return n == s.Value.Args.Count;
         return program.Types.TryGetValue(s.Value.Name, out var g) && g.Params.Count == s.Value.Args.Count;
     }

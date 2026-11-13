@@ -1,0 +1,5 @@
+fn mapTryGet(m Map<K,V>, key K) -> Option<V>
+  "The value for a key as Some, or None when the key is not in the map."
+  pure
+body
+  if mapHas(m, key) then Some(mapGet(m, key)) else None()

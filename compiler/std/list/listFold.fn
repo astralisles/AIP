@@ -1,0 +1,4 @@
+fn listFold(items List<T>, start A, f Fn<A,T,A>) -> A
+  "Combines the items left to right: f(f(start, first), second) and so on."
+  pure
+extern

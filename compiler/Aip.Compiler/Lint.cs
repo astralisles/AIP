@@ -43,7 +43,7 @@ static partial class Lint
             var all = body.Concat(ContractExprs(fn)).ToList();
 
             // unused-param: a parameter nothing refers to, in the body or in a contract.
-            var names = all.OfType<NameRef>().Select(n => n.Name).ToHashSet();
+            var names = all.OfType<NameRef>().Select(n => n.Name).Concat(all.OfType<Call>().Where(c => c.Indirect).Select(c => c.Name)).ToHashSet();
             foreach (var p in fn.Params.Where(p => !fn.IsExtern && !names.Contains(p.Name)))
                 Warn(fn, fn.Line, "unused-param", $"parameter `{p.Name}` of `{fn.Name}` is never used", "remove it, or use it");
 
@@ -59,7 +59,7 @@ static partial class Lint
                 if (e is Binary { Op: "/" or "%", Right: IntLit { Value: 0 } } d)
                     Warn(fn, d.Line, "division-by-zero", $"`{d.Op} 0` always fails at run time");
                 // literal-out-of-range: a literal argument outside the range its parameter declares.
-                if (e is Call { Ctor: null } c && program.Fns.TryGetValue(c.Name, out var target))
+                if (e is Call { Ctor: null, Indirect: false } c && program.Fns.TryGetValue(c.Name, out var target))
                 {
                     // requires-always-false: every argument is a constant and a `requires` of the callee is false for them (T-0950).
                     if (Interp.FirstBrokenRequires(program, target, c.Args) is { } broken)

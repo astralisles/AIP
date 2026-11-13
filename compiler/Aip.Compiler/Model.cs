@@ -21,7 +21,9 @@ sealed class TextLit : Expr { public List<object> Parts = new(); }
 /// <summary>A local name, or (when Const is set by the checker) a `.const` file.</summary>
 sealed class NameRef : Expr { public string Name = ""; public bool Erased; public bool Const; }
 /// <summary>A function call, or (when Ctor is set by the checker) the construction of a struct or variant case.</summary>
-sealed class Call : Expr { public string Name = ""; public List<Expr> Args = new(); public string? Ctor; public bool Erased; }
+sealed class Call : Expr { public string Name = ""; public List<Expr> Args = new(); public string? Ctor; public bool Erased; public bool Indirect; }
+/// <summary>`&name`: a reference to a named top-level function (T-0928). Its type is `Fn<params...,result>`.</summary>
+sealed class FnRef : Expr { public string Name = ""; public List<string> ParamTypes = new(); public string Ret = ""; }
 /// <summary>`target.name`: reads a field of a struct.</summary>
 sealed class Field : Expr { public Expr Target = null!; public string Name = ""; public bool Erased; }
 /// <summary>`set target.name = value`: overwrites a field of a struct in place (needs the `mutate` effect). Unit.</summary>

@@ -7,6 +7,7 @@ variant Expr
   TextParts(parts List<Expr>)
   NameRef(name Text)
   CallFn(name Text, args List<Expr>)
+  FnOf(name Text)
   FieldOf(target Expr, name Text)
   UnaryOp(op Text, operand Expr)
   BinaryOp(op Text, left Expr, right Expr)

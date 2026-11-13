@@ -1,0 +1,6 @@
+some 11
+none
+some 5
+none
+ok 5
+error: divide by zero

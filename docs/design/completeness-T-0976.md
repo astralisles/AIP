@@ -9,9 +9,9 @@ Int/sized ints/floats/bits, Text, Bytes, List/Set/Map/SortedMap/SortedSet/Queue/
 native libraries, hash, `aip query/find/spec`, partial self-hosting (lexer, header and body parser in `examples/aipc`).
 
 ## Missing, in order
-1. **Function pointers + `listMap`/`listFilter`/`listFold`/`listSort`.** Decided (`function-pointers-T-0928.md`), not built. Blocks the most.
+1. **Function pointers + `listMap`/`listFilter`/`listFold`/`listSort`.** **Done (T-0976 #2).** See `function-pointers-T-0928.md`.
 2. **`Option`/`Result` in std, and failing std calls using them** (`listGet`, `mapGet`, `textToInt`, `fileRead`). Decided
-   (`open-questions-T-0944.md` item 5); `Option` exists only as an example. Today failures are crashes.
+   (`open-questions-T-0944.md` item 5); **Partly done (T-0976 #2):** std `Option<T>`, `Result<T,E>`, `listTryGet`, `mapTryGet`. Still crashing: `textToInt`, `fileRead` (need extern try-versions).
 3. **Tail-call lowering** (`loops-and-switches-T-0975.md` step 1). Loops are recursion, so long loops overflow the stack.
 4. **"Outside world" std**: `processExit`, `fileExists`/`fileAppend`/`dirList`/`dirCreate`, `timeNow`/`timeSleep`, `randomInt`
    (seeded pure `randomNext`), `envGet`, `printError`. None exist (only `fileRead`, `fileWrite`, `printLine`, `readLine`, `arg`).
