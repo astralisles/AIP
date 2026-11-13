@@ -1,5 +1,6 @@
 fn parseBinary(toks List<Text>, pos Int, level Int) -> ExprParsed
   "Read an expression whose operators bind at operator level `level` or tighter (0 is the loosest)."
   pure
+  fails
 body
   if level >= 6 then parseUnary(toks, pos) else parseBinaryRest(toks, level, parseBinary(toks, pos, level + 1))

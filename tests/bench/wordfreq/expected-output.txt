@@ -1,0 +1,12 @@
+the 4
+dog 2
+fox 2
+and 1
+barks 1
+brown 1
+jumps 1
+lazy 1
+over 1
+quick 1
+runs 1
+11 distinct words, 16 total

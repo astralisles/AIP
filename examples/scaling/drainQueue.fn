@@ -1,5 +1,6 @@
 fn drainQueue(q Queue<Int>, sum Int) -> Int
   "Pop every item and add up what came out."
   pure
+  fails
 body
   if queueSize(q) == 0 then sum else drainQueue(queuePop(q), sum + queueFront(q))
