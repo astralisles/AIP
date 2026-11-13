@@ -57,6 +57,8 @@ sealed class CsBackend : IBackend
         foreach (var fn in program.ProjectFns)
             File.WriteAllText(Path.Combine(srcDir, fn.Name + ".cs"), EmitFn(fn));
         File.WriteAllText(Path.Combine(srcDir, "Program.cs"), ProgramCs);
+        if (program.Types.Count > 0)
+            File.WriteAllText(Path.Combine(srcDir, "Types.cs"), EmitTypes(program));
         var csproj = Path.Combine(srcDir, program.Name + ".csproj");
         File.WriteAllText(csproj, Csproj);
 
@@ -90,8 +92,31 @@ sealed class CsBackend : IBackend
     {
         "Int" => "long", "Text" => "string", "Bool" => "bool", "_" => "object",
         _ when t.StartsWith("List<") => "System.Collections.Generic.List<object>",
-        _ => "void",
+        "Unit" => "void",
+        _ => t, // a struct or variant: a C# record of the same name (see EmitTypes)
     };
+
+    static string Fields(Case c) => string.Join(", ", c.Fields.Select(f => $"{CsType(f.Type.Name)} @{f.Name}"));
+
+    /// <summary>A struct is a sealed record; a variant is an abstract record with one nested sealed record per case.</summary>
+    static string EmitTypes(ProgramModel program)
+    {
+        var sb = new StringBuilder("// Generated from the .struct and .variant files. Do not edit.\n");
+        foreach (var def in program.Types.Values.OrderBy(d => d.Name, StringComparer.Ordinal))
+        {
+            sb.Append($"/// <summary>{System.Security.SecurityElement.Escape(def.Doc)}</summary>\n");
+            if (!def.IsVariant) sb.Append($"public sealed record @{def.Name}({Fields(def.Cases[0])});\n");
+            else
+            {
+                sb.Append($"public abstract record @{def.Name}\n{{\n    private @{def.Name}() {{ }}\n");
+                foreach (var c in def.Cases) sb.Append($"    public sealed record @{c.Name}({Fields(c)}) : @{def.Name};\n");
+                sb.Append("}\n");
+            }
+        }
+        return sb.ToString();
+    }
+
+    static string Pattern(Arm a) => a.Binds.Count == 0 ? $"{a.Path} _" : $"{a.Path}({string.Join(", ", a.Binds.Select(b => $"var @{b}"))})";
 
     static string EmitFn(Fn fn)
     {
@@ -113,9 +138,16 @@ sealed class CsBackend : IBackend
     }
 
     /// <summary>A statement. A Unit `if` becomes an if statement because C# cannot use void in `?:`.</summary>
-    static string EmitUnit(Expr e, string indent) => e is IfExpr { Type: "Unit" } i
-        ? $"{indent}if ({Emit(i.Cond)})\n{indent}{{\n{EmitUnit(i.Then, indent + "    ")}{indent}}}\n{indent}else\n{indent}{{\n{EmitUnit(i.Else, indent + "    ")}{indent}}}\n"
-        : $"{indent}{Emit(e)};\n";
+    static string EmitUnit(Expr e, string indent) => e switch
+    {
+        IfExpr { Type: "Unit" } i =>
+            $"{indent}if ({Emit(i.Cond)})\n{indent}{{\n{EmitUnit(i.Then, indent + "    ")}{indent}}}\n{indent}else\n{indent}{{\n{EmitUnit(i.Else, indent + "    ")}{indent}}}\n",
+        MatchExpr { Type: "Unit" } m =>
+            $"{indent}switch ({Emit(m.Subject)})\n{indent}{{\n"
+            + string.Concat(m.Arms.Select(a => $"{indent}    case {Pattern(a)}:\n{EmitUnit(a.Body, indent + "        ")}{indent}        break;\n"))
+            + $"{indent}    default: throw new System.InvalidOperationException();\n{indent}}}\n",
+        _ => $"{indent}{Emit(e)};\n",
+    };
 
     static string Emit(Expr e) => e switch
     {
@@ -125,6 +157,9 @@ sealed class CsBackend : IBackend
         TextLit t => t.Parts.Count == 1 && t.Parts[0] is string only
             ? Quote(only)
             : "string.Concat(" + string.Join(", ", t.Parts.Select(p => p is string s ? Quote(s) : $"Rt.Text({Emit((Expr)p)})")) + ")",
+        Call { Ctor: not null } c => $"new {c.Ctor}({string.Join(", ", c.Args.Select(Emit))})",
+        Field f => $"{Emit(f.Target)}.@{f.Name}",
+        MatchExpr m => $"({Emit(m.Subject)} switch {{ {string.Join(", ", m.Arms.Select(a => $"{Pattern(a)} => {Emit(a.Body)}"))}, _ => throw new System.InvalidOperationException() }})",
         Call c => Externs.TryGetValue(c.Name, out var template)
             ? (c.Name == "listGet" ? $"(({CsType(c.Type)})" : "") + string.Format(template, c.Args.Select(Emit).ToArray<object>()) + (c.Name == "listGet" ? ")" : "")
             : $"Fn.@{c.Name}({string.Join(", ", c.Args.Select(Emit))})",

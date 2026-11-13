@@ -1,0 +1,6 @@
+fn main() -> Unit
+  "Use a dot on a variant."
+  effects terminal.write
+body
+  let light = Green()
+  printLine("{light.name} {Car(1)}")

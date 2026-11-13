@@ -1,0 +1,6 @@
+variant Shape
+  "A shape: a circle, a rectangle, a single dot, or nothing."
+  Circle(center Point, radius Int)
+  Rect(corner Point, width Int, height Int)
+  Dot(at Point)
+  Nothing

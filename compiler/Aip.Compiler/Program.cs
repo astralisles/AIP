@@ -36,6 +36,19 @@ outDir ??= Path.Combine(dir, "build");
 var diags = new List<Diagnostic>();
 var program = new ProgramModel { Name = Path.GetFileName(dir.TrimEnd('\\', '/')), Dir = dir };
 
+void AddType(TypeDef def)
+{
+    if (program.Types.TryGetValue(def.Name, out var other))
+    {
+        diags.Add(new Diagnostic(def.File, def.Line, "duplicate-name", $"`{def.Name}` is already defined in {Path.GetFileName(other.File)}", "names are unique across the project; rename one"));
+        return;
+    }
+    program.Types[def.Name] = def;
+    foreach (var c in def.Cases)
+        if (!program.Ctors.TryAdd(c.Name, (def, c)))
+            diags.Add(new Diagnostic(def.File, c.Line, "duplicate-name", $"`{c.Name}` is already defined in {Path.GetFileName(program.Ctors[c.Name].Def.File)}", "case and type names are unique across the project; rename one"));
+}
+
 void Load(string root, bool isStd)
 {
     var files = Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories)
@@ -46,7 +59,12 @@ void Load(string root, bool isStd)
         var ext = Path.GetExtension(file);
         if (ext != ".fn")
         {
-            if (ext is ".struct" or ".variant" or ".const")
+            if (ext is ".struct" or ".variant")
+            {
+                try { AddType(Parser.ParseTypeFile(file)); }
+                catch (CompileException e) { diags.Add(e.Diagnostic); }
+            }
+            else if (ext == ".const")
                 diags.Add(new Diagnostic(file, 1, "unsupported-file", $"`{ext}` files are not supported by the compiler yet"));
             continue;
         }
@@ -64,6 +82,8 @@ void Load(string root, bool isStd)
 
 Load(Path.Combine(AppContext.BaseDirectory, "std"), true);
 Load(dir, false);
+foreach (var (name, ctor) in program.Ctors.Where(c => program.Fns.ContainsKey(c.Key)))
+    diags.Add(new Diagnostic(ctor.Def.File, ctor.Case.Line, "duplicate-name", $"`{name}` is also a function ({Path.GetFileName(program.Fns[name].File)})", "names are unique across the project; rename one"));
 if (diags.Count == 0) new Checker(program, diags).Check();
 
 if (diags.Count > 0)
