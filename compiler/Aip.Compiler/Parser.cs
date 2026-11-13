@@ -29,6 +29,15 @@ sealed class Parser
         return p.ParseLines(lines ?? File.ReadAllLines(file));
     }
 
+    /// <summary>Parses source text already in memory; `file` is only used for names and errors.</summary>
+    public static Fn ParseText(string file, string text)
+    {
+        var lines = new List<string>();
+        using (var r = new StringReader(text))
+            for (var l = r.ReadLine(); l != null; l = r.ReadLine()) lines.Add(l); // same split as File.ReadAllLines
+        return ParseFile(file, lines.ToArray());
+    }
+
     /// <summary>One line per token (`Kind text`), and `Newline` after each non-blank line. Used to compare with the lexer written in AIP.</summary>
     public static string Tokens(string file)
     {
