@@ -43,7 +43,7 @@ static class Lint
 
             // unused-param: a parameter nothing refers to, in the body or in a contract.
             var names = all.OfType<NameRef>().Select(n => n.Name).ToHashSet();
-            foreach (var p in fn.Params.Where(p => !names.Contains(p.Name)))
+            foreach (var p in fn.Params.Where(p => !fn.IsExtern && !names.Contains(p.Name)))
                 Warn(fn, fn.Line, "unused-param", $"parameter `{p.Name}` of `{fn.Name}` is never used", "remove it, or use it");
 
             foreach (var e in all)

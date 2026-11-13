@@ -1,0 +1,5 @@
+fn cStrlen(s Text) -> Int
+  "Length in bytes of a text, computed by the C runtime library (`strlen`)."
+  effects native.ucrtbase
+  native "ucrtbase" "strlen"
+extern

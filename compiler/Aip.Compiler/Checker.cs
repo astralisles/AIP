@@ -47,6 +47,31 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
         return a;
     }
 
+    static readonly System.Text.RegularExpressions.Regex NativeLibName = new(@"^[A-Za-z0-9_][A-Za-z0-9_.\-]*$");
+    static readonly System.Text.RegularExpressions.Regex NativeSymName = new(@"^[A-Za-z_][A-Za-z0-9_]*$");
+
+    /// <summary>Rules for `native "lib" "symbol"` (docs/design/native-libraries-T-0956.md).</summary>
+    void CheckNative(Fn fn)
+    {
+        if (fn.IsStd) { if (fn.NativeLib != null) Error(fn.NativeLine, "native-name", "the standard library cannot use `native`"); return; }
+        if (fn.IsConst) return;
+        if (fn.IsExtern && fn.NativeLib == null)
+        {
+            Error(fn.Line, "extern-no-native", $"`{fn.Name}` is extern but names no library", "add `native \"library\" \"symbol\"` to the header");
+            return;
+        }
+        if (fn.NativeLib == null) return;
+        if (!fn.IsExtern) Error(fn.NativeLine, "native-body", $"`{fn.Name}` has `native` but also a body", "end the file with `extern` instead of `body`");
+        if (!NativeLibName.IsMatch(fn.NativeLib) || !NativeSymName.IsMatch(fn.NativeSymbol))
+            Error(fn.NativeLine, "native-name", "the library name may use letters, digits, `_`, `.`, `-` (no path, no extension needed); the symbol is a C identifier",
+                "for example `native \"sqlite3\" \"sqlite3_libversion\"`");
+        if (!fn.Effects.Any(e => e.StartsWith("native.", StringComparison.Ordinal)))
+            Error(fn.EffectsLine, "native-effect", $"`{fn.Name}` calls native code but declares no `native.*` effect", $"declare `effects native.{System.Text.RegularExpressions.Regex.Replace(fn.NativeLib, "[^A-Za-z0-9_]", "_")}`");
+        foreach (var t in fn.Params.Select(p => p.Type.Name).Append(fn.Ret.Name))
+            if (t is not ("Int" or "Bool" or "Text" or "Unit"))
+                Error(fn.Line, "native-type", $"native functions only take and return Int, Bool, Text (and Unit as result); `{t}` is not allowed", "convert in an AIP function around the native one");
+    }
+
     static bool Unify(string pattern, string actual, Dictionary<string, string> vars)
     {
         if (actual == "") return true;
@@ -172,6 +197,7 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
         foreach (var e in fn.Examples) ExpectType(e, new Dictionary<string, string>(), "Bool", "an `example`");
         _inContract = false;
 
+        CheckNative(fn);
         if (fn.IsExtern) return;
 
         _effects = new HashSet<string>();
