@@ -10,7 +10,9 @@ compiler source needs, or a compiler stage still to write. Items are ordered by 
 
 ## A. Language gaps (the compiler source cannot be written without these)
 
-1. **`match` as an expression anywhere.** Today a `match` must start a line or follow `let x =` (`Parser.cs`, error `syntax`).
+1. **DONE (iteration 4, nested case): `match` as an expression anywhere.** A `match` as the last statement already worked; a case
+   can now be a `match` whose cases are indented two spaces deeper (`examples/expr/simplify.fn`, `tests/errors/match-incomplete-nested`).
+   Still not allowed: a `match` inside an `if` branch or as an operand. Original problem: Today a `match` must start a line or follow `let x =` (`Parser.cs`, error `syntax`).
    A parser/checker is mostly nested matches and matches that return the function result. Allow: `match` as the last
    statement (the return value), and a `match` arm that is itself a `match` block (or the arm calls a helper, which costs one
    file per arm). Without this the AST passes need hundreds of tiny helper files.
@@ -18,7 +20,8 @@ compiler source needs, or a compiler stage still to write. Items are ordered by 
    Every pass over a list is hand-written recursion today.
 3. **`Result<T, E>` / `Option<T>`, hence generic variants** (decided in `open-questions-T-0944.md` item 5, not built). The parser
    and checker must return "value or error"; today that needs a struct with an `error` field per stage.
-4. **Recursive and list-containing variants.** An AST is `Expr` containing `List<Expr>`. The type-erased `List` probably allows
+4. **DONE (iteration 4): recursive and list-containing variants.** `examples/expr` has `Expr` with `Neg(inner Expr)` and `Sum(items List<Expr>)`;
+   build, `aip test`, lint and fuzz pass. Original problem: An AST is `Expr` containing `List<Expr>`. The type-erased `List` probably allows
    it, but no example proves it. Needed first: a 10-line example (`variant Expr`, `Add(left Expr, right Expr)`, `Call(name Text, args List<Expr>)`)
    with a test; fix whatever fails.
 5. **Struct/variant values as `Map` / `SortedMap` keys, and structural `==` on them.** The checker needs symbol tables keyed by
@@ -148,3 +151,9 @@ in a unit, the `Bytes` and number decisions (open question 9: overflow, `Float`)
 
 Recommended: start with section A and the body parser now (the C# compiler still checks everything), write the IR spec as its own
 design file and review it before any code generator, and decide the removal date only when gates 1-7 are green.
+
+## G. Progress log
+
+- Iteration 4: gates F.1 partly met (A1 nested `match`, A4 recursive variant). Fixed the AIP header parser (`examples/aipc/parse/parseType.fn`) to read
+  `SortedMap`/`SortedSet` types; `scripts\compare-index.ps1` had been failing on the standard library since T-0951 added them.
+  Next: B (text/list/file std functions), then the body parser. Tag `seed-csharp` on the commit that is merged (Architect owns git, so it is left to the user).

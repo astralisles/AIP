@@ -61,7 +61,7 @@ sealed class Parser
         // 0 = expect signature, 1 = header, 2 = body, 3 = after extern
         int state = 0;
         bool sawEffects = false;
-        MatchExpr? pending = null;
+        var pending = new Stack<(MatchExpr Match, int ArmIndent)>(); // matches whose arm lines are still being read (arms nest two spaces deeper)
         IfExpr? openIf = null; // a multi-line `if` whose branch lines are still being read
         bool inElse = false;
         for (int i = 0; i < lines.Length; i++)
@@ -94,10 +94,15 @@ sealed class Parser
                 continue;
             }
 
-            if (indent == 4 && state == 2 && pending != null)
+            if (state == 2)
             {
-                ParseArm(pending, text);
-                continue;
+                while (pending.Count > 0 && indent < pending.Peek().ArmIndent) pending.Pop();
+                if (pending.Count > 0 && indent == pending.Peek().ArmIndent)
+                {
+                    var arm = ParseArm(pending.Peek().Match, text);
+                    if (arm.Body is MatchExpr nested) pending.Push((nested, indent + 2));
+                    continue;
+                }
             }
             if (indent == 4 && state == 2 && openIf != null)
             {
@@ -146,7 +151,7 @@ sealed class Parser
                 openIf = new IfExpr { Line = _line, Cond = ParseExprText(text["if ".Length..^" then".Length]), Then = new BlockExpr { Line = _line }, Else = new BlockExpr { Line = _line } };
                 inElse = false;
                 fn.Body.Add(new Stmt { Line = _line, Value = openIf });
-                pending = null;
+                pending.Clear();
                 continue;
             }
             Lex(text);
@@ -161,7 +166,8 @@ sealed class Parser
             stmt.Value = ParseExpr();
             ExpectEnd();
             fn.Body.Add(stmt);
-            pending = stmt.Value as MatchExpr;
+            pending.Clear();
+            if (stmt.Value is MatchExpr started) pending.Push((started, 4));
         }
 
         if (openIf != null) CloseIf(openIf, inElse);
@@ -236,7 +242,7 @@ sealed class Parser
         return sign + digits;
     }
 
-    void ParseArm(MatchExpr m, string text)
+    Arm ParseArm(MatchExpr m, string text)
     {
         Lex(text);
         var arm = new Arm { Line = _line, Case = Expect(T.Ident, "a case name").Text };
@@ -251,10 +257,11 @@ sealed class Parser
             ExpectSym(")");
         }
         ExpectSym("=>");
-        _matchAllowed = false;
+        _matchAllowed = true; // an arm may be a nested `match`, whose arms are indented two spaces deeper
         arm.Body = ParseExpr();
         ExpectEnd();
         m.Arms.Add(arm);
+        return arm;
     }
 
     public static TypeDef ParseTypeFile(string file, string[]? lines = null)
@@ -468,7 +475,7 @@ sealed class Parser
             case T.Text:
                 return ParseText(t.Text);
             case T.Ident:
-                if (t.Text == "match") throw Err("syntax", "a `match` must start a line or follow `let name =`", "move it to its own line, or call a function that does the match");
+                if (t.Text == "match") throw Err("syntax", "a `match` must start a line, follow `let name =`, or be the whole of a case after `=>`", "move it to its own line, or call a function that does the match");
                 if (t.Text == "true" || t.Text == "false") return new BoolLit { Line = _line, Value = t.Text == "true" };
                 if (IsSym("("))
                 {

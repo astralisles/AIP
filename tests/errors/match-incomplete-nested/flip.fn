@@ -1,0 +1,12 @@
+fn flip(e Expr) -> Int
+  "Negate a number; the inner match forgets Sum."
+  pure
+body
+  match e
+    Neg(inner) => match inner
+      Num(value) => value
+      Neg(again) => eval(again)
+      Add(left, right) => eval(left)
+    Num(value) => 0 - value
+    Add(left, right) => eval(left)
+    Sum(items) => eval(e)
