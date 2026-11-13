@@ -16,8 +16,10 @@ foreach ($pattern in @('\bErr(?:or)?\((?:[^,"()]|\([^()]*\))+,\s*"([a-z]+(?:-[a-
   foreach ($m in [regex]::Matches($text, $pattern)) { $codes[$m.Groups[1].Value] = $true }
 }
 $expected = @{}
-# codes that scripts\test.ps1 checks itself (command line and back end errors, not `aip check` errors)
-foreach ($m in [regex]::Matches((Get-Content (Join-Path $PSScriptRoot 'test.ps1') -Raw), "Contains\('([a-z]+(?:-[a-z]+)+)'\)")) { $expected[$m.Groups[1].Value] = $true }
+# codes that test.ps1 or a tests\checks\*.ps1 file checks itself (command line and back end errors, not `aip check` errors)
+foreach ($f in @(Get-Item (Join-Path $PSScriptRoot 'test.ps1')) + @(Get-ChildItem (Join-Path $root 'tests\checks') -Filter *.ps1 -File)) {
+  foreach ($m in [regex]::Matches((Get-Content $f.FullName -Raw), "Contains\('([a-z]+(?:-[a-z]+)+)'\)")) { $expected[$m.Groups[1].Value] = $true }
+}
 # internal-error guards that cannot be triggered from a project
 foreach ($c in 'backend-failed', 'backend-missing-extern') { $expected[$c] = $true }
 foreach ($f in @(Get-ChildItem (Join-Path $root 'tests\errors') -Recurse -Filter expected.txt) + @(Get-ChildItem (Join-Path $root 'tests\contracts') -Recurse -Filter expected.txt)) {
