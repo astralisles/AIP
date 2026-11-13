@@ -121,13 +121,11 @@ sealed partial class Checker
             for (int i = 0; i < argTypes.Count; i++)
             {
                 var want = target.Params[i].Type.Name;
-                if (IsVar(want) && vars.TryGetValue(want, out var bound)) want = bound; // bitAnd(x, 255): the literal follows x
+                if (IsVar(want) && vars.TryGetValue(want, out var bound)) want = bound; // f(x, 255) with both of type T: the literal follows x
                 if (IsDefaultLit(argTypes[i]) && !IsVar(want) && FitLiteral(c.Args[i], want)) { argTypes[i] = want; continue; }
                 if (!Unify(target.Params[i].Type.Name, argTypes[i], vars))
                     Error(c.Line, "type-mismatch", $"argument `{target.Params[i].Name}` of `{c.Name}` must be {Subst(target.Params[i].Type.Name, vars)}, found {argTypes[i]}", $"signature: {target.Signature}");
             }
-            if (target.IsStd && c.Name.StartsWith("bit", StringComparison.Ordinal) && vars.TryGetValue("T", out var bt) && bt != "" && bt != "_" && !IsInt(bt))
-                Error(c.Line, "type-mismatch", $"`{c.Name}` needs a whole number (Int, I8..I32, U8..U64), found {bt}");
             return Subst(target.Ret.Name, vars);
         }
         return Subst(target.Ret.Name, new Dictionary<string, string>());
@@ -243,6 +241,11 @@ sealed partial class Checker
     string UnaryType(Unary u, Dictionary<string, string> env, HashSet<string> used)
     {
         var t = TypeOf(u.Operand, env, used);
+        if (u.Op == "~")
+        {
+            if (t != "" && !IsInt(t)) Error(u.Line, "type-mismatch", $"`~` needs a whole number (Int, I8..I32, U8..U64), found {t}");
+            return IsInt(t) ? t : "Int";
+        }
         if (u.Op != "-")
         {
             if (t != "" && t != "Bool") Error(u.Line, "type-mismatch", $"`{u.Op}` needs Bool, found {t}");
@@ -256,6 +259,12 @@ sealed partial class Checker
     {
         var l = TypeOf(b.Left, env, used);
         var r = TypeOf(b.Right, env, used);
+        if (b.Op is "<<" or ">>") // the count is always Int, whatever the type of the number being shifted
+        {
+            if (l != "" && !IsInt(l)) Error(b.Line, "type-mismatch", $"`{b.Op}` needs a whole number on the left (Int, I8..I32, U8..U64), found {l}");
+            if (r != "" && r != "Int") Error(b.Line, "type-mismatch", $"the shift count of `{b.Op}` must be Int, found {r}", "convert the count first, for example with numFromU8");
+            return l == "" ? "Int" : l;
+        }
         if (IsDefaultLit(l) && l != r && FitLiteral(b.Left, r)) l = r;
         else if (IsDefaultLit(r) && l != r && FitLiteral(b.Right, l)) r = l;
         if (IsNum(l) && IsNum(r) && l != r && b.Op is "+" or "-" or "*" or "/" or "%" or "<" or "<=" or ">" or ">=" or "==" or "!=")
@@ -280,6 +289,11 @@ sealed partial class Checker
                     Error(b.Line, "type-mismatch", $"`{b.Op}` compares {l} with {r}",
                         IsList(l) ? "lists, sets and maps cannot be compared; compare their sizes or items" : IsVar(l) ? "a value of a type parameter cannot be compared" : UserType(l) != null ? "structs and variants cannot be compared; compare their fields, or use `match`" : null);
                 return "Bool";
+            case "&" or "|" or "^":
+                if (known && (!IsInt(l) || l != r))
+                    Error(b.Line, "type-mismatch", $"`{b.Op}` needs the same whole-number type on both sides (Int, I8..I32, U8..U64), found {l} and {r}",
+                        IsInt(l) && IsInt(r) ? "convert one side first, for example with numFromU8 / numToU8" : null);
+                return IsInt(l) ? l : IsInt(r) ? r : "Int";
             default: // and, or, =>
                 if (known && (l != "Bool" || r != "Bool")) Error(b.Line, "type-mismatch", $"`{b.Op}` needs Bool on both sides, found {l} and {r}");
                 return "Bool";

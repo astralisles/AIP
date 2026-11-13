@@ -1,5 +1,0 @@
-fn bitShr(a T, count Int) -> T
-  "Shift bits right: zeros come in for unsigned types, the sign bit is copied for signed ones. count must be 0 to width-1, else a run-time error."
-  pure
-  fails
-extern

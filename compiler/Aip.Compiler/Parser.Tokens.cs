@@ -22,6 +22,13 @@ sealed partial class Parser
         _pos++;
     }
 
+    /// <summary>Closes a type argument list. `List<List<Int>>` lexes as `>>`; the first `>` is consumed and one stays.</summary>
+    void ExpectCloseAngle()
+    {
+        if (IsSym(">>")) { _toks[_pos] = new Tok(T.Sym, ">"); return; }
+        ExpectSym(">");
+    }
+
     void ExpectWord(string w)
     {
         if (Peek.Kind != T.Ident || Peek.Text != w) throw Err("syntax", $"expected `{w}`, found {Describe(Peek)}");

@@ -4,4 +4,4 @@ fn main() -> Unit
   fails
 body
   printLine("before")
-  printLine("{bitShl(numToU8(1), 8)}")
+  printLine("{numToU8(1) << 8}")

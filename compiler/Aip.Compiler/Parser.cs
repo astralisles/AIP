@@ -9,7 +9,7 @@ sealed record Tok(T Kind, string Text);
 /// <summary>Parses one .fn file. The format is line based: signature, header lines, then `body` or `extern`.</summary>
 sealed partial class Parser
 {
-    static readonly string[] Symbols = { "->", "=>", "==", "!=", "<=", ">=", "..", ".", "(", ")", ",", "<", ">", "+", "-", "*", "/", "%", "=", "&" };
+    static readonly string[] Symbols = { "->", "=>", "==", "!=", "<=", ">=", "<<", ">>", "..", ".", "(", ")", ",", "<", ">", "+", "-", "*", "/", "%", "&", "|", "^", "~", "=" };
 
     readonly string _file;
     int _line;
@@ -241,7 +241,7 @@ sealed partial class Parser
                 if (inner.Range != "") throw Err("syntax", "an element type cannot have a range");
                 args.Add(inner.Name);
             } while (IsSym(","));
-            ExpectSym(">");
+            ExpectCloseAngle();
             name = $"{name}<{string.Join(",", args)}>";
         }
         var range = new StringBuilder();

@@ -280,12 +280,15 @@ sealed partial class CsBackend : IBackend
         Call c => Externs.TryGetValue(c.Name, out var template)
             ? (c.Name is "listGet" or "listFold" or "taskAwait" or "mapGet" or "sortedMapGet" or "queueFront" or "priorityQueueFront" ? $"(({CsType(c.Type)})" : "") + string.Format(System.Globalization.CultureInfo.InvariantCulture, template.Replace("<T>", CsType(c.Type)), c.Args.Select(Emit).ToArray<object>()) + (c.Name is "listGet" or "listFold" or "taskAwait" or "mapGet" or "sortedMapGet" or "queueFront" or "priorityQueueFront" ? ")" : "")
             : Cast(c.Erased, c.Type, $"Fn.@{c.Name}({string.Join(", ", c.Args.Select(Emit))})"),
-        Unary u => u.Op == "-" ? $"(-{Emit(u.Operand)})" : $"(!{Emit(u.Operand)})",
+        Unary u => u.Op == "-" ? $"(-{Emit(u.Operand)})" : u.Op == "~" ? $"unchecked(({CsType(u.Type)})(~{Emit(u.Operand)}))" : $"(!{Emit(u.Operand)})",
         Binary b => b.Op switch
         {
             "and" => $"({Emit(b.Left)} && {Emit(b.Right)})",
             "or" => $"({Emit(b.Left)} || {Emit(b.Right)})",
             "=>" => $"(!{Emit(b.Left)} || {Emit(b.Right)})",
+            // Bit operations: C# widens small types to int, so cast back. Shift counts outside 0..width-1 are errors.
+            "&" or "|" or "^" => $"unchecked(({CsType(b.Type)})({Emit(b.Left)} {b.Op} {Emit(b.Right)}))",
+            "<<" or ">>" => $"unchecked(({CsType(b.Type)})({Emit(b.Left)} {b.Op} Rt.Shift({Emit(b.Right)}, sizeof({CsType(b.Type)}) * 8)))",
             // Sized integers: C# widens to int, so cast back; `checked` makes overflow a run-time error, never a silent wrap.
             "+" or "-" or "*" or "/" or "%" when b.Type is not ("Int" or "" or "F32" or "F64") =>
                 $"checked(({CsType(b.Type)})({Emit(b.Left)} {b.Op} {Emit(b.Right)}))",
