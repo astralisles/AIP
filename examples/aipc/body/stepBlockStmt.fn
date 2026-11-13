@@ -1,0 +1,5 @@
+fn stepBlockStmt(text Text, pending List<Int>) -> BodyStep
+  "A statement inside a multi-line `if` branch."
+  pure
+body
+  BodyStep("stmt {sexpr(parseExprText(text))}", pending, true)

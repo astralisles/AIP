@@ -1,0 +1,5 @@
+struct BodyStep
+  "The result of reading one body line: the dump line to print (empty for a blank line) and the reading state for the next line."
+  out Text
+  pending List<Int>
+  openIf Bool

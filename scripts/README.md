@@ -13,6 +13,7 @@
 - `check-determinism.ps1 [dirs]` - two `aip emit` runs give byte-identical files.
 - `aip.ps1` also rebuilds when std files were moved, added or deleted (same timestamps), and the build removes stale std copies from its output.
 - `capture-session.ps1` - runs commands and writes `> command` plus real output to a log (evidence).
+- `compare-ast.ps1` - bootstrap check: the AIP body parser (`examplesipc`, `aipc ast <file>`) prints the same dump as `aip ast` for every `.fn` file the C# parser accepts. Exit code = mismatches.
 - `compare-index.ps1` - bootstrap check: the AIP parser (`examples\aipc`, `aipc index <files>`) reads every header in `examples\` and `compiler\std` like the C# compiler (`aip index`, `aip std`). Exit code = mismatches.
 - `compare-lexers.ps1` - bootstrap check: the AIP lexer (`examples\aipc`, `aipc tokens <file>`) prints the same tokens as `aip tokens` for every `.fn`/`.const` file. Exit code = mismatches.
 - `render-log-to-frames.ps1` - renders such a log as PNG frames revealed line by line (for a GIF).

@@ -1,0 +1,5 @@
+fn parseTextParts(raw Text) -> List<Expr>
+  "Split the raw contents of a text literal into literal pieces (Lit) and `{expr}` holes."
+  pure
+body
+  textPartsFrom(raw, 0, "", listEmpty())

@@ -1,0 +1,15 @@
+variant Expr
+  "An expression of the AIP language as the AIP parser reads it. Lit is a piece of text inside TextParts."
+  IntNum(text Text)
+  FloatNum(text Text)
+  BoolVal(value Bool)
+  Lit(text Text)
+  TextParts(parts List<Expr>)
+  NameRef(name Text)
+  CallFn(name Text, args List<Expr>)
+  FieldOf(target Expr, name Text)
+  UnaryOp(op Text, operand Expr)
+  BinaryOp(op Text, left Expr, right Expr)
+  IfExpr(cond Expr, whenTrue Expr, whenFalse Expr)
+  MatchOn(subject Expr)
+  BadExpr(message Text)

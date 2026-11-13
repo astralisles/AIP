@@ -1,0 +1,18 @@
+fn sexpr(e Expr) -> Text
+  "Print an expression as one s-expression, for comparing with the C# parser's dump."
+  pure
+body
+  match e
+    IntNum(text) => "(int {text})"
+    FloatNum(text) => "(float {text})"
+    BoolVal(value) => if value then "(bool true)" else "(bool false)"
+    Lit(text) => sexprQuoted(text)
+    TextParts(parts) => "(text{sexprItems(parts, 0)})"
+    NameRef(name) => "(name {name})"
+    CallFn(name, args) => "(call {name}{sexprItems(args, 0)})"
+    FieldOf(target, name) => "(field {sexpr(target)} {name})"
+    UnaryOp(op, operand) => "(unary {op} {sexpr(operand)})"
+    BinaryOp(op, left, right) => "(binary {op} {sexpr(left)} {sexpr(right)})"
+    IfExpr(cond, whenTrue, whenFalse) => "(if {sexpr(cond)} {sexpr(whenTrue)} {sexpr(whenFalse)})"
+    MatchOn(subject) => "(match {sexpr(subject)})"
+    BadExpr(message) => "(bad {message})"

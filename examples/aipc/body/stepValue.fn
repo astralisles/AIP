@@ -1,0 +1,6 @@
+fn stepValue(prefix Text, toks List<Text>, pos Int) -> BodyStep
+  "Read the value of a statement; a `match` leaves its arms to the lines that follow (indented 4)."
+  pure
+body
+  let v = parseExpr(toks, pos, true)
+  BodyStep("stmt {prefix}{sexpr(v.expr)}", if isMatch(v.expr) then listAppend(listEmpty(), 4) else listEmpty(), false)

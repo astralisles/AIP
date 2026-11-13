@@ -1,0 +1,4 @@
+struct ExprParsed
+  "An expression read from the tokens, and the position of the token after it."
+  expr Expr
+  next Int

@@ -1,0 +1,6 @@
+fn printBodyLine(lines List<Text>, i Int, step BodyStep) -> Unit
+  "Print the dump line of a body line, then read the rest."
+  effects terminal.write
+body
+  printLine(step.out)
+  printBody(lines, i + 1, step.pending, step.openIf)
