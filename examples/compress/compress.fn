@@ -1,0 +1,6 @@
+fn compress(data List<Int>, i Int, out List<Int>) -> List<Int>
+  "Run-length encode bytes as pairs: how many times, then the byte value."
+  pure
+  fails
+body
+  if i >= listLength(data) then out else compressRun(data, i, out, runLength(data, i, listGet(data, i), 0))
