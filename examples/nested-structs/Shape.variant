@@ -1,0 +1,4 @@
+variant Shape
+  "A shape that can be put in a collection."
+  Dot(at Point)
+  Line(from Point, to Point)

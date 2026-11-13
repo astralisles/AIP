@@ -1,0 +1,8 @@
+List of lists: 2 rows, grid[0][1] = 2
+List of structs: second point is 3,4
+Map of structs: work is 5,6
+Map of maps: 1
+List of sets: true
+Set of structs (same point twice): 1
+Struct with collections: red Ann 9
+List of variants: 2
