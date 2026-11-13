@@ -1,0 +1,1 @@
+error effect-missing: `main` is declared with effects terminal.write but uses `set`, which needs mutate

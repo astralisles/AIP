@@ -1,0 +1,7 @@
+fn main() -> Unit
+  "Changes a field without declaring the mutate effect."
+  effects terminal.write
+body
+  let h = Health(10, 0)
+  set h.hp = 5
+  printLine("{h.hp}")

@@ -1,0 +1,4 @@
+struct Health
+  "Hit points and the tick of the last hit."
+  hp Int
+  lastHit Int

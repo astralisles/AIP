@@ -108,7 +108,7 @@ sealed class Parser
             {
                 Lex(text);
                 _matchAllowed = false;
-                var line = ParseExpr();
+                var line = ParseSetOrExpr();
                 ExpectEnd();
                 ((BlockExpr)(inElse ? openIf.Else : openIf.Then)).Stmts.Add(line);
                 continue;
@@ -173,7 +173,7 @@ sealed class Parser
                 ExpectSym("=");
             }
             _matchAllowed = true;
-            stmt.Value = ParseExpr();
+            stmt.Value = stmt.Let == null ? ParseSetOrExpr() : ParseExpr();
             ExpectEnd();
             fn.Body.Add(stmt);
             pending.Clear();
@@ -417,6 +417,22 @@ sealed class Parser
     }
 
     // ---- expressions, lowest precedence first ----
+
+    /// <summary>A statement: `set target.field = value`, or an expression.</summary>
+    Expr ParseSetOrExpr()
+    {
+        if (Peek.Kind == T.Ident && Peek.Text == "set" && _pos + 1 < _toks.Count && _toks[_pos + 1].Kind == T.Ident)
+        {
+            int line = _line;
+            _pos++;
+            var target = ParseExpr();
+            if (target is not Field f) throw Err("syntax", "`set` needs a field on the left, for example `set p.hp = 5`");
+            ExpectSym("=");
+            _matchAllowed = false;
+            return new Assign { Line = line, Target = f, Value = ParseExpr() };
+        }
+        return ParseExpr();
+    }
 
     Expr ParseExpr()
     {

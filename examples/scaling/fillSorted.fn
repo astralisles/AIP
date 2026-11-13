@@ -1,0 +1,5 @@
+fn fillSorted(m SortedSet<Int>, i Int, n Int) -> SortedSet<Int>
+  "Add n - 1 down to i to the sorted set, descending, one at a time."
+  pure
+body
+  if i >= n then m else fillSorted(sortedSetAdd(m, n - 1 - i), i + 1, n)

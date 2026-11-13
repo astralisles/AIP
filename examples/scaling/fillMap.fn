@@ -1,0 +1,5 @@
+fn fillMap(m Map<Int,Int>, i Int, n Int) -> Map<Int,Int>
+  "Store i * 2 under key i for i up to n - 1, one at a time."
+  pure
+body
+  if i >= n then m else fillMap(mapSet(m, i, i * 2), i + 1, n)

@@ -284,8 +284,8 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
         {
             if (_effects.Count > 0)
             {
-                var culprit = fn.Calls.Where(c => program.Fns.TryGetValue(c, out var f) && f.Effects.Count > 0).OrderBy(c => c).First();
-                Error(fn.EffectsLine, "const-not-pure", $"constant `{fn.Name}` calls `{culprit}`, which needs {program.Fns[culprit].EffectsText}",
+                var culprit = fn.Calls.Where(c => program.Fns.TryGetValue(c, out var f) && f.Effects.Count > 0).OrderBy(c => c).FirstOrDefault();
+                Error(fn.EffectsLine, "const-not-pure", culprit == null ? $"constant `{fn.Name}` uses `set`" : $"constant `{fn.Name}` calls `{culprit}`, which needs {program.Fns[culprit].EffectsText}",
                     "a constant must be pure; compute this value in a function that declares the effect");
             }
             return;
@@ -296,9 +296,10 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
         if (missing.Count > 0)
         {
             var needed = string.Join(", ", fn.Effects.Union(_effects).OrderBy(e => e));
-            var culprit = fn.Calls.Where(c => program.Fns.TryGetValue(c, out var f) && f.Effects.Intersect(missing).Any()).OrderBy(c => c).First();
+            var culprit = fn.Calls.Where(c => program.Fns.TryGetValue(c, out var f) && f.Effects.Intersect(missing).Any()).OrderBy(c => c).FirstOrDefault();
+            var because = culprit != null ? $"calls `{culprit}`, which needs {string.Join(", ", missing)}" : $"uses `set`, which needs {string.Join(", ", missing)}";
             Error(fn.EffectsLine, "effect-missing",
-                $"`{fn.Name}` is declared {(fn.Effects.Count == 0 ? "pure" : $"with effects {fn.EffectsText}")} but calls `{culprit}`, which needs {string.Join(", ", missing)}",
+                $"`{fn.Name}` is declared {(fn.Effects.Count == 0 ? "pure" : $"with effects {fn.EffectsText}")} but {because}",
                 $"declare `effects {needed}` or remove the call");
         }
         if (unused.Count > 0 && !_unknownCall)
@@ -369,6 +370,7 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
             NameRef n => NameType(n, env, used),
             Call c => CallType(c, env, used),
             Field f => FieldType(f, env, used),
+            Assign a => AssignType(a, env, used),
             MatchExpr m => MatchType(m, env, used),
             Unary u => UnaryType(u, env, used),
             Binary b => BinaryType(b, env, used),
@@ -467,6 +469,17 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
                 if (!Unify(cs.Fields[i].Type.Name, argTypes[i], vars) && !FitLiteral(c.Args[i], cs.Fields[i].Type.Name))
                     Error(c.Line, "type-mismatch", $"field `{cs.Fields[i].Name}` of `{c.Name}` must be {Subst(cs.Fields[i].Type.Name, vars)}, found {argTypes[i]}", $"signature: {sig}");
         return def.Params.Count == 0 ? def.Name : Join(def.Name, def.Params.Select(p => vars.GetValueOrDefault(p, "_")));
+    }
+
+    string AssignType(Assign a, Dictionary<string, string> env, HashSet<string> used)
+    {
+        var ft = FieldType(a.Target, env, used);
+        var vt = TypeOf(a.Value, env, used);
+        if (_inContract) Error(a.Line, "contract-not-pure", "`set` changes data and cannot be used in a contract or example");
+        else _effects.Add("mutate");
+        if (ft != "" && vt != "" && !Compat(vt, ft) && !Widens(vt, ft) && !FitLiteral(a.Value, ft))
+            Error(a.Line, "type-mismatch", $"field `{a.Target.Name}` is {ft} but the value is {vt}");
+        return "Unit";
     }
 
     string FieldType(Field f, Dictionary<string, string> env, HashSet<string> used)

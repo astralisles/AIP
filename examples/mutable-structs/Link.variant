@@ -1,0 +1,4 @@
+variant Link
+  "Either nothing, or a node."
+  End
+  To(node Node)

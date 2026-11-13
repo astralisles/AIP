@@ -1,0 +1,7 @@
+set 100000 has 99999: true has 100000: false
+old version still has 1 item, new one has 2
+map 100000 key 77777 -> 155554
+list 100000 item 99999 99999 item 5 5 -> 42
+sorted 100000 first 0
+queue 100000 front 0 drained sum 4999950000
+priority 100000 front 99999

@@ -1,0 +1,6 @@
+hp seen through the alias: 7
+last hit: 5
+before: none
+player -> fish
+fish -> player
+player -> fish -> player

@@ -13,6 +13,7 @@ static class Lint
         TextLit t => t.Parts.OfType<Expr>(),
         Call c => c.Args,
         Field f => new[] { f.Target },
+        Assign a => new Expr[] { a.Target, a.Value },
         MatchExpr m => m.Arms.Select(a => a.Body).Prepend(m.Subject),
         Unary u => new[] { u.Operand },
         Binary b => new[] { b.Left, b.Right },

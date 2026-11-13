@@ -1,0 +1,16 @@
+fn main() -> Unit
+  "Show in-place field updates, shared references and a cycle."
+  effects mutate, terminal.write
+body
+  let h = Health(10, 0)
+  let alias = h
+  damage(h, 3, 5)
+  printLine("hp seen through the alias: {alias.hp}")
+  printLine("last hit: {h.lastHit}")
+  let p = Node("player", End())
+  let f = Node("fish", End())
+  printLine("before: {nextName(p)}")
+  join(p, f)
+  printLine("player -> {nextName(p)}")
+  printLine("fish -> {nextName(f)}")
+  printLine("player -> fish -> {nextName(f)}")

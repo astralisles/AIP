@@ -1,0 +1,5 @@
+fn fillSet(s Set<Int>, i Int, n Int) -> Set<Int>
+  "Add the numbers i up to n - 1 to the set, one at a time."
+  pure
+body
+  if i >= n then s else fillSet(setAdd(s, i), i + 1, n)

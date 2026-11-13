@@ -117,3 +117,34 @@ roughly linear (doubling n at most about doubles time) and the old versions to s
 
 **Open points.** Measure the compiler's peak allocation under phase 1 before building phase 2. If it fits in a few GB, phase 2
 can wait.
+
+## Update (iteration 7): what is now built
+
+**Collections are persistent** (`compiler/Aip.Compiler/PersistentRt.cs`, emitted as `Persistent.cs`). An update copies
+only the path to the change and shares the rest; the old version stays valid. API unchanged.
+
+| Collection | Operation | Cost |
+|---|---|---|
+| List | get, set, append, length | O(log32 n) |
+| List | insert, remove, concat, slice, reverse | O(n) |
+| Map, Set | get, has, set/add, remove | O(log32 n) expected (HAMT); size O(1) |
+| Map, Set | keys/items (first-added order) | O(n) |
+| SortedMap, SortedSet | get, set, remove, min | O(log2 n) (persistent AVL) |
+| Queue | push, front | O(log32 n); pop amortised O(1) |
+| PriorityQueue | push, pop | O(log2 n); ties pop in the order added |
+
+Test: `examples/scaling` builds 100000 items in each collection, one update at a time, and checks that old versions
+are still readable; `tests/checks/scaling.ps1` adds a time limit. (The old copy-everything code was O(n^2) here.)
+
+**Structs are mutable** with reference semantics: `set p.hp = p.hp - 3` changes the one shared record, so every
+alias sees it, and two structs can point at each other (player <-> fish). Any function containing `set` has the
+new effect `mutate` in its signature (and in the index); pure functions cannot mutate, and contracts cannot either.
+Test: `examples/mutable-structs`, `tests/errors/missing-mutate`.
+
+**Consequences, stated honestly**
+- Cycles now exist, so the self-hosted runtime needs a tracing GC or cycle collector, not reference counts alone.
+  (The C# back end uses the .NET GC, so nothing is needed there.)
+- Struct `==`, hashing and text conversion are by value and recurse; on a cyclic struct they can overflow the stack.
+  A struct used as a map key must not be mutated afterwards.
+- NOT done: the unique-owner in-place update (reference counts) is still future work; persistent sharing alone gives
+  the Big-O above. The `aip run` interpreter (only used for `example` checks) still copies collections.

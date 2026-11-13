@@ -1,0 +1,5 @@
+fn fillPriority(q PriorityQueue<Int>, i Int, n Int) -> PriorityQueue<Int>
+  "Push the numbers i up to n - 1 with the highest number most urgent, one at a time."
+  pure
+body
+  if i >= n then q else fillPriority(priorityQueuePush(q, i, n - i), i + 1, n)
