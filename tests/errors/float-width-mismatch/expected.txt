@@ -1,1 +1,1 @@
-error type-mismatch: `+` needs the same number type on both sides, found F32 and F64
+error type-mismatch: `+` needs the same number type on both sides, found F64 and Int

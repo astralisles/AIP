@@ -1,4 +1,4 @@
-fn take(x Int) -> Int
+fn take(x I32) -> I32
   "t"
   pure
 body

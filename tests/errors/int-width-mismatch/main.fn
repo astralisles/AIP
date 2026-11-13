@@ -1,7 +1,7 @@
 fn main() -> Unit
-  "Mixing widths is an error."
+  "I32 and U32 do not fit in each other."
   effects terminal.write
 body
-  let a = numToI32(1)
-  let b = numToI8(2)
+  let a = numToU32(1)
+  let b = numToI32(2)
   printLine("{a + b}")

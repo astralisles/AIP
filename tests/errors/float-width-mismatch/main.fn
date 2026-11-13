@@ -1,7 +1,7 @@
 fn main() -> Unit
-  "Mixing F32 and F64 is an error."
+  "Int never turns into a float on its own."
   effects terminal.write
 body
-  let a = numToF32(1)
-  let b = numToF64(2)
+  let a = numToF64(1)
+  let b = 2
   printLine("{a + b}")

@@ -66,6 +66,19 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
     static string Join(string name, IEnumerable<string> args) => $"{name}<{string.Join(",", args)}>";
     static bool IsVar(string t) => t.Length == 1 && char.IsAsciiLetterUpper(t[0]);
 
+    /// <summary>Lossless widening: every value of `from` is a value of `to` (never Int to a float, never U64 to a signed type).</summary>
+    static readonly Dictionary<string, string[]> WidensTo = new()
+    {
+        ["I8"] = new[] { "I16", "I32", "Int" },
+        ["I16"] = new[] { "I32", "Int" },
+        ["I32"] = new[] { "Int" },
+        ["U8"] = new[] { "U16", "U32", "U64", "I16", "I32", "Int" },
+        ["U16"] = new[] { "U32", "U64", "I32", "Int" },
+        ["U32"] = new[] { "U64", "Int" },
+        ["F32"] = new[] { "F64" },
+    };
+    static bool Widens(string from, string to) => WidensTo.TryGetValue(from, out var t) && t.Contains(to);
+
     /// <summary>Types match; `_` (an element type not known yet, e.g. in an empty list) matches anything.</summary>
     static bool Compat(string a, string b)
     {
@@ -105,7 +118,7 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
                 if (!Unify(p.Value.Args[i], a.Value.Args[i], vars)) return false;
             return true;
         }
-        return Compat(pattern, actual);
+        return Compat(pattern, actual) || Widens(actual, pattern);
     }
 
     static string Subst(string t, Dictionary<string, string> vars)
@@ -188,7 +201,7 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
             }
             else if (last)
             {
-                if (t != "" && !Compat(t, fn.Ret.Name) && !FitLiteral(s.Value, fn.Ret.Name))
+                if (t != "" && !Compat(t, fn.Ret.Name) && !Widens(t, fn.Ret.Name) && !FitLiteral(s.Value, fn.Ret.Name))
                     Error(s.Line, "type-mismatch", $"the body ends with {t} but `{fn.Name}` returns {fn.Ret.Name}");
             }
             else if (t != "" && t != "Unit")
@@ -346,7 +359,7 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
             Error(c.Line, "wrong-arguments", $"`{c.Name}` takes {cs.Fields.Count} argument(s), found {argTypes.Count}", $"signature: {sig}");
         else
             for (int i = 0; i < argTypes.Count; i++)
-                if (argTypes[i] != "" && !Compat(cs.Fields[i].Type.Name, argTypes[i]) && !FitLiteral(c.Args[i], cs.Fields[i].Type.Name))
+                if (argTypes[i] != "" && !Compat(cs.Fields[i].Type.Name, argTypes[i]) && !Widens(argTypes[i], cs.Fields[i].Type.Name) && !FitLiteral(c.Args[i], cs.Fields[i].Type.Name))
                     Error(c.Line, "type-mismatch", $"field `{cs.Fields[i].Name}` of `{c.Name}` must be {cs.Fields[i].Type.Name}, found {argTypes[i]}", $"signature: {sig}");
         return def.Name;
     }
@@ -441,6 +454,10 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
         var r = TypeOf(b.Right, env, used);
         if (IsDefaultLit(l) && l != r && FitLiteral(b.Left, r)) l = r;
         else if (IsDefaultLit(r) && l != r && FitLiteral(b.Right, l)) r = l;
+        if (IsNum(l) && IsNum(r) && l != r && b.Op is "+" or "-" or "*" or "/" or "%" or "<" or "<=" or ">" or ">=" or "==" or "!=")
+        {
+            if (Widens(l, r)) l = r; else if (Widens(r, l)) r = l; // the narrower side is widened, never the other way
+        }
         bool known = l != "" && r != "";
         switch (b.Op)
         {
@@ -448,11 +465,11 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
                 if (known && (!IsNum(l) || l != r))
                     Error(b.Line, "type-mismatch", $"`{b.Op}` needs the same number type on both sides, found {l} and {r}",
                         b.Op == "+" && (l == "Text" || r == "Text") ? "to join texts, write one text with `{...}` parts"
-                        : IsNum(l) && IsNum(r) ? "convert one side first, for example with numFromI32 / numToF64" : null);
+                        : IsNum(l) && IsNum(r) ? "neither type fits in the other; convert one side first, for example with numFromI32 / numToF64" : null);
                 return IsNum(l) ? l : IsNum(r) ? r : "Int";
             case "<" or "<=" or ">" or ">=":
                 if (known && (!IsNum(l) || l != r)) Error(b.Line, "type-mismatch", $"`{b.Op}` needs the same number type on both sides, found {l} and {r}",
-                    IsNum(l) && IsNum(r) ? "convert one side first, for example with numFromI32 / numToF64" : null);
+                    IsNum(l) && IsNum(r) ? "neither type fits in the other; convert one side first, for example with numFromI32 / numToF64" : null);
                 return "Bool";
             case "==" or "!=":
                 if (known && (!Compat(l, r) || l == "Unit" || IsList(l) || program.Types.ContainsKey(l)))
