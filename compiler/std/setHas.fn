@@ -1,0 +1,4 @@
+fn setHas(s Set<T>, item T) -> Bool
+  "True when the item is in the set."
+  pure
+extern

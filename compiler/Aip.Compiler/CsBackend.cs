@@ -32,6 +32,19 @@ sealed class CsBackend : IBackend
         ["listLength"] = "(long)({0}).Count",
         ["listGet"] = "({0})[(int)({1})]",
         ["listAppend"] = "Rt.Append({0}, {1})",
+        ["mapEmpty"] = "new System.Collections.Generic.Dictionary<object, object>()",
+        ["mapSize"] = "(long)({0}).Count",
+        ["mapHas"] = "({0}).ContainsKey({1})",
+        ["mapGet"] = "Rt.MapGet({0}, {1})",
+        ["mapSet"] = "Rt.MapSet({0}, {1}, {2})",
+        ["mapRemove"] = "Rt.MapRemove({0}, {1})",
+        ["mapKeys"] = "new System.Collections.Generic.List<object>(({0}).Keys)",
+        ["setEmpty"] = "new System.Collections.Generic.Dictionary<object, object>()",
+        ["setSize"] = "(long)({0}).Count",
+        ["setHas"] = "({0}).ContainsKey({1})",
+        ["setAdd"] = "Rt.MapSet({0}, {1}, true)",
+        ["setRemove"] = "Rt.MapRemove({0}, {1})",
+        ["setItems"] = "new System.Collections.Generic.List<object>(({0}).Keys)",
         ["fileRead"] = "System.IO.File.ReadAllText({0})",
         ["fileWrite"] = "Rt.Write({0}, {1})",
         ["noop"] = "Rt.Nop()",
@@ -91,6 +104,8 @@ sealed class CsBackend : IBackend
     {
         "Int" => "long", "Text" => "string", "Bool" => "bool", "_" => "object",
         _ when t.StartsWith("List<") => "System.Collections.Generic.List<object>",
+        // Maps and sets are insertion-ordered dictionaries (a set maps each item to true); every change copies.
+        _ when t.StartsWith("Map<") || t.StartsWith("Set<") => "System.Collections.Generic.Dictionary<object, object>",
         _ => "void",
     };
 
@@ -127,7 +142,7 @@ sealed class CsBackend : IBackend
             ? Quote(only)
             : "string.Concat(" + string.Join(", ", t.Parts.Select(p => p is string s ? Quote(s) : $"Rt.Text({Emit((Expr)p)})")) + ")",
         Call c => Externs.TryGetValue(c.Name, out var template)
-            ? (c.Name == "listGet" ? $"(({CsType(c.Type)})" : "") + string.Format(template, c.Args.Select(Emit).ToArray<object>()) + (c.Name == "listGet" ? ")" : "")
+            ? (c.Name is "listGet" or "mapGet" ? $"(({CsType(c.Type)})" : "") + string.Format(template, c.Args.Select(Emit).ToArray<object>()) + (c.Name is "listGet" or "mapGet" ? ")" : "")
             : $"Fn.@{c.Name}({string.Join(", ", c.Args.Select(Emit))})",
         Unary u => u.Op == "-" ? $"(-{Emit(u.Operand)})" : $"(!{Emit(u.Operand)})",
         Binary b => b.Op switch
@@ -185,6 +200,20 @@ sealed class CsBackend : IBackend
                 var r = new System.Collections.Generic.List<object>(l.Count + 1);
                 r.AddRange(l);
                 r.Add(item);
+                return r;
+            }
+            public static object MapGet(System.Collections.Generic.Dictionary<object, object> m, object k) =>
+                m.TryGetValue(k, out var v) ? v : throw new System.Collections.Generic.KeyNotFoundException("mapGet: key not in the map");
+            public static System.Collections.Generic.Dictionary<object, object> MapSet(System.Collections.Generic.Dictionary<object, object> m, object k, object v)
+            {
+                var r = new System.Collections.Generic.Dictionary<object, object>(m);
+                r[k] = v;
+                return r;
+            }
+            public static System.Collections.Generic.Dictionary<object, object> MapRemove(System.Collections.Generic.Dictionary<object, object> m, object k)
+            {
+                var r = new System.Collections.Generic.Dictionary<object, object>();
+                foreach (var p in m) if (!p.Key.Equals(k)) r.Add(p.Key, p.Value);
                 return r;
             }
             public static void Nop() { }

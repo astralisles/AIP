@@ -1,0 +1,4 @@
+fn setRemove(s Set<T>, item T) -> Set<T>
+  "A new set without the item; the original is unchanged."
+  pure
+extern

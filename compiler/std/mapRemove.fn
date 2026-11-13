@@ -1,0 +1,4 @@
+fn mapRemove(m Map<K,V>, key K) -> Map<K,V>
+  "A new map without the key; the original is unchanged."
+  pure
+extern

@@ -16,7 +16,7 @@ line lists everything the program can do. Every function must be reachable from 
 Standard library: `std/*.fn` are header-only `extern` functions; each back end
 supplies the implementation (see `Externs` in `CsBackend.cs`).
 
-Supported so far: `.fn` files; Int, Text, Bool, Unit; `let`, calls, operators,
+Supported so far: `.fn` files; Int, Text, Bool, Unit; `List<T>`, `Set<T>`, `Map<K,V>` (immutable: every change returns a new value; see `examples/collections`); `let`, calls, operators,
 `if/then/else`, text with `{expr}` parts. Ranges, `requires`, `ensures` and
 `example` are parsed and type-checked but not yet proved or run.
 
@@ -30,5 +30,5 @@ for every `.fn` file, including its own source. It is part of `scripts\test.ps1`
 Still missing before the compiler can compile itself:
 1. `struct`, `variant` and `match` (tokens, AST nodes, types) and the `.struct/.variant/.const` files.
 2. Parser in AIP (lines to AST), then checker, then an emitter that writes the C# text.
-3. A `Map`/lookup type and a way to run `dotnet publish` (a `process.run` effect) from AIP.
+3. (`Map` and `Set` now exist.) A way to run `dotnet publish` (a `process.run` effect) from AIP.
 4. Then: C# compiler builds the AIP compiler (stage 1), stage 1 builds itself (stage 2), stage 2 output must equal stage 1.

@@ -1,0 +1,4 @@
+fn setEmpty() -> Set<T>
+  "A set with no items."
+  pure
+extern
