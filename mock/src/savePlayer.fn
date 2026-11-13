@@ -1,5 +1,0 @@
-fn savePlayer(p Player, path Path) -> Result<Unit, FileError>
-  "Write a player to a file as one line of text."
-  effects file.write
-body
-  writeTextFile(path, encodePlayer(p))

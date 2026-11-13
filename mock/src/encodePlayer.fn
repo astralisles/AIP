@@ -1,6 +1,0 @@
-fn encodePlayer(p Player) -> Text 1..
-  "Turn a player into one line of text for saving."
-  pure
-  example encodePlayer(Player("Ann", 50, Armor(Chain, 80))) == "Ann,50,Chain,80"
-body
-  "{p.name},{p.hp},{p.armor.kind},{p.armor.durability}"

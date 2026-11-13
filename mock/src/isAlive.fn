@@ -1,5 +1,0 @@
-fn isAlive(p Player) -> Bool
-  "True while a player still has hp."
-  pure
-body
-  p.hp > 0
