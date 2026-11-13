@@ -16,6 +16,20 @@ is never changed after it is built, there is no way to patch the link in afterwa
 change this: the function can only build *new* structs that hold the old ones, so the pointers always go from newer to older.
 Data that is truly circular (a graph, parent/child) is written with keys instead, for example a `Map` from id to node, where a node
 stores the other's id. An id is plain data, not a pointer, so reference counting never sees a cycle.
+**But cyclic data is common in real programs** (doubly linked lists, parent pointers in trees, graphs, observers, a compiler's
+symbol table pointing at scopes that point back). The language does not forbid the *shape*, it forbids the *pointer*. The cost is real:
+- The program carries an id table and looks nodes up (O(1) or O(log n) per hop instead of a pointer follow).
+- "Changing" a node means making a new node and a new table entry; with parent ids, the children need no rebuild, which is the usual
+  upside over pointers.
+- Dangling ids are possible (an id with no entry), so the lookup returns a `Result`/`Option` or crashes, as `mapGet` does today.
+Options, in order of preference:
+1. Keep ids and a `Map` (works today, no runtime cost to the memory design).
+2. Add a std "arena/graph" type: nodes are created into an arena and referred to by typed handles. Still immutable from the outside,
+   still no pointers in the language, and the runtime can free the whole arena at once. This makes the common case ergonomic.
+3. Allow real cycles (mutation or recursive `let`) and add a cycle collector or tracing GC. Largest runtime, and it weakens the
+   "pure functions cannot race" argument in `parallelism-T-0935.md`. Not recommended unless 1 and 2 prove too slow or awkward
+   (measure on the self-hosted compiler first).
+
 This guarantee holds only while we do not add: mutation, lazy or recursive `let` (`let a = S(b)` and `let b = S(a)`), or a
 cell/reference type. Any such feature needs a cycle collector, so it must be checked against this note first.
 
