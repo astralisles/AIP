@@ -82,6 +82,44 @@ foreach ($gate in 'check-error-coverage', 'check-externs', 'check-index', 'check
   Report "gate: $gate" ($LASTEXITCODE -eq 0) $out
 }
 
+# run aip in its own process so its stderr is plain text, not PowerShell error records
+function AipBoth { (cmd /c "powershell -NoProfile -File `"$aip`" $($args -join ' ') 2>&1" | Out-String) }
+function AipOut { (cmd /c "powershell -NoProfile -File `"$aip`" $($args -join ' ') 2>nul" | Out-String).Trim() }
+# logging and debugging: logLine goes to stderr only; --verbose logs compiler steps; crashes are reported cleanly
+$stdout = AipOut run examples\logging
+Report 'logging: stdout has only the normal output' ($stdout -eq 'Hello from the logging example') "got: $stdout"
+$all = AipBoth run examples\logging --verbose
+Report 'logging: logLine and --verbose go to stderr' ($all.Contains('debug: starting') -and $all.Contains('[aip') -and $all.Contains('checked: 0 error(s)')) $all
+$crash = AipBoth run examples\crash
+Report 'crash: run-time error is reported with exit code 1' ($LASTEXITCODE -eq 1 -and $crash.Contains('runtime error: KeyNotFoundException') -and -not $crash.Contains(' at Fn.')) $crash
+$env:AIP_TRACE = '1'
+$crash = AipBoth run examples\crash
+Remove-Item Env:\AIP_TRACE
+Report 'crash: AIP_TRACE=1 prints the stack trace' ($crash.Contains('at Fn.main')) $crash
+# profiling: AIP_PROFILE writes JSON (time, memory, per-function calls); AIP_CALLS writes one JSON line per call with arguments
+$tmp = Join-Path ([IO.Path]::GetTempPath()) ("aip-prof-" + [guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory $tmp | Out-Null
+$env:AIP_PROFILE = Join-Path $tmp 'profile.json'; $env:AIP_CALLS = Join-Path $tmp 'calls.jsonl'; $env:AIP_CALLS_MAX = '1'
+$null = AipBoth run examples\adding
+Remove-Item Env:\AIP_PROFILE, Env:\AIP_CALLS, Env:\AIP_CALLS_MAX
+$p = try { Get-Content (Join-Path $tmp 'profile.json') -Raw | ConvertFrom-Json } catch { $null }
+$c = @(try { Get-Content (Join-Path $tmp 'calls.jsonl') } catch { @() })
+Report 'profile: AIP_PROFILE and AIP_CALLS write valid JSON' ($p -and $p.schema -eq 1 -and $p.functions.Count -gt 0 -and $p.maxCallDepth -ge 1 -and $c.Count -eq 2 -and $c[1].Contains('truncated')) "profile: $p calls: $c"
+Remove-Item -Recurse -Force $tmp
+# std layout (T-0942): grouped one folder deep; no stale flat copies in the build output; the compiler rejects a misplaced file
+$out = (& $aip std | Out-String)
+$groups = @($out -split "`r?`n" | Where-Object { $_ -match '^\w+/$' })
+$srcCount = @(Get-ChildItem compiler\std -Recurse -File -Filter *.fn).Count
+$fnCount = @($out -split "`r?`n" | Where-Object { $_ -match '^  \w+\(' }).Count
+Report 'std: `aip std` lists every std file under its group' ($LASTEXITCODE -eq 0 -and $groups.Count -ge 9 -and $fnCount -eq $srcCount -and @(Get-ChildItem compiler\std -File -Filter *.fn).Count -eq 0) "groups: $($groups -join ' '), listed $fnCount of $srcCount`n$out"
+$bin = Join-Path $root 'compiler\Aip.Compiler\bin\Release\net10.0'
+$copy = Join-Path ([IO.Path]::GetTempPath()) ('aip-stdlayout-' + [guid]::NewGuid().ToString('N'))
+Copy-Item $bin $copy -Recurse
+Move-Item (Join-Path $copy 'std\text\textLength.fn') (Join-Path $copy 'std\textLength.fn')
+Move-Item (Join-Path $copy 'std\list\listGet.fn') (Join-Path $copy 'std\map\listGet.fn')
+$out = (& (Join-Path $copy 'aip.exe') check examples\hello | Out-String).Trim()
+Remove-Item -Recurse -Force $copy
+Report 'std: misplaced std files are rejected (std-layout)' ($LASTEXITCODE -ne 0 -and $out.Contains('std-layout') -and $out.Contains('`textLength` must be in a group folder') -and $out.Contains('`listGet` in std/map/ must start with `map`')) $out
 $out = (& (Join-Path $PSScriptRoot "compare-lexers.ps1") | Out-String).Trim()
 Report "bootstrap: AIP lexer matches the C# lexer" ($LASTEXITCODE -eq 0) $out
 if ($failed -eq 0) { 'ALL PASSED' } else { "$failed FAILED" }

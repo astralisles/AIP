@@ -6,6 +6,7 @@ namespace Aip;
 /// <summary>Back end that emits C# and builds it with the .NET SDK.</summary>
 sealed class CsBackend : IBackend
 {
+    public Action<string> Log { get; init; } = _ => { };
     public string Name => "cs";
 
     /// <summary>Language target name -> .NET runtime identifier.</summary>
@@ -21,8 +22,8 @@ sealed class CsBackend : IBackend
     /// <summary>How each std extern function is written in C#. {0}, {1}... are the arguments.</summary>
     static readonly Dictionary<string, string> Externs = new()
     {
+        ["logLine"] = "System.Console.Error.Write({0} + \"\\n\")",
         ["printLine"] = "System.Console.Out.Write({0} + \"\\n\")",
-        ["writeFile"] = "System.IO.File.WriteAllText({0}, {1})",
         ["textLength"] = "(long)({0}).Length",
         ["textSlice"] = "Rt.Slice({0}, {1}, {2})",
         ["textCode"] = "(long)({0})[(int)({1})]",
@@ -77,7 +78,12 @@ sealed class CsBackend : IBackend
         var hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
             Encoding.UTF8.GetBytes(rid + "\0" + string.Join("\0", files.Select(p => p.Key + "\0" + p.Value)))));
         var stamp = Path.Combine(binDir, ".aip-build-hash");
-        if (File.Exists(exePath) && File.Exists(stamp) && File.ReadAllText(stamp) == hash) return exePath;
+        if (File.Exists(exePath) && File.Exists(stamp) && File.ReadAllText(stamp) == hash)
+        {
+            Log("generated C# unchanged since last build; skipping dotnet publish");
+            return exePath;
+        }
+        Log($"generated {files.Count} C# file(s) in {srcDir}; running dotnet publish");
 
         Directory.CreateDirectory(srcDir);
         foreach (var old in Directory.EnumerateFiles(srcDir, "*.cs").Where(p => !files.ContainsKey(Path.GetFileName(p))))
@@ -104,6 +110,7 @@ sealed class CsBackend : IBackend
         proc.WaitForExit();
         if (proc.ExitCode != 0)
         {
+            Log($"dotnet publish exit code {proc.ExitCode}");
             Console.WriteLine("error backend-failed: the generated C# did not build (this is a compiler bug or a missing .NET component)");
             foreach (var line in (output + errTask.Result).Split('\n').Where(l => l.Contains("error")).Distinct().Take(10))
                 Console.WriteLine("  " + line.Trim());
@@ -170,6 +177,10 @@ sealed class CsBackend : IBackend
         sb.Append("public static partial class Fn\n{\n");
         sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"    /// <summary>{System.Security.SecurityElement.Escape(fn.Doc)}</summary>\n");
         sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"    public static {CsType(fn.Ret.Name)} @{fn.Name}({string.Join(", ", fn.Params.Select(p => $"{CsType(p.Type.Name)} @{p.Name}"))})\n    {{\n");
+        // Opt-in run-time inspection (AIP_PROFILE / AIP_CALLS, see compiler/README.md): off by default, one bool check per call.
+        var argList = string.Join(", ", fn.Params.Select(p => $"@{p.Name}"));
+        sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"        if (Rt.Calls) Rt.Call(\"{fn.Name}\", new object[] {{ {argList} }});\n");
+        sb.Append("        long __t = Rt.Prof ? Rt.Enter() : 0;\n        try\n        {\n");
         for (int i = 0; i < fn.Body.Count; i++)
         {
             var s = fn.Body[i];
@@ -178,6 +189,7 @@ sealed class CsBackend : IBackend
             else if (i == fn.Body.Count - 1 && fn.Ret.Name != "Unit") sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"        return {e};\n");
             else sb.Append(EmitUnit(s.Value, "        "));
         }
+        sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"        }}\n        finally {{ if (Rt.Prof) Rt.Leave(\"{fn.Name}\", __t); }}\n");
         sb.Append("    }\n}\n");
         return sb.ToString();
     }
@@ -243,11 +255,28 @@ sealed class CsBackend : IBackend
             public static void Main(string[] args)
             {
                 Rt.Args = args;
+                Rt.Init();
                 System.Console.OutputEncoding = new System.Text.UTF8Encoding(false);
                 // Deep recursion is how loops are written, so run on a big stack.
-                var t = new System.Threading.Thread(() => Fn.@main(), 512 * 1024 * 1024);
+                int code = 0;
+                var t = new System.Threading.Thread(() =>
+                {
+                    try { Fn.@main(); }
+                    catch (System.Exception e)
+                    {
+                        // Debugging aid: a clean one-line error; AIP_TRACE=1 adds the C# stack (function names are Fn.<name>).
+                        var trace = System.Environment.GetEnvironmentVariable("AIP_TRACE");
+                        System.Console.Error.WriteLine("runtime error: " + e.GetType().Name + ": " + e.Message);
+                        if (trace == "1" || trace == "true") System.Console.Error.WriteLine(e.StackTrace);
+                        else System.Console.Error.WriteLine("  (set AIP_TRACE=1 to see which functions were running)");
+                        code = 1;
+                        Rt.Error = e.GetType().Name + ": " + e.Message;
+                    }
+                }, 512 * 1024 * 1024);
                 t.Start();
                 t.Join();
+                Rt.Report(code);
+                System.Environment.Exit(code);
             }
         }
 
@@ -281,6 +310,91 @@ sealed class CsBackend : IBackend
                 return r;
             }
             public static void Nop() { }
+
+            // ---- opt-in profiling and call log (one program thread; parallel tasks (T-0935) will need per-thread state) ----
+            public static bool Prof, Calls;
+            public static string? Error;
+            static string? profPath, callsPath;
+            static long startTs, depth, maxDepth, callLimit, callCount;
+            static System.Text.StringBuilder callLog = new();
+            sealed class Stat { public long Calls, Self; }
+            static readonly System.Collections.Generic.Dictionary<string, Stat> stats = new();
+            static readonly System.Collections.Generic.List<long> childTime = new();
+            static readonly System.Globalization.CultureInfo Inv = System.Globalization.CultureInfo.InvariantCulture;
+            public static void Init()
+            {
+                profPath = System.Environment.GetEnvironmentVariable("AIP_PROFILE");
+                callsPath = System.Environment.GetEnvironmentVariable("AIP_CALLS");
+                Prof = !string.IsNullOrEmpty(profPath);
+                Calls = !string.IsNullOrEmpty(callsPath);
+                callLimit = long.TryParse(System.Environment.GetEnvironmentVariable("AIP_CALLS_MAX"), out var n) ? n : 10000;
+                startTs = System.Diagnostics.Stopwatch.GetTimestamp();
+            }
+            public static long Enter()
+            {
+                depth++;
+                if (depth > maxDepth) maxDepth = depth;
+                childTime.Add(0);
+                return System.Diagnostics.Stopwatch.GetTimestamp();
+            }
+            public static void Leave(string name, long t0)
+            {
+                long total = System.Diagnostics.Stopwatch.GetTimestamp() - t0;
+                long kids = childTime[^1];
+                childTime.RemoveAt(childTime.Count - 1);
+                if (childTime.Count > 0) childTime[^1] += total;
+                if (!stats.TryGetValue(name, out var s)) stats[name] = s = new Stat();
+                s.Calls++;
+                s.Self += total - kids;
+                depth--;
+            }
+            public static void Call(string name, object[] a)
+            {
+                callCount++;
+                if (callCount > callLimit) return;
+                callLog.Append("{\"n\":").Append(callCount).Append(",\"depth\":").Append(depth).Append(",\"fn\":\"").Append(name).Append("\",\"args\":[");
+                for (int i = 0; i < a.Length; i++)
+                {
+                    var v = a[i] is string str ? str : System.Convert.ToString(a[i], Inv) ?? "null";
+                    if (v.Length > 120) v = v.Substring(0, 120) + "...";
+                    callLog.Append(i > 0 ? "," : "").Append(Json(v));
+                }
+                callLog.Append("]}\n");
+            }
+            static string Json(string v)
+            {
+                var sb = new System.Text.StringBuilder("\"");
+                foreach (var c in v)
+                    sb.Append(c switch { '"' => "\\\"", '\\' => "\\\\", '\n' => "\\n", '\r' => "\\r", '\t' => "\\t", _ when c < ' ' => "\\u" + ((int)c).ToString("X4"), _ => c.ToString() });
+                return sb.Append('"').ToString();
+            }
+            static void Out(string? path, string text)
+            {
+                if (path == "-") System.Console.Error.Write(text);
+                else if (path != null) System.IO.File.WriteAllText(path, text);
+            }
+            public static void Report(int code)
+            {
+                if (Calls)
+                {
+                    if (callCount > callLimit) callLog.Append("{\"truncated\":true,\"calls\":").Append(callCount).Append(",\"logged\":").Append(callLimit).Append("}\n");
+                    Out(callsPath, callLog.ToString());
+                }
+                if (!Prof) return;
+                string ms(long ts) => (ts * 1000.0 / System.Diagnostics.Stopwatch.Frequency).ToString("0.###", Inv);
+                var proc = System.Diagnostics.Process.GetCurrentProcess();
+                var sb = new System.Text.StringBuilder("{\n");
+                sb.Append($"  \"schema\": 1,\n  \"exitCode\": {code},\n  \"error\": {(Error == null ? "null" : Json(Error))},\n");
+                sb.Append($"  \"wallMs\": {ms(System.Diagnostics.Stopwatch.GetTimestamp() - startTs)},\n");
+                sb.Append($"  \"cpuMs\": {proc.TotalProcessorTime.TotalMilliseconds.ToString("0.###", Inv)},\n");
+                sb.Append($"  \"peakWorkingSetBytes\": {proc.PeakWorkingSet64},\n  \"allocatedBytes\": {System.GC.GetTotalAllocatedBytes()},\n");
+                sb.Append($"  \"gcCollections\": [{System.GC.CollectionCount(0)}, {System.GC.CollectionCount(1)}, {System.GC.CollectionCount(2)}],\n");
+                sb.Append($"  \"maxCallDepth\": {maxDepth},\n  \"functions\": [\n");
+                sb.Append(string.Join(",\n", System.Linq.Enumerable.Select(System.Linq.Enumerable.OrderByDescending(stats, p => p.Value.Self),
+                    p => $"    {{\"fn\": \"{p.Key}\", \"calls\": {p.Value.Calls}, \"selfMs\": {ms(p.Value.Self)}}}")));
+                sb.Append("\n  ]\n}\n");
+                Out(profPath, sb.ToString());
+            }
             public static void Write(string path, string content) => System.IO.File.WriteAllText(path, content);
             public static string Text(string v) => v;
             public static string Text(long v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);

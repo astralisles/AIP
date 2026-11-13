@@ -10,11 +10,39 @@ The only back end so far is `CsBackend.cs`: it emits C# and builds it with the .
     scripts\aip.ps1 build examples\hello [--target linux-x64]
     scripts\test.ps1
 
+## Logging and debugging
+
+- `--verbose` / `-v` (or env `AIP_VERBOSE=1`) on any `aip` command logs steps with timings to stderr: files loaded, check result, whether `dotnet publish` ran or was skipped, program exit code. stdout stays unchanged.
+- `logLine(text)` (std, effect `log.write`) writes a diagnostic line to stderr, so it never mixes with program output. See `examples/logging`.
+- A crashing program prints `runtime error: <type>: <message>` to stderr and exits with code 1. Set `AIP_TRACE=1` to also print the stack (generated C# frames `Fn.<function>`). See `examples/crash`.
+
+## Profiling and inspection for an LLM (T-0938)
+
+Answer: yes, a machine-readable mode, but as plain environment variables on the built program, not a separate
+build or a debugger. An LLM cannot drive an interactive debugger well; it can read a JSON file. Because values are
+immutable and there are no globals (T-0925), "the state" of a run is just the arguments of each call, so a call log
+answers "what was the state when X happened" without breakpoints.
+
+- `AIP_PROFILE=<file>` (or `-` for stderr): at exit writes one JSON object: `exitCode`, `error` (the runtime error, if any),
+  `wallMs`, `cpuMs`, `peakWorkingSetBytes`, `allocatedBytes`, `gcCollections` (gen 0/1/2), `maxCallDepth`, and `functions`:
+  per AIP function `calls` and `selfMs` (time excluding callees), slowest first. Also written when the program crashes.
+- `AIP_CALLS=<file>` (or `-`): one JSON line per function call, in call order: `n`, `depth`, `fn`, `args` (as text, cut at 120 chars).
+  Capped by `AIP_CALLS_MAX` (default 10000); a final `{"truncated":true,...}` line says how many calls were not logged.
+- Both off by default: the cost is one bool check per call. They work with `aip run` and with a built program, no rebuild needed.
+  Example: `$env:AIP_PROFILE="p.json"; scripts\aip.ps1 run examples\adding`.
+- Existing aids stay: `--verbose` (compiler steps), `logLine` (program messages), `AIP_TRACE=1` (stack of a crash).
+
+Limits and next steps: List/Map/Struct arguments print as their C# type name, not their contents (add a `Rt.Show`
+that prints values); return values are not logged; the stats are for one thread, so tasks (T-0935) need per-task
+tables merged at `taskAwait`; a sampling mode (per-line, not per-function) and `ensures` failures as structured
+errors are not done. `index.txt` (function list with effects) plus `profile.json` is the intended pair of files to give an LLM.
+
 Entry point: a function named `main`, no parameters, returns Unit. Its `effects`
 line lists everything the program can do. Every function must be reachable from `main`.
 
-Standard library: `std/*.fn` are header-only `extern` functions; each back end
-supplies the implementation (see `Externs` in `CsBackend.cs`).
+Standard library: `std/<group>/*.fn` are header-only `extern` functions, grouped by type or effect
+(`text`, `list`, `map`, `set`, `file`, `terminal`, `log`, `process`, `core`; see `std/README.md`).
+`scripts\aip.ps1 std` lists them. Each back end supplies the implementation (see `Externs` in `CsBackend.cs`).
 
 Supported so far: `.fn` files; Int, Text, Bool, Unit; `List<T>`, `Set<T>`, `Map<K,V>` (immutable: every change returns a new value; see `examples/collections`); `let`, calls, operators,
 `if/then/else`, text with `{expr}` parts; `.struct` and `.variant` files (constructors `Point(1, 2)`,
@@ -86,3 +114,73 @@ keeps the promises of the language:
 
 Not implemented. Until then, use recursion over `List<T>`. Build it after `struct`/`variant`/`match`,
 then add std `listMap`, `listFilter`, `listFold`.
+
+## Design decision: security and memory safety (T-0936)
+
+Honest answer: no language is "immune". We can make whole bug classes impossible by
+construction, and keep the rest small, visible and checkable. Today's state, by class:
+
+**Already closed by construction (C# back end, verified in the code)**
+- Memory corruption (buffer overflow, use-after-free, uninitialised reads): the language has no
+  pointers, no manual memory, no `unsafe`, no FFI, no `DllImport`. Generated code is managed C#;
+  `listGet`, `textCode` and `mapGet` throw on a bad index/key instead of reading past the end.
+- Integer overflow: the generated project sets `CheckForOverflowUnderflow`, so `Int` (64-bit) arithmetic
+  throws instead of wrapping. `textSlice` clamps.
+- Eval/RCE from data: there is no `eval`, no reflection, no dynamic code loading, no string-to-code path.
+  Programs cannot start processes or open sockets: the only effects are `terminal.write`, `file.read`, `file.write`.
+- Shared-state bugs (races, hidden mutation): immutable values, no globals (T-0925), no threads today; planned parallelism (T-0935) shares nothing and keeps results deterministic.
+- Injection into the generated C#: identifiers are ASCII letters/digits/`_` only (lexer) and emitted with `@`;
+  text literals are escaped by `Quote` (every non-printable becomes `\uXXXX`); doc text is XML-escaped and
+  cannot contain a line break (a lone CR was tried: it splits the line, and the file is rejected as `missing-doc`).
+
+**Open gaps (to do, in this order)**
+1. Effects are only declared, not enforced at run time. `file.read`/`file.write` accept any path, so a program
+   (or a compiler pass written in AIP that handles untrusted `.fn` files) can read or overwrite anything the user can
+   (`../..`, absolute paths). Fix: path-scoped effects, e.g. `file.read` limited to a root passed in by the host
+   (`--allow-read <dir>`, `--allow-write <dir>`), checked in `Rt` after `Path.GetFullPath` (and reject symlink escape).
+   The same rule applies to the future `process.run`: an allow-list of programs, arguments passed as an array, never one shell string.
+2. Resource exhaustion (DoS, not corruption): unbounded recursion overflows the 512 MB stack and kills the process;
+   huge `Text`/`List` allocations exhaust memory; `textToInt` and `fileRead` on hostile input throw (a crash, which is the safe outcome).
+   Fix: a recursion-depth counter in generated code, optional `--max-memory`, and run untrusted programs under an OS limit.
+3. The compiler itself reads untrusted source: keep it free of `Process`/reflection use on source-derived strings
+   (today only `dotnet` with fixed arguments), cap file size and nesting depth in `Parser.cs` so a hostile `.fn` cannot
+   overflow the compiler's own stack.
+4. Supply chain: the build runs `dotnet` and pulls the SDK's NuGet restore. Pin the SDK (`global.json`), generate the
+   csproj with no package references (true today), and restore offline once dependencies are frozen.
+5. Tests: add `tests/errors` and run-time cases that must stay true: path escape rejected, overflow throws, bad index throws,
+   hostile text literal does not change the generated code. Run a fuzz pass (random bytes into the lexer/parser) in `scripts\test.ps1`.
+
+**Rule for new features** (including `Fn` pointers and `state` handles): a feature that can reach outside the program
+(files, processes, network, time, randomness) must be an effect named in the signature, scoped by the host, and shown in the index.
+Never add `unsafe`, FFI, reflection, `eval`, or a text-to-code path. Mutation stays out. Tasks (T-0935) must keep the same limits per task (stack size, path scope, memory).
+
+**Not covered by the language**: bugs in the .NET runtime, the OS, or a back end. A future native back end (no .NET)
+must re-prove each bullet above (bounds checks, overflow checks) in its own runtime; the checks belong in the shared
+spec of `std`, not only in `CsBackend.cs`.
+
+## Design decision: parallelism (T-0935)
+
+Yes, but only as deterministic, effect-visible parallelism, and not yet. Because values are
+immutable and there is no global state (T-0925), pure functions cannot race, so parallelism
+needs no locks, atomics or shared memory in the language.
+
+Shape (builds on `Fn` from T-0928):
+- Data parallelism first: std `listMapPar(list, &f)`, `listFoldPar(list, &f, &combine)`.
+  `f` must be pure (no effects in its `Fn` type); `combine` must be associative. The result
+  is identical to the sequential `listMap` / `listFold`, always in input order, so
+  `example`/`ensures` checking and "stage 2 output == stage 1 output" still hold.
+  The back end chooses the thread count; it is never visible to the program.
+- Parallel effects (e.g. compile many files, each reading and writing files): `taskRun(&f, arg)`
+  returns a `Task<R>`; `taskAwait(t)` returns the result. The effects of `f` must appear in the
+  caller's `effects` line plus a `parallel` effect, so the index shows which functions fork.
+  Tasks share nothing: arguments are copied/immutable and the only way back is `taskAwait`.
+  Results are consumed in a program-chosen order, so output order stays deterministic.
+- No shared mutable state, no locks, no channels, no `async`/`await` coloring. Any
+  cross-task communication needs the explicit state handle from T-0925, not planned now.
+- Errors: a failing task surfaces at its `taskAwait`; unawaited tasks are a compile error.
+- Back end: C# `Parallel`/`Task` (the main thread already runs on a 512 MB stack thread;
+  task threads need the same stack size for deep recursion); other back ends may run sequentially,
+  which must give the same result.
+
+Not implemented. Needs `Fn` first. Immediate use: compiling the files of a project in the
+bootstrapped compiler (parse each `.fn` in parallel, check and emit in order).

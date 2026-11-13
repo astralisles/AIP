@@ -9,5 +9,6 @@
 - `check-externs.ps1` - `compiler\std` headers, the C# templates and the `aip test` interpreter agree, and `pure` std functions really touch nothing.
 - `check-index.ps1 [dirs]` - the index matches the function headers (derived independently of the compiler), and `build\index.txt` is not stale.
 - `check-determinism.ps1 [dirs]` - two `aip emit` runs give byte-identical files.
+- `aip.ps1` also rebuilds when std files were moved, added or deleted (same timestamps), and the build removes stale std copies from its output.
 - `capture-session.ps1` - runs commands and writes `> command` plus real output to a log (evidence).
 - `render-log-to-frames.ps1` - renders such a log as PNG frames revealed line by line (for a GIF).

@@ -11,7 +11,7 @@ $interp = Get-Content (Join-Path $root 'compiler\Aip.Compiler\Interp.cs') -Raw
 $templates = @{}
 foreach ($m in [regex]::Matches($cs, '\["(\w+)"\] = "((?:[^"\\]|\\.)*)",')) { $templates[$m.Groups[1].Value] = $m.Groups[2].Value }
 $std = @{}
-foreach ($f in Get-ChildItem (Join-Path $root 'compiler\std') -Filter *.fn) {
+foreach ($f in Get-ChildItem (Join-Path $root 'compiler\std') -Recurse -Filter *.fn) {
   $lines = Get-Content $f.FullName
   $eff = 'pure'
   foreach ($l in $lines) { if ($l -match '^  effects (.+)$') { $eff = $Matches[1].Trim() } }
