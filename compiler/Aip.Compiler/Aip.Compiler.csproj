@@ -13,6 +13,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Content Include="..\std\**\*.fn" LinkBase="std" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\spec.md" Link="spec.md" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <!-- std files are grouped in folders (std/text, std/list, ...). Drop copies whose source was moved
        or deleted, or the compiler would load the old copy too and report duplicate names. -->

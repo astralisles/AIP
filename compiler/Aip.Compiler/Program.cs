@@ -12,6 +12,8 @@ const string Usage = """
       aip emit <projectDir> [--out D]                 check, then write the generated C# (no build)
       aip fuzz <projectDir>                           damage every source file many ways; the compiler must never crash
       aip std                                         list the standard library by group (std/<group>/)
+      aip find <projectDir> <word>...                 search project and std functions by name, doc, effect (best match first)
+      aip spec                                        print the one-page language spec (for a model to read first)
     options: --verbose (or -v, or env AIP_VERBOSE=1) logs compiler steps and timings to stderr
     run-time: AIP_TRACE=1 makes a crashing program print its full stack trace; `logLine` writes to stderr
     targets: windows-x64, windows-arm64, linux-x64, linux-arm64, macos-arm64 (default: this machine)
@@ -22,8 +24,15 @@ if (args.Length == 2 && args[0] == "tokens")
     Console.Write(Parser.Tokens(Path.GetFullPath(args[1])));
     return 0;
 }
+if (args is ["spec"])
+{
+    Console.Write(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "spec.md")));
+    return 0;
+}
+string[] findWords = [];
+if (args.Length >= 3 && args[0] == "find") { findWords = args[2..]; args = args[..2]; }
 if (args is ["std"]) args = ["std", AppContext.BaseDirectory];
-if (args.Length < 2 || args[0] is not ("check" or "index" or "build" or "run" or "lint" or "test" or "emit" or "fuzz" or "std"))
+if (args.Length < 2 || args[0] is not ("check" or "index" or "build" or "run" or "lint" or "test" or "emit" or "fuzz" or "std" or "find"))
 {
     Console.WriteLine(Usage);
     return 2;
@@ -58,6 +67,24 @@ if (command == "std")
         Console.WriteLine($"{g.Key}/");
         foreach (var f in g.OrderBy(f => f.Name, StringComparer.Ordinal)) Console.WriteLine($"  {f.Signature} | {f.EffectsText}");
     }
+    return 0;
+}
+if (command == "find")
+{
+    if (findWords.Length == 0) { Console.WriteLine(Usage); return 2; }
+    var hits = program.Fns.Values.Select(f =>
+    {
+        int score = 0;
+        foreach (var w in findWords)
+        {
+            if (f.Name.Contains(w, StringComparison.OrdinalIgnoreCase)) score += 3;
+            if (f.Doc.Contains(w, StringComparison.OrdinalIgnoreCase)) score += 2;
+            if (f.Signature.Contains(w, StringComparison.OrdinalIgnoreCase) || f.EffectsText.Contains(w, StringComparison.OrdinalIgnoreCase)) score += 1;
+        }
+        return (f, score);
+    }).Where(h => h.score > 0).OrderByDescending(h => h.score).ThenBy(h => h.f.Name, StringComparer.Ordinal).Take(10).ToList();
+    foreach (var (f, _) in hits) Console.WriteLine($"{(f.IsStd ? "std" : "project")} | {f.Signature} | {f.EffectsText} | {f.Doc}");
+    if (hits.Count == 0) Console.WriteLine($"no function matches: {string.Join(" ", findWords)}");
     return 0;
 }
 

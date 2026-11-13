@@ -1,0 +1,6 @@
+fn countdownStep(n Int) -> Unit
+  "Print n, then count down from n - 1."
+  effects terminal.write
+body
+  printLine("{n}...")
+  countdown(n - 1)

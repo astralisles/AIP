@@ -19,7 +19,10 @@ foreach ($p in $Projects) {
     foreach ($l in $lines) { if ($l -match '^  effects (.+)$') { $eff = ($Matches[1].Split(',') | ForEach-Object { $_.Trim() }) -join ', ' } }
     $rows += [pscustomobject]@{ Name = $name; Line = "$sig | $eff | checked, not proved" }
   }
-  $expected = (($rows | Sort-Object { $_.Name } -Culture '' -CaseSensitive | ForEach-Object { $_.Line }) -join "`n") + "`n"
+  # ordinal order (uppercase before lowercase), as the compiler sorts
+  $names = [string[]]@($rows | ForEach-Object { $_.Name }); $keys = [string[]]@($rows | ForEach-Object { $_.Line })
+  if ($rows.Count -gt 1) { [Array]::Sort($names, $keys, [StringComparer]::Ordinal) }
+  $expected = ($keys -join "`n") + "`n"
   $got = (& $aip index $p) -join "`n"
   $got += "`n"
   $ok = ($got -ceq $expected)
