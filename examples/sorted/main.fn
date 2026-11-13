@@ -1,0 +1,15 @@
+fn main() -> Unit
+  "Show SortedMap and SortedSet: keys always come back in order."
+  effects terminal.write
+body
+  let ages = sortedMapSet(sortedMapSet(sortedMapSet(sortedMapEmpty(), "Tim", 12), "Ann", 30), "Cy", 7)
+  let keys = sortedMapKeys(ages)
+  printLine("Keys: {listGet(keys, 0)} {listGet(keys, 1)} {listGet(keys, 2)}")
+  let ann = sortedMapGet(ages, "Ann")
+  let hasBob = sortedMapHas(ages, "Bob")
+  printLine("Ann is {ann}, has Bob: {hasBob}")
+  let fewer = sortedMapRemove(ages, "Ann")
+  printLine("After remove: {sortedMapSize(fewer)}, original still {sortedMapSize(ages)}")
+  let seen = sortedSetAdd(sortedSetAdd(sortedSetAdd(sortedSetAdd(sortedSetEmpty(), 30), 5), 12), 5)
+  let items = sortedSetItems(seen)
+  printLine("Set size {sortedSetSize(seen)}: {listGet(items, 0)} {listGet(items, 1)} {listGet(items, 2)}")

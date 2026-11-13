@@ -1,0 +1,4 @@
+struct Parsed
+  "A piece of text read from the tokens, and the position of the token after it."
+  text Text
+  next Int

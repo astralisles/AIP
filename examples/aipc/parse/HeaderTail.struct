@@ -1,0 +1,4 @@
+struct HeaderTail
+  "What the header lines after the signature declare: the purpose line and the effects."
+  doc Text
+  effects List<Text>

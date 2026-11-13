@@ -1,0 +1,4 @@
+fn sortedMapGet(m SortedMap<K,V>, key K) -> V
+  "The value for a key; the key must be in the map (check with sortedMapHas)."
+  pure
+extern

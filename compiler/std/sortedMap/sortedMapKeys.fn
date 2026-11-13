@@ -1,0 +1,4 @@
+fn sortedMapKeys(m SortedMap<K,V>) -> List<K>
+  "The keys in ascending order (Int by value, Text by character code)."
+  pure
+extern

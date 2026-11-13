@@ -1,0 +1,4 @@
+fn sortedMapHas(m SortedMap<K,V>, key K) -> Bool
+  "True when the map has an entry for the key."
+  pure
+extern

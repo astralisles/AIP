@@ -1,0 +1,5 @@
+fn paramTexts(params List<ParamDecl>, i Int, acc List<Text>) -> List<Text>
+  "acc followed by `name Type` for each parameter from position i on."
+  pure
+body
+  if i >= listLength(params) then acc else paramTexts(params, i + 1, listAppend(acc, "{listGet(params, i).name} {listGet(params, i).type}"))

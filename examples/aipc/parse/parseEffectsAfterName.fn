@@ -1,0 +1,5 @@
+fn parseEffectsAfterName(toks List<Text>, pos Int, acc List<Text>) -> List<Text>
+  "After one effect name, stop at the end of the line or read the next name after the comma at pos."
+  pure
+body
+  if tokAt(toks, pos) == "Sym ," then parseEffects(toks, pos + 1, "", acc) else acc

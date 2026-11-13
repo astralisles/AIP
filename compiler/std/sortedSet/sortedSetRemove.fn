@@ -1,0 +1,4 @@
+fn sortedSetRemove(s SortedSet<T>, item T) -> SortedSet<T>
+  "A new set without the item; the original is unchanged."
+  pure
+extern

@@ -1,0 +1,4 @@
+fn sortedMapEmpty() -> SortedMap<K,V>
+  "A sorted map with no entries."
+  pure
+extern
