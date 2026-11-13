@@ -28,15 +28,15 @@ compiler source needs, or a compiler stage still to write. Items are ordered by 
 
 | Need | Why the compiler needs it | Proposed std function |
 |---|---|---|
-| Join many texts | the emitter builds large C# files; repeated `+` is quadratic | `textJoin(parts List<Text>, separator Text)` |
+| Join many texts | the emitter builds large outputs; repeated `+` is quadratic | `textJoin(parts List<Text>, separator Text)` |
 | Split / search text | line splitting, finding `->`, `:` in headers | `textSplit`, `textIndexOf`, `textStartsWith`, `textTrim` |
 | Int to Text and back | positions, error messages (`{n}` interpolation covers Int to Text; `textToInt` exists) | none |
 | More list operations | symbol tables, token windows | `listSet`, `listSlice`, `listConcat`, `listReverse` |
-| Write many files, make folders | the emitter writes one `.cs` per function and a `.csproj` | `fileMakeFolder`, `fileExists` (`file.write`, `file.read`) |
+| Write many files, make folders | the cache holds one object file per function | `fileMakeFolder`, `fileExists` (`file.write`, `file.read`) |
 | List a folder | project loader finds every `.fn`, `.struct`, `.variant`, `.const` | `fileList(folder Text) -> List<Text>` (`file.read`) |
-| Run a process | stage 1 must call `dotnet publish` and run the result | `processRun(command Text, args List<Text>) -> RunResult` (effect `process.run`; `security-T-0936.md` applies: the effect appears in `main` and in the index) |
+| Bytes and binary files | IR, object code and the exe are not text | `Bytes` type, `fileReadBytes`, `fileWriteBytes`, `bytesGet/Set/Append/Slice`, Int bit operations (`and`/`or`/`xor`/shift on Int) |
 | Exit code | `aip check` returns non-zero on errors | `processExit(code Int)` (`process.exit`) |
-| Read std headers and the C# templates | the `Externs` templates in `CsBackend.cs` are C# string literals | keep them as data files next to the headers (for example `std/<group>/<name>.cs.txt`) that both compilers read; this also removes the duplicate between `check-externs.ps1` and the back end |
+| Std implementations | `Externs` in `CsBackend.cs` are C# text | each std function gets a native implementation in the runtime (section E) and an IR-level definition; `check-externs.ps1` compares header, IR definition and interpreter |
 
 ## C. Compiler stages still to write in AIP (in order, each with a compare script like the lexer and header parser)
 
@@ -46,20 +46,60 @@ compiler source needs, or a compiler stage still to write. Items are ordered by 
    list and index as `aip index` (already compared by `compare-index.ps1`).
 3. **Checker** subset: names, types, effects, reachability, constants, std layout. Start with the error codes the AIP compiler's own
    source can trigger; compare against `tests/errors` one code at a time (`check-error-coverage.ps1` already lists them).
-4. **Emitter**: same C# text as `CsBackend.cs`. Check: byte-equal output of `aip emit` for every example (`check-determinism.ps1`
-   already shows the C# output is deterministic, which makes a byte compare possible).
-5. **Driver**: `aipc build <dir>` writes the files and runs `dotnet publish` through `processRun`.
-6. **Stage check**: C# builds `aipc` (stage 1); stage 1 builds `aipc` (stage 2); stage 2 emits the same C# as stage 1.
-   Add as `tests/checks/bootstrap-stages.ps1`.
+4. **IR lowering**: checked program to the IR (section E), one IR unit per function. Check: a textual IR dump equal to the dump
+   of the C# front end for every example.
+5. **Native code generator + linker**: IR unit to machine code, units to an exe (section E). Check: every `examples/*/expected-output.txt`
+   passes with the exe built without C# or `dotnet`.
+6. **Driver**: `aipc build <dir>` loads, checks, lowers only changed units, links. No `processRun` needed.
+7. **Stage check**: the C# compiler builds `aipc` (stage 1); stage 1 builds `aipc` (stage 2); stage 2 output is byte-equal to
+   stage 1. After that the C# compiler is only a seed, kept in the repo to rebuild from nothing.
 
 Subset rule to keep this small: the AIP compiler need only accept the language the AIP compiler is written in. Lint, `aip test`,
-query, fuzz, `--target` and `aip find` stay in C# until a later ticket.
+query, fuzz, `--target` and `aip find` stay in C# until a later ticket. The C# back end (`CsBackend.cs`) stays as the seed and as the reference for output until step 7 passes, then is removed.
+
+## E. No C# in the middle: IR, cache, exe (feedback on iteration 1)
+
+Decision: the AIP compiler goes source -> **AIP IR** -> **machine code** -> **exe**. No C# text, no `dotnet` at build time.
+
+**IR.** A small typed, first-order, immutable format: one *unit* per AIP function (this fits "one function per file"). A unit holds
+the function's typed body in a flat, stack-free form (let-bound values, calls, `if`, `match`, constants) plus the names and
+signatures it calls. Binary and deterministic, so units can be hashed and compared byte for byte.
+
+**Cache.** Directory `build/cache/`, one file per unit, named by hash. The key of a unit is
+`hash(function source, hash of the signature of every function/type/const it uses, compiler version, target)`.
+Only the *signature* of callees is in the key, not their bodies, so editing a body recompiles that one function; editing a signature
+recompiles it and its callers. Because effects are in the signature, an effect change correctly invalidates callers. Check phase
+results (`check`/`index`) use the same keys. Safe to delete; a damaged entry is rebuilt. Test: change one function body in a
+100-function project and assert exactly one unit is regenerated (counted in `AIP_TIMINGS=1` output).
+
+**Exe.** Three options, in order of cost:
+1. *Stub + IR payload.* The exe is a prebuilt runtime that holds the IR and interprets/JITs it. Fast to build, no code generator
+   needed, slow to run, and not the compiler's own speed target. Good as a first milestone (it makes the stage check possible
+   early).
+2. *Own x64 code generator + own linker/PE writer (Windows, later ELF for `linux-x64`).* Each unit becomes position independent code
+   with relocations; the linker concatenates cached units, resolves calls, appends the runtime, writes the PE. Real native speed,
+   fully cached, no external tools. Most work.
+3. *Use an existing back end* (QBE, LLVM, or the system assembler/linker). Least work for good code, but adds a non-AIP tool dependency
+   that conflicts with "no intermediary" and with the supply-chain rule in `security-T-0936.md`.
+
+Recommendation: 1 then 2. Ship option 1 as soon as the IR exists, then replace the stub with generated code unit by unit (a unit may
+be native or interpreted in the same exe), so the exe never stops working. Skip 3 unless 2 stalls.
+
+**Runtime.** Everything the generated code needs that is not a function: memory allocation and a garbage collector (all values are
+immutable and acyclic, so reference counting or an arena per call tree is enough, no cycle collector), text and collection
+implementations behind the std functions, the deep stack (the current 512 MB), file/terminal/args/log effects as OS calls
+(`kernel32` on Windows, syscalls on Linux), and the crash report (`runtime error:`, `AIP_TRACE`). It is written in AIP plus a very small
+set of *intrinsics* (raw memory load/store, OS call) that only the runtime folder may use, so the language the user sees stays free of
+`unsafe` (`compiler.md` rule). That runtime is the largest single item in this plan after the code generator.
 
 ## D. Risks
 
 - **Speed and memory.** The lexer already needs a 512 MB stack because loops are recursion. A 150-file source with immutable
   `List` copies on every append (`listAppend` returns a new list) may be too slow. Measure `aipc tokens` on the whole compiler first;
   if slow, make `listAppend` / `mapSet` use persistent structures in the back end (no language change).
+- **Runtime in AIP.** Memory management and collections need raw memory intrinsics. Keep them in one folder, with an effect name
+  of their own, so no ordinary program can reach them.
+- **Two machine targets.** Windows PE and Linux ELF writers are separate work; do Windows first, since the stage check runs there.
 - **Size per file.** One function per file will make the AIP compiler several hundred files; fine for the index, but `match`
   helpers (A1) would double it.
 - **Open question 11** (`open-questions-T-0944.md`): self-hosting competes with the benchmark and the error-quality work. Bootstrapping is
@@ -71,4 +111,4 @@ query, fuzz, `--target` and `aip find` stay in C# until a later ticket.
 2. B: `textJoin`, `textSplit`, `textIndexOf`, `textStartsWith`, `listSet`, `listSlice`, `listConcat`, `fileList`. All pure or simple I/O.
 3. Body parser with its compare script (C1).
 4. A2 (function pointers) and A3 (`Result` / `Option`) before the checker (C3), since the checker is where they pay off.
-5. `processRun`, `processExit`, emitter, driver, stage check (C4-C6).
+5. `Bytes` and bit operations, IR, runtime, code generator, linker, driver, stage check (C4-C7).
