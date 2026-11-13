@@ -1,0 +1,6 @@
+fn compressRun(data List<Int>, i Int, out List<Int>, run Int) -> List<Int>
+  "Add one (count, byte) pair for the run of length run at i, then go on with the rest."
+  pure
+  fails
+body
+  compress(data, i + run, listAppend(listAppend(out, run), listGet(data, i)))

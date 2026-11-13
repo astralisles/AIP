@@ -1,0 +1,6 @@
+fn decompress(data List<Int>, i Int, out List<Int>) -> List<Int>
+  "Undo compress: expand each (count, byte) pair."
+  pure
+  fails
+body
+  if i >= listLength(data) then out else decompress(data, i + 2, repeatByte(out, listGet(data, i + 1), listGet(data, i)))
