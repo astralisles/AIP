@@ -21,16 +21,19 @@ Open PowerShell in this folder, then:
        scripts\aip.ps1 check examples\hello
        scripts\aip.ps1 index examples\hello
 
+  3a. List the standard library, grouped by folder (compiler\std\<group>\):
+       scripts\aip.ps1 std
+
   3b. Write a file to disk (creates greeting.txt in the current folder):
-       scriptsip.ps1 run exampleswritefile
+       scripts\aip.ps1 run examples\writefile
 
   4. Build for Linux from Windows (run the result on a Linux machine):
        scripts\aip.ps1 build examples\hello --target linux-x64
 
   5. More examples: adding numbers, data types, basic math:
-       scriptsip.ps1 run examplesdding
-       scriptsip.ps1 run examples	ypes
-       scriptsip.ps1 run examplesmath
+       scripts\aip.ps1 run examples\adding
+       scripts\aip.ps1 run examples\types
+       scripts\aip.ps1 run examples\math
 
   6. Run the tests:
        scripts\test.ps1
@@ -45,7 +48,7 @@ file name = function name. Then: scripts\aip.ps1 run <your folder>
 
 FOLDERS
 
-  compiler\   the aip compiler (C#) and its standard library (std\*.fn)
+  compiler\   the aip compiler (C#) and its standard library (std\<group>\*.fn)
   examples\   programs that compile and run
   tests\      projects the compiler must reject, with the expected error
   mock\       hand-written design samples; not compiled yet

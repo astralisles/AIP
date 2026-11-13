@@ -77,6 +77,20 @@ $p = try { Get-Content (Join-Path $tmp 'profile.json') -Raw | ConvertFrom-Json }
 $c = @(try { Get-Content (Join-Path $tmp 'calls.jsonl') } catch { @() })
 Report 'profile: AIP_PROFILE and AIP_CALLS write valid JSON' ($p -and $p.schema -eq 1 -and $p.functions.Count -gt 0 -and $p.maxCallDepth -ge 1 -and $c.Count -eq 2 -and $c[1].Contains('truncated')) "profile: $p calls: $c"
 Remove-Item -Recurse -Force $tmp
+# std layout (T-0942): grouped one folder deep; no stale flat copies in the build output; the compiler rejects a misplaced file
+$out = (& $aip std | Out-String)
+$groups = @($out -split "`r?`n" | Where-Object { $_ -match '^\w+/$' })
+$srcCount = @(Get-ChildItem compiler\std -Recurse -File -Filter *.fn).Count
+$fnCount = @($out -split "`r?`n" | Where-Object { $_ -match '^  \w+\(' }).Count
+Report 'std: `aip std` lists every std file under its group' ($LASTEXITCODE -eq 0 -and $groups.Count -ge 9 -and $fnCount -eq $srcCount -and @(Get-ChildItem compiler\std -File -Filter *.fn).Count -eq 0) "groups: $($groups -join ' '), listed $fnCount of $srcCount`n$out"
+$bin = Join-Path $root 'compiler\Aip.Compiler\bin\Release\net10.0'
+$copy = Join-Path ([IO.Path]::GetTempPath()) ('aip-stdlayout-' + [guid]::NewGuid().ToString('N'))
+Copy-Item $bin $copy -Recurse
+Move-Item (Join-Path $copy 'std\text\textLength.fn') (Join-Path $copy 'std\textLength.fn')
+Move-Item (Join-Path $copy 'std\list\listGet.fn') (Join-Path $copy 'std\map\listGet.fn')
+$out = (& (Join-Path $copy 'aip.exe') check examples\hello | Out-String).Trim()
+Remove-Item -Recurse -Force $copy
+Report 'std: misplaced std files are rejected (std-layout)' ($LASTEXITCODE -ne 0 -and $out.Contains('`textLength` must be in a group folder') -and $out.Contains('`listGet` in std/map/ must start with `map`')) $out
 $out = (& (Join-Path $PSScriptRoot "compare-lexers.ps1") | Out-String).Trim()
 Report "bootstrap: AIP lexer matches the C# lexer" ($LASTEXITCODE -eq 0) $out
 if ($failed -eq 0) { 'ALL PASSED' } else { "$failed FAILED" }
