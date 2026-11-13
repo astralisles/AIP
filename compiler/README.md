@@ -72,4 +72,5 @@ Open questions and what was decided (`aip spec`, `aip find`, Result/Option, AI-f
 One file per topic in `docs/design/` (for example `security-T-0936.md`, `bootstrapping.md`).
 File types and the parts of each file: `docs/design/file-anatomy-T-0948.md`. Constants: `docs/design/consts-T-0941.md`.
 Logging and debugging: `docs/design/logging-T-0934.md`; profiling: `docs/design/profiling-T-0938.md`.
+Native shared libraries (`native "lib" "symbol"`, dll/so/dylib): `docs/design/native-libraries-T-0956.md`.
 A new decision is a new file there; do not append it to this README.

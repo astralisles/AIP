@@ -1,0 +1,5 @@
+fn main() -> Unit
+  "Native call without a native effect."
+  effects native.ucrtbase, terminal.write
+body
+  printLine("{absolute(-1)}")

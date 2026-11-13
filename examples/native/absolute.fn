@@ -1,0 +1,5 @@
+fn absolute(n Int) -> Int
+  "Absolute value, computed by the C runtime library (64-bit `_abs64`)."
+  effects native.ucrtbase
+  native "ucrtbase" "_abs64"
+extern

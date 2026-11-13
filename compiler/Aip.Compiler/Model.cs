@@ -61,6 +61,10 @@ sealed class Fn
     public int Line = 1;
     public bool IsStd;
     public bool IsExtern;
+    /// <summary>`native "lib" "symbol"` header line: the function is a symbol in a shared library (dll, so, dylib). Null otherwise.</summary>
+    public string? NativeLib;
+    public string NativeSymbol = "";
+    public int NativeLine;
     /// <summary>A `.const` file: no parameters, Ret is its type, Body is one statement (its value), always pure.</summary>
     public bool IsConst;
     public List<Param> Params = new();
