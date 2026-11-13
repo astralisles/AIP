@@ -25,3 +25,17 @@ AIP is designed for AI: fewer ways to say the same thing, every function's state
 off-by-one or forgotten-increment class of bugs. Recursion with named parameters is checkable; tail-call lowering makes it cheap.
 
 No code was changed; this is a design decision. Recommend merging the note.
+
+## Tail-call lowering, explained (step 1 above)
+A loop written as recursion looks like this:
+
+    fn sumTo(n Int, total Int) -> Int
+      if n == 0 then total else sumTo(n - 1, total + n)
+
+The last thing `sumTo` does is call itself and return that result unchanged: a call in *tail position*.
+Today each call adds a frame to the stack, so a very long loop (tens of millions of steps) runs out of stack.
+But because nothing is left to do after the call, the old frame is no longer needed. The back end (the part that
+writes the C# output) can therefore compile that self-call as "set `n` and `total` to the new values and jump back to
+the top of the function", which is exactly what a `while` loop does. The AIP source stays the same; only the generated
+code changes, so loops use constant stack and run faster. Calls that are not in tail position (for example
+`1 + sumTo(n - 1)`) stay normal calls.
