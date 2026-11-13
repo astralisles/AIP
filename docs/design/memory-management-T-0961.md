@@ -69,6 +69,39 @@ If the numbers are bad, the escape hatch is a *store*: an effect-gated mutable t
 signature and the index, so the mutation stays visible and out of pure code. That breaks the "no mutation" rule in `compiler.md`,
 so it is a decision for the owner, not something to add quietly.
 
+**Rework (user feedback: copying 100K entries to add one fish is not acceptable).** Confirmed in the code: `setAdd` is
+`Rt.MapSet`, which does `new Dictionary(m)` and then sets one key (`CsBackend.cs`, `MapSet`), so every add is O(n); `Append`
+and `MapRemove` also copy everything, and filling a set of n items one at a time is O(n^2). The memory model must therefore
+promise this, as a rule and not as a later optimisation:
+
+> **Updating a collection costs time and memory proportional to the size of the change (O(log n) or better), never to the size
+> of the collection. The old version stays valid and shares everything the update did not touch.**
+
+How the model delivers it (two layers; the language and the "values are immutable" rule do not change):
+1. **Persistent collections (structural sharing).** `List`, `Map`, `Set` and the sorted kinds become trees or hash tries with
+   wide nodes (for example 32 children). An add allocates only the new path from root to leaf (about 4 nodes for 100,000 items,
+   7 for 100 million); every other node is shared between the old and new collection. Reads are O(log32 n), in practice 3 to 4
+   hops. Append to the end of a list is amortised O(1) with a small tail buffer.
+2. **Unique-owner in-place update.** If the runtime knows nobody else holds the old version (reference count 1, which is the
+   normal case in `world = fill(world, ...)` loops), it mutates the node in place instead of copying the path. Nobody can
+   observe this, so it is not language mutation. Loops written as recursion therefore cost one write per add, as with a mutable set.
+Reference counting (phase 2) is what makes layer 2 safe, and it frees the shared nodes exactly when the last version using them goes
+away. Tree nodes hold only values created earlier, so the heap is still acyclic.
+
+Consequences:
+- **Order of work changes.** Persistent `Map`/`Set`/`List` in the back end comes *before* the self-hosted runtime, because the
+  current copying design breaks servers and also makes the self-hosted compiler slow (`bootstrap-gaps-T-0954.md`, "Speed and memory").
+- **Same API.** `setAdd`, `mapSet`, `listAppend` keep their signatures and meaning, so no program changes. Only `Rt` in
+  `CsBackend.cs` and, later, the runtime change. Iteration order rules (`mapKeys`, `setItems`) must be kept by a test.
+- **Cheap bulk build.** Add `listFromRange` style builders or a "transient" batch mode only if measurements show the per-add cost
+  still matters after layers 1 and 2.
+- **C# step.** `System.Collections.Immutable` (`ImmutableDictionary`, `ImmutableHashSet`, `ImmutableList`) already gives O(log n)
+  updates and is the quickest first step; replace with a custom 32-way trie later for speed and for the self-hosted runtime.
+- **Not solved by this:** memory overhead per entry grows (nodes, counts); a hot value shared by many writers (see above).
+
+Acceptance test for the rework: add 100,000 items one at a time to a set, then to a map, then to a list, and require the total to be
+roughly linear (doubling n at most about doubles time) and the old versions to still read correctly.
+
 **Recommendation.**
 1. **Own runtime, not user-visible.** Allocation and release live in the runtime folder planned in `bootstrap-gaps-T-0954.md`,
    written in AIP plus a few raw-memory intrinsics that only that folder may use. Users still never see a pointer.
