@@ -1,0 +1,3 @@
+const settings Text
+  "The settings text."
+  value fileRead("settings.txt")

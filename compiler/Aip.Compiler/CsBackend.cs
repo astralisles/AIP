@@ -46,6 +46,29 @@ sealed class CsBackend : IBackend
         ["setAdd"] = "Rt.MapSet({0}, {1}, true)",
         ["setRemove"] = "Rt.MapRemove({0}, {1})",
         ["setItems"] = "new System.Collections.Generic.List<object>(({0}).Keys)",
+        ["sortedMapEmpty"] = "new System.Collections.Generic.SortedDictionary<object, object>(Rt.Order)",
+        ["sortedMapSize"] = "(long)({0}).Count",
+        ["sortedMapHas"] = "({0}).ContainsKey({1})",
+        ["sortedMapGet"] = "Rt.SortedGet({0}, {1})",
+        ["sortedMapSet"] = "Rt.SortedPut({0}, {1}, {2})",
+        ["sortedMapRemove"] = "Rt.SortedRemove({0}, {1})",
+        ["sortedMapKeys"] = "new System.Collections.Generic.List<object>(({0}).Keys)",
+        ["sortedSetEmpty"] = "new System.Collections.Generic.SortedDictionary<object, object>(Rt.Order)",
+        ["sortedSetSize"] = "(long)({0}).Count",
+        ["sortedSetHas"] = "({0}).ContainsKey({1})",
+        ["sortedSetAdd"] = "Rt.SortedPut({0}, {1}, true)",
+        ["sortedSetRemove"] = "Rt.SortedRemove({0}, {1})",
+        ["sortedSetItems"] = "new System.Collections.Generic.List<object>(({0}).Keys)",
+        ["queueEmpty"] = "new System.Collections.Generic.List<object>()",
+        ["queueSize"] = "(long)({0}).Count",
+        ["queuePush"] = "Rt.Append({0}, {1})",
+        ["queueFront"] = "Rt.Front({0}, \"queueFront\")",
+        ["queuePop"] = "Rt.Pop({0}, \"queuePop\")",
+        ["priorityQueueEmpty"] = "new System.Collections.Generic.List<object>()",
+        ["priorityQueueSize"] = "(long)({0}).Count",
+        ["priorityQueuePush"] = "Rt.PqPush({0}, {1}, {2})",
+        ["priorityQueueFront"] = "((object[])Rt.Front({0}, \"priorityQueueFront\"))[1]",
+        ["priorityQueuePop"] = "Rt.Pop({0}, \"priorityQueuePop\")",
         ["fileRead"] = "System.IO.File.ReadAllText({0})",
         ["fileWrite"] = "Rt.Write({0}, {1})",
         ["numToI8"] = "checked((sbyte)({0}))",
@@ -151,7 +174,7 @@ sealed class CsBackend : IBackend
     public static SortedDictionary<string, string> EmitFiles(ProgramModel program)
     {
         var files = new SortedDictionary<string, string>(StringComparer.Ordinal);
-        foreach (var fn in program.ProjectFns) files[fn.Name + ".cs"] = EmitFn(fn);
+        foreach (var fn in program.ProjectFns) files[fn.Name + ".cs"] = fn.IsConst ? EmitConst(fn) : EmitFn(fn);
         files["Program.cs"] = ProgramCs;
         if (program.Types.Count > 0) files["Types.cs"] = EmitTypes(program);
         files[program.Name + ".csproj"] = Csproj;
@@ -166,9 +189,10 @@ sealed class CsBackend : IBackend
     {
         "Int" => "long", "F32" => "float", "F64" => "double", "I8" => "sbyte", "I16" => "short", "I32" => "int",
         "U8" => "byte", "U16" => "ushort", "U32" => "uint", "U64" => "ulong", "Text" => "string", "Bool" => "bool", "_" => "object",
-        _ when t.StartsWith("List<", StringComparison.Ordinal) => "System.Collections.Generic.List<object>",
+        _ when t.StartsWith("List<", StringComparison.Ordinal) || t.StartsWith("Queue<", StringComparison.Ordinal) || t.StartsWith("PriorityQueue<", StringComparison.Ordinal) => "System.Collections.Generic.List<object>",
         // Maps and sets are insertion-ordered dictionaries (a set maps each item to true); every change copies.
         _ when t.StartsWith("Map<", StringComparison.Ordinal) || t.StartsWith("Set<", StringComparison.Ordinal) => "System.Collections.Generic.Dictionary<object, object>",
+        _ when t.StartsWith("SortedMap<", StringComparison.Ordinal) || t.StartsWith("SortedSet<", StringComparison.Ordinal) => "System.Collections.Generic.SortedDictionary<object, object>",
         "Unit" => "void",
         _ => t, // a struct or variant: a C# record of the same name (see EmitTypes)
     };
@@ -218,6 +242,21 @@ sealed class CsBackend : IBackend
         return sb.ToString();
     }
 
+    /// <summary>A `.const` file: a property computed once, on first use. Lazy (not a static initializer) so the
+    /// order of constants across files does not matter; the checker rejects cycles, and the value is pure.</summary>
+    static string EmitConst(Fn k)
+    {
+        var t = CsType(k.Ret.Name);
+        var sb = new StringBuilder();
+        sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"// Generated from {k.Name}.const. Do not edit.\n");
+        sb.Append("public static partial class Const\n{\n");
+        sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"    /// <summary>{System.Security.SecurityElement.Escape(k.Doc)}</summary>\n");
+        sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"    public static {t} @{k.Name} => ConstCell.@{k.Name}.Value;\n}}\n");
+        sb.Append("static partial class ConstCell\n{\n");
+        sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"    internal static readonly System.Lazy<{t}> @{k.Name} = new(() => {Emit(k.Body[0].Value)});\n}}\n");
+        return sb.ToString();
+    }
+
     /// <summary>A statement. A Unit `if` becomes an if statement because C# cannot use void in `?:`.</summary>
     static string EmitUnit(Expr e, string indent) => e switch
     {
@@ -241,7 +280,7 @@ sealed class CsBackend : IBackend
         FloatLit { Type: "F32" } f => f.Value.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + "F",
         FloatLit f => f.Value.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + "D",
         BoolLit b => b.Value ? "true" : "false",
-        NameRef n => "@" + n.Name,
+        NameRef n => n.Const ? "Const.@" + n.Name : "@" + n.Name,
         TextLit t => t.Parts.Count == 1 && t.Parts[0] is string only
             ? Quote(only)
             : "string.Concat(" + string.Join(", ", t.Parts.Select(p => p is string s ? Quote(s) : $"Rt.Text({Emit((Expr)p)})")) + ")",
@@ -249,7 +288,7 @@ sealed class CsBackend : IBackend
         Field f => $"{Emit(f.Target)}.@{f.Name}",
         MatchExpr m => $"({Emit(m.Subject)} switch {{ {string.Join(", ", m.Arms.Select(a => $"{Pattern(a)} => {Emit(a.Body)}"))}, _ => throw new System.InvalidOperationException() }})",
         Call c => Externs.TryGetValue(c.Name, out var template)
-            ? (c.Name is "listGet" or "mapGet" ? $"(({CsType(c.Type)})" : "") + string.Format(System.Globalization.CultureInfo.InvariantCulture, template.Replace("<T>", CsType(c.Type)), c.Args.Select(Emit).ToArray<object>()) + (c.Name is "listGet" or "mapGet" ? ")" : "")
+            ? (c.Name is "listGet" or "mapGet" or "sortedMapGet" or "queueFront" or "priorityQueueFront" ? $"(({CsType(c.Type)})" : "") + string.Format(System.Globalization.CultureInfo.InvariantCulture, template.Replace("<T>", CsType(c.Type)), c.Args.Select(Emit).ToArray<object>()) + (c.Name is "listGet" or "mapGet" or "sortedMapGet" or "queueFront" or "priorityQueueFront" ? ")" : "")
             : $"Fn.@{c.Name}({string.Join(", ", c.Args.Select(Emit))})",
         Unary u => u.Op == "-" ? $"(-{Emit(u.Operand)})" : $"(!{Emit(u.Operand)})",
         Binary b => b.Op switch
@@ -341,6 +380,43 @@ sealed class CsBackend : IBackend
             {
                 var r = new System.Collections.Generic.Dictionary<object, object>();
                 foreach (var p in m) if (!p.Key.Equals(k)) r.Add(p.Key, p.Value);
+                return r;
+            }
+            // Sorted maps and sets are balanced trees: keys come back in ascending order (Int by value, Text by ordinal).
+            sealed class OrderCmp : System.Collections.Generic.IComparer<object>
+            {
+                public int Compare(object? a, object? b) => a is string s ? string.CompareOrdinal(s, (string)b!) : ((long)a!).CompareTo((long)b!);
+            }
+            public static readonly System.Collections.Generic.IComparer<object> Order = new OrderCmp();
+            public static object SortedGet(System.Collections.Generic.SortedDictionary<object, object> m, object k) =>
+                m.TryGetValue(k, out var v) ? v : throw new System.Collections.Generic.KeyNotFoundException("sortedMapGet: key not in the map");
+            public static System.Collections.Generic.SortedDictionary<object, object> SortedPut(System.Collections.Generic.SortedDictionary<object, object> m, object k, object v)
+            {
+                var r = new System.Collections.Generic.SortedDictionary<object, object>(m, Order);
+                r[k] = v;
+                return r;
+            }
+            public static System.Collections.Generic.SortedDictionary<object, object> SortedRemove(System.Collections.Generic.SortedDictionary<object, object> m, object k)
+            {
+                var r = new System.Collections.Generic.SortedDictionary<object, object>(m, Order);
+                r.Remove(k);
+                return r;
+            }
+            // Queue is a List (front = index 0). PriorityQueue is a List of object[] { priority, item } kept in
+            // ascending priority, and equal priorities keep insertion order.
+            public static object Front(System.Collections.Generic.List<object> l, string fn) =>
+                l.Count > 0 ? l[0] : throw new System.Collections.Generic.KeyNotFoundException(fn + ": the queue is empty");
+            public static System.Collections.Generic.List<object> Pop(System.Collections.Generic.List<object> l, string fn)
+            {
+                if (l.Count == 0) throw new System.Collections.Generic.KeyNotFoundException(fn + ": the queue is empty");
+                return l.GetRange(1, l.Count - 1);
+            }
+            public static System.Collections.Generic.List<object> PqPush(System.Collections.Generic.List<object> l, object item, long priority)
+            {
+                int i = l.Count;
+                while (i > 0 && (long)((object[])l[i - 1])[0] > priority) i--;
+                var r = new System.Collections.Generic.List<object>(l);
+                r.Insert(i, new object[] { priority, item });
                 return r;
             }
             public static void Nop() { }

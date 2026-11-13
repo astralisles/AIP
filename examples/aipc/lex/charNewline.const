@@ -1,0 +1,3 @@
+const charNewline Int
+  "The character code of a line break (\n)."
+  value 10

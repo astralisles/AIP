@@ -1,0 +1,4 @@
+Keys: Ann Cy Tim
+Ann is 30, has Bob: false
+After remove: 2, original still 3
+Set size 3: 5 12 30

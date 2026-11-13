@@ -1,0 +1,1 @@
+error const-not-pure: constant `settings` calls `fileRead`, which needs file.read

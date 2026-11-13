@@ -1,0 +1,4 @@
+fn queuePush(q Queue<T>, item T) -> Queue<T>
+  "A new queue with the item added at the back; the original is unchanged."
+  pure
+extern

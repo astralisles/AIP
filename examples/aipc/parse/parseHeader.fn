@@ -1,0 +1,5 @@
+fn parseHeader(toks List<Text>) -> FnHeader
+  "Read the header of a .fn or .const file from its tokens."
+  pure
+body
+  if tokAt(toks, 0) == "Ident const" then parseConstHeader(toks) else parseFnHeader(toks)

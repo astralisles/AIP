@@ -1,0 +1,4 @@
+fn sortedSetEmpty() -> SortedSet<T>
+  "A sorted set with no items."
+  pure
+extern

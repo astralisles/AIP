@@ -1,0 +1,1 @@
+error const-cycle: constant `height` depends on itself: height -> width -> height

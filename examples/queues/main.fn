@@ -1,0 +1,11 @@
+fn main() -> Unit
+  "Show Queue (first in, first out) and PriorityQueue (lowest priority number first)."
+  effects terminal.write
+body
+  let q = queuePush(queuePush(queuePush(queueEmpty(), "a"), "b"), "c")
+  let rest = queuePop(q)
+  printLine("Queue front {queueFront(q)}, after pop {queueFront(rest)}, size {queueSize(rest)}, original {queueSize(q)}")
+  let p = priorityQueuePush(priorityQueuePush(priorityQueuePush(priorityQueuePush(priorityQueueEmpty(), "low", 9), "urgent", 1), "mid", 5), "urgent2", 1)
+  let p2 = priorityQueuePop(p)
+  let p3 = priorityQueuePop(p2)
+  printLine("Priority: {priorityQueueFront(p)} {priorityQueueFront(p2)} {priorityQueueFront(p3)} size {priorityQueueSize(p3)}")

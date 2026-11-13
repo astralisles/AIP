@@ -19,7 +19,7 @@ static class Project
     }
 
     /// <param name="overrides">Optional replacement text per file path, so tools can try a changed file without writing it.</param>
-    public static ProgramModel Load(string dir, List<Diagnostic> diags, Dictionary<string, string[]>? overrides = null, bool stdOnly = false)
+    public static ProgramModel Load(string dir, List<Diagnostic> diags, Dictionary<string, string[]>? overrides = null, bool stdOnly = false, SourceCache? cache = null, Action<string>? phase = null)
     {
         var program = new ProgramModel { Name = Path.GetFileName(dir.TrimEnd('\\', '/')), Dir = dir };
 
@@ -40,43 +40,63 @@ static class Project
 
         void LoadFolder(string root, bool isStd)
         {
-            var files = Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories)
-                .Where(f => !Path.GetRelativePath(root, f).Replace('\\', '/').Split('/').Contains("build"))
-                .OrderBy(f => f, StringComparer.Ordinal);
-            foreach (var file in files)
+            // FileInfo comes from the directory listing, so size and write time cost no extra file opens.
+            var infos = new DirectoryInfo(root).EnumerateFiles("*", SearchOption.AllDirectories)
+                .Where(f => !Path.GetRelativePath(root, f.FullName).Replace('\\', '/').Split('/').Contains("build"))
+                .OrderBy(f => f.FullName, StringComparer.Ordinal).ToArray();
+            var files = infos.Select(f => f.FullName).ToArray();
+            if (!isStd) phase?.Invoke($"list files ({files.Length})");
+            // Reading and parsing is ~90% of the time on big projects (mostly opening files), so it runs on
+            // all cores; results are then merged in file order, so output stays the same as a serial run.
+            var parsed = new object?[files.Length];
+            Parallel.For(0, files.Length, i =>
             {
+                var fileExt = Path.GetExtension(files[i]);
+                if (fileExt is not (".fn" or ".const")) return;
+                try
+                {
+                    parsed[i] = fileExt == ".const" ? Parser.ParseConstFile(files[i], Over(files[i]))
+                        : Over(files[i]) is { } o ? Parser.ParseFile(files[i], o)
+                        : isStd || cache == null ? Parser.ParseFile(files[i])
+                        : Parser.ParseText(files[i], cache.Read(infos[i]));
+                }
+                catch (CompileException e) { parsed[i] = e.Diagnostic; }
+            });
+            for (int i = 0; i < files.Length; i++)
+            {
+                var file = files[i];
                 var ext = Path.GetExtension(file);
-                if (ext != ".fn")
+                if (ext is not (".fn" or ".const"))
                 {
                     if (ext is ".struct" or ".variant")
                     {
                         try { AddType(Parser.ParseTypeFile(file, Over(file))); }
                         catch (CompileException e) { diags.Add(e.Diagnostic); }
                     }
-                    else if (ext == ".const")
-                        diags.Add(new Diagnostic(file, 1, "unsupported-file", $"`{ext}` files are not supported by the compiler yet"));
                     continue;
                 }
-                try
-                {
-                    var fn = Parser.ParseFile(file, Over(file));
-                    fn.IsStd = isStd;
-                    if (isStd && StdLayoutError(root, file, fn) is { } layout)
-                        diags.Add(new Diagnostic(file, fn.Line, "std-layout", layout, "see compiler/std/README.md"));
-                    if (program.Fns.TryGetValue(fn.Name, out var other))
-                        diags.Add(new Diagnostic(file, fn.Line, "duplicate-name", $"`{fn.Name}` is already defined in {Path.GetFileName(other.File)}{(other.IsStd ? " (standard library)" : "")}", "names are unique across the project; rename one"));
-                    else program.Fns[fn.Name] = fn;
-                }
-                catch (CompileException e) { diags.Add(e.Diagnostic); }
+                if (parsed[i] is Diagnostic d) { diags.Add(d); continue; }
+                var fn = (Fn)parsed[i]!;
+                fn.IsStd = isStd;
+                if (isStd && StdLayoutError(root, file, fn) is { } layout)
+                    diags.Add(new Diagnostic(file, fn.Line, "std-layout", layout, "see compiler/std/README.md"));
+                if (program.Fns.TryGetValue(fn.Name, out var other))
+                    diags.Add(new Diagnostic(file, fn.Line, "duplicate-name", $"`{fn.Name}` is already defined in {Path.GetFileName(other.File)}{(other.IsStd ? " (standard library)" : "")}", "names are unique across the project; rename one"));
+                else program.Fns[fn.Name] = fn;
             }
         }
 
         LoadFolder(Path.Combine(AppContext.BaseDirectory, "std"), true);
         if (stdOnly) return program;
+        phase?.Invoke("load cache");
         LoadFolder(dir, false);
+        phase?.Invoke($"read+parse ({cache?.Hits ?? 0} from cache, {cache?.Misses ?? 0} from disk)");
+        cache?.Save();
+        phase?.Invoke("save cache");
         foreach (var (name, ctor) in program.Ctors.Where(c => program.Fns.ContainsKey(c.Key)))
             diags.Add(new Diagnostic(ctor.Def.File, ctor.Case.Line, "duplicate-name", $"`{name}` is also a function ({Path.GetFileName(program.Fns[name].File)})", "names are unique across the project; rename one"));
         if (diags.Count == 0) new Checker(program, diags).Check();
+        phase?.Invoke("check");
         return program;
     }
 }

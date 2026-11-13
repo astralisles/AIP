@@ -1,0 +1,6 @@
+fn lexStep(src Text, pos Int, acc List<Text>) -> List<Text>
+  "Lex the token that starts at pos, then the rest."
+  pure
+body
+  let c = textCode(src, pos)
+  if c == charNewline then lexFrom(src, pos + 1, addNewline(acc)) else if isSpace(c) then lexFrom(src, pos + 1, acc) else if isDigit(c) then lexNumber(src, pos, acc) else if isIdentStart(c) then lexToken(src, pos, scanIdent(src, pos), "Ident", acc) else if c == charQuote then lexString(src, pos, acc) else lexSymbol(src, pos, acc)

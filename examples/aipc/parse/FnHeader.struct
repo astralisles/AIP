@@ -1,0 +1,8 @@
+struct FnHeader
+  "The header of one .fn or .const file: what the index shows, plus the purpose line."
+  name Text
+  params List<ParamDecl>
+  ret Text
+  doc Text
+  effects List<Text>
+  isConst Bool

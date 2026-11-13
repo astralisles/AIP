@@ -1,0 +1,7 @@
+fn parseHeaderLines(toks List<Text>, pos Int, doc Text, effects List<Text>) -> HeaderTail
+  "Read the header lines from pos until `body` or `extern`: the purpose line and the effects; skip requires, ensures and example."
+  pure
+body
+  let first = tokAt(toks, pos)
+  let next = lineEnd(toks, pos) + 1
+  if first == "Ident body" or first == "Ident extern" or first == "End" then HeaderTail(doc, effects) else if tokKind(first) == "Text" and doc == "" then parseHeaderLines(toks, next, tokText(first), effects) else if first == "Ident effects" then parseHeaderLines(toks, next, doc, parseEffects(toks, pos + 1, "", effects)) else parseHeaderLines(toks, next, doc, effects)

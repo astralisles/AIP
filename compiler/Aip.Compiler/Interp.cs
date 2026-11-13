@@ -85,6 +85,7 @@ sealed class Interp(ProgramModel program)
             case IntLit i: return Coerce((BigInteger)i.Value, i.Type == "" ? "Int" : i.Type);
             case FloatLit fl: return fl.Type == "F32" ? (object)(float)fl.Value : fl.Value;
             case BoolLit b: return b.Value;
+            case NameRef { Const: true } k: return CallFn(program.Fns[k.Name], new List<object?>());
             case NameRef n: return env[n.Name];
             case TextLit t:
                 return string.Concat(t.Parts.Select(p => p is string s ? s : Text(Eval((Expr)p, env))));
@@ -202,10 +203,18 @@ sealed class Interp(ProgramModel program)
     };
 
     // Same behaviour as the C# back end's Externs; effectful ones are refused before we get here.
+    sealed class OrderCmp : IComparer<object>
+    {
+        public int Compare(object? x, object? y) => x is string s ? string.CompareOrdinal(s, (string)y!) : ((long)x!).CompareTo((long)y!);
+    }
+    static readonly IComparer<object> Order = new OrderCmp();
+
     static object? Extern(string name, List<object?> a)
     {
         List<object?> L(int i) => (List<object?>)a[i]!;
         Dictionary<object, object?> M(int i) => (Dictionary<object, object?>)a[i]!;
+        SortedDictionary<object, object?> S(int i) => (SortedDictionary<object, object?>)a[i]!;
+        SortedDictionary<object, object?> Copy(int i) => new(S(i), Order);
         try
         {
             switch (name)
@@ -261,6 +270,26 @@ sealed class Interp(ProgramModel program)
                 case "listLength": return (long)L(0).Count;
                 case "listGet": return L(0)[(int)(long)a[1]!];
                 case "listAppend": return new List<object?>(L(0)) { a[1] };
+                case "queueEmpty" or "priorityQueueEmpty": return new List<object?>();
+                case "queueSize" or "priorityQueueSize": return (long)L(0).Count;
+                case "queuePush": return new List<object?>(L(0)) { a[1] };
+                case "queueFront": return L(0).Count > 0 ? L(0)[0] : throw new KeyNotFoundException("queueFront: the queue is empty");
+                case "priorityQueueFront": return L(0).Count > 0 ? ((object?[])L(0)[0]!)[1] : throw new KeyNotFoundException("priorityQueueFront: the queue is empty");
+                case "queuePop" or "priorityQueuePop": return L(0).Count > 0 ? L(0).GetRange(1, L(0).Count - 1) : throw new KeyNotFoundException(name + ": the queue is empty");
+                case "priorityQueuePush":
+                    {
+                        var l = L(0); int i = l.Count; long p = (long)a[2]!;
+                        while (i > 0 && (long)((object?[])l[i - 1]!)[0]! > p) i--;
+                        var r = new List<object?>(l); r.Insert(i, new object?[] { p, a[1] }); return r;
+                    }
+                case "sortedMapEmpty" or "sortedSetEmpty": return new SortedDictionary<object, object?>(Order);
+                case "sortedMapSize" or "sortedSetSize": return (long)S(0).Count;
+                case "sortedMapHas" or "sortedSetHas": return S(0).ContainsKey(a[1]!);
+                case "sortedMapGet": return S(0).TryGetValue(a[1]!, out var sv) ? sv : throw new KeyNotFoundException("sortedMapGet: key not in the map");
+                case "sortedMapSet": { var r = Copy(0); r[a[1]!] = a[2]; return r; }
+                case "sortedSetAdd": { var r = Copy(0); r[a[1]!] = true; return r; }
+                case "sortedMapRemove" or "sortedSetRemove": { var r = Copy(0); r.Remove(a[1]!); return r; }
+                case "sortedMapKeys" or "sortedSetItems": return S(0).Keys.Select(k => (object?)k).ToList();
                 case "mapEmpty" or "setEmpty": return new Dictionary<object, object?>();
                 case "mapSize" or "setSize": return (long)M(0).Count;
                 case "mapHas" or "setHas": return M(0).ContainsKey(a[1]!);

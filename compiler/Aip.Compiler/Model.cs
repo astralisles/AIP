@@ -18,7 +18,8 @@ sealed class FloatLit : Expr { public double Value; }
 sealed class BoolLit : Expr { public bool Value; }
 /// <summary>Parts are either string (literal text) or Expr (interpolated).</summary>
 sealed class TextLit : Expr { public List<object> Parts = new(); }
-sealed class NameRef : Expr { public string Name = ""; }
+/// <summary>A local name, or (when Const is set by the checker) a `.const` file.</summary>
+sealed class NameRef : Expr { public string Name = ""; public bool Const; }
 /// <summary>A function call, or (when Ctor is set by the checker) the construction of a struct or variant case.</summary>
 sealed class Call : Expr { public string Name = ""; public List<Expr> Args = new(); public string? Ctor; }
 /// <summary>`target.name`: reads a field of a struct.</summary>
@@ -61,6 +62,8 @@ sealed class Fn
     public int Line = 1;
     public bool IsStd;
     public bool IsExtern;
+    /// <summary>A `.const` file: no parameters, Ret is its type, Body is one statement (its value), always pure.</summary>
+    public bool IsConst;
     public List<Param> Params = new();
     public TypeRef Ret = new("Unit", "");
     public string Doc = "";
@@ -72,7 +75,7 @@ sealed class Fn
     public List<Stmt> Body = new();
     public HashSet<string> Calls = new();
 
-    public string Signature =>
+    public string Signature => IsConst ? $"const {Name} {Ret}" :
         $"{Name}({string.Join(", ", Params.Select(p => $"{p.Name} {p.Type}"))}) -> {Ret}";
 
     public string EffectsText => Effects.Count == 0 ? "pure" : string.Join(", ", Effects);

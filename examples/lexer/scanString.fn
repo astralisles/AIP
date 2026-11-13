@@ -1,5 +1,0 @@
-fn scanString(src Text, i Int) -> Int
-  "The position of the closing double quote, skipping backslash escapes."
-  pure
-body
-  if i >= textLength(src) then i else if textCode(src, i) == 34 then i else if textCode(src, i) == 92 then scanString(src, i + 2) else scanString(src, i + 1)

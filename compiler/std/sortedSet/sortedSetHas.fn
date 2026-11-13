@@ -1,0 +1,4 @@
+fn sortedSetHas(s SortedSet<T>, item T) -> Bool
+  "True when the set has the item."
+  pure
+extern

@@ -1,0 +1,4 @@
+struct ParamDecl
+  "One parameter of a function: its name and its type as written in the index."
+  name Text
+  type Text

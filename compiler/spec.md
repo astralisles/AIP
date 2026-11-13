@@ -10,7 +10,7 @@ FUNCTION  fn name(a Int, b Text) -> Int
           body
             <statements, indented 2 spaces>
           std functions have `extern` instead of `body`.
-TYPES     Int, Text, Bool, Unit, List<T>, Set<T>, Map<K,V>. All values are immutable: mapSet(m, k, v) returns a new map.
+TYPES     Int, Text, Bool, Unit, List<T>, Set<T>, Map<K,V>, SortedSet<T>, SortedMap<K,V> (Int or Text keys, kept in order), Queue<T> (first in, first out), PriorityQueue<T> (push with an Int priority; lowest comes out first). All values are immutable: mapSet(m, k, v) returns a new map.
 STRUCT    Point.struct:  struct Point / "doc" / x Int / y Int      build: Point(1, 2)   read: p.x
 VARIANT   Shape.variant: variant Shape / "doc" / Circle(r Int) / Nothing    one case per line
 STATEMENTS  let x = expr        if c then a else b       match v  (one `Case(a, b) => expr` arm per line, every case)

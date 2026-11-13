@@ -1,0 +1,3 @@
+const charQuote Int
+  "The character code of a double quote, which starts and ends a text."
+  value 34
