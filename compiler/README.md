@@ -50,6 +50,11 @@ Supported so far: `.fn` files; Int, Text, Bool, Unit; `List<T>`, `Set<T>`, `Map<
 per line, every case required). See `examples/shapes`. Ranges, `requires`, `ensures` and
 `example` are parsed and type-checked but not yet proved or run.
 
+Control flow: conditionals are `if c then a else b` (chainable with `else if`, one line, an expression; with Unit
+branches it is a statement) and `match`. There is no `while`/`for`: a loop is a function that calls itself with the
+next state (accumulator parameters), so state stays immutable. One million iterations run fine (512 MB stack). See
+`examples/control`. Multi-line `if` blocks and `Fn`-based `listMap`/`listFold` are not done (see T-0928).
+
 ## Road to bootstrapping (compiler written in AIP)
 
 Done: `struct`, `variant`, `match`; `List<T>` (type-erased at run time), text helpers (`textLength`, `textSlice`, `textCode`, ...), file and

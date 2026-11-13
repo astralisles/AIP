@@ -42,6 +42,7 @@ $expectedOut = @{
   types  = "Int:  42|Text: hello|Bool: true|Bool from a comparison (count > 40): true|Bool from and/or/not: true|Text equality: true|Ann is 30. Adult: yes|Tim is 12. Adult: no"
   shapes = "circle of radius 2 at 0,0, area 12|4 by 5 rectangle at 1,2, area 20|(skipping an empty shape)|dot at 7,8, area 0"
   collections = "List size: 2, first: pear|Map size: 2|Ann is 30|Has Bob: false|Updated Ann: 31, original still 30|Keys: 2, first key: Ann|After remove: 1|Set size (3, 5, 3): 2|Has 5: true, has 4: false|Set items: 2, first: 3|Map of lists: apple"
+  control = "sign(-4) = -1, sign(0) = 0, sign(9) = 1|grade(95) = A, grade(72) = C, grade(10) = F|sumTo(100) = 5050|factorial(10) = 3628800|countEven(1..20) = 10|sumTo(1000000) = 500000500000|3...|2...|1...|Liftoff!"
   math   = "7 - 10 = -3|6 * 7 = 42|17 / 5 = 3 (whole number division)|17 % 5 = 2 (the rest)|abs(-12) = 12|max(3, 9) = 9|min(3, 9) = 3|square(-4) = 16|clamp(15, 0, 10) = 10|average(4, 10) = 7|isEven(10) = true|isEven(7) = false"
 }
 foreach ($name in $expectedOut.Keys | Sort-Object) {
