@@ -24,6 +24,11 @@ Report 'hello: `aip run` prints only "Hello, World!"' ($LASTEXITCODE -eq 0 -and 
 $out = (& $aip build examples\hello --target wasm | Out-String).Trim()
 Report 'hello: wasm is refused with a clear message' ($LASTEXITCODE -ne 0 -and $out.Contains('unsupported-target')) $out
 
+$out = (& $aip query examples\hello callers greeting | Out-String).Trim()
+Report 'hello: query callers greeting -> main' ($LASTEXITCODE -eq 0 -and $out.StartsWith('main()')) $out
+$out = (& $aip query examples\hello fn nope | Out-String).Trim()
+Report 'hello: query of an unknown function fails clearly' ($LASTEXITCODE -ne 0 -and $out.Contains('no-such-function')) $out
+
 foreach ($case in Get-ChildItem (Join-Path $root 'tests\errors') -Directory | Sort-Object Name) {
   $expected = (Get-Content (Join-Path $case.FullName 'expected.txt') -Raw).Trim()
   $out = (& $aip check $case.FullName | Out-String).Trim()

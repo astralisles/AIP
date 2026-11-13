@@ -5,12 +5,13 @@ const string Usage = """
     usage:
       aip check <projectDir>                          check only
       aip index <projectDir>                          print the index: one line per function
+      aip query <projectDir> <verb> [arg]             ask the index (always fresh); verbs: list, fn NAME, find WORDS, callers NAME, calls NAME, effect NAME
       aip build <projectDir> [--target T] [--out D]   check, then build a program
       aip run <projectDir>                            check, build for this machine, then run it
     targets: windows-x64, windows-arm64, linux-x64, linux-arm64, macos-arm64 (default: this machine)
     """;
 
-if (args.Length < 2 || args[0] is not ("check" or "index" or "build" or "run"))
+if (args.Length < 2 || args[0] is not ("check" or "index" or "query" or "build" or "run"))
 {
     Console.WriteLine(Usage);
     return 2;
@@ -19,6 +20,8 @@ if (args.Length < 2 || args[0] is not ("check" or "index" or "build" or "run"))
 var command = args[0];
 var dir = Path.GetFullPath(args[1]);
 string? target = null, outDir = null;
+string[] queryArgs = [];
+if (command == "query") { queryArgs = args[2..]; args = args[..2]; }
 for (int i = 2; i < args.Length; i++)
 {
     if (args[i] == "--target" && i + 1 < args.Length) target = args[++i];
@@ -78,6 +81,8 @@ switch (command)
     case "index":
         Console.Write(Index());
         return 0;
+    case "query":
+        return Query.Run(program, queryArgs);
 }
 
 var host = (OperatingSystem.IsWindows() ? "windows" : OperatingSystem.IsMacOS() ? "macos" : "linux")
