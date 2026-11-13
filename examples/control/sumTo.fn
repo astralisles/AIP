@@ -1,0 +1,6 @@
+fn sumTo(n Int, total Int) -> Int
+  "Loop: add n + (n-1) + ... + 1 to total."
+  pure
+  example sumTo(4, 0) == 10
+body
+  if n == 0 then total else sumTo(n - 1, total + n)

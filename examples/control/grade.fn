@@ -1,0 +1,6 @@
+fn grade(score Int) -> Text
+  "A letter for a score: A from 90, B from 80, C from 70, else F."
+  pure
+  example grade(95) == "A"
+body
+  if score >= 90 then "A" else if score >= 80 then "B" else if score >= 70 then "C" else "F"

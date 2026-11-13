@@ -7,6 +7,8 @@ The only back end so far is `CsBackend.cs`: it emits C# and builds it with the .
     scripts\aip.ps1 run examples\hello
     scripts\aip.ps1 check examples\hello
     scripts\aip.ps1 index examples\hello
+    scripts\aip.ps1 find examples\shapes area      search project + std functions
+    scripts\aip.ps1 spec                           one-page language spec for a model
     scripts\aip.ps1 build examples\hello [--target linux-x64]
     scripts\test.ps1
 
@@ -23,8 +25,13 @@ Supported so far: `.fn` files; Int (64-bit signed), I8 I16 I32 U8 U16 U32 U64, F
 per line, every case required). See `examples/shapes`. Ranges, `requires`, `ensures` and
 `example` are parsed and type-checked but not yet proved or run.
 
+Control flow: conditionals are `if c then a else b` (chainable with `else if`, one line, an expression; with Unit
+branches it is a statement) and `match`. Loops are recursion (no `while`/`for`); see `docs/design/control-flow-T-0943.md`
+and `examples/control`.
+
 ## Design decisions, features and roadmap
 
+Open questions and what was decided (`aip spec`, `aip find`, Result/Option, AI-first rule): `docs/design/open-questions-T-0944.md`.
 One file per topic in `docs/design/` (for example `security-T-0936.md`, `bootstrapping.md`).
 Logging and debugging: `docs/design/logging-T-0934.md`; profiling: `docs/design/profiling-T-0938.md`.
 A new decision is a new file there; do not append it to this README.
