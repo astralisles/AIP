@@ -1,0 +1,4 @@
+fn textJoin(items List<Text>, separator Text) -> Text
+  "The items joined with the separator between them."
+  pure
+extern

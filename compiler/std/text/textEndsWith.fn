@@ -1,0 +1,4 @@
+fn textEndsWith(text Text, suffix Text) -> Bool
+  "True when the text ends with suffix."
+  pure
+extern

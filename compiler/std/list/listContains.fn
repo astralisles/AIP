@@ -1,0 +1,4 @@
+fn listContains(items List<T>, item T) -> Bool
+  "True when an equal item is in the list."
+  pure
+extern

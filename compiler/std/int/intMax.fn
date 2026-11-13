@@ -1,0 +1,4 @@
+fn intMax(a Int, b Int) -> Int
+  "The larger of two numbers."
+  pure
+extern

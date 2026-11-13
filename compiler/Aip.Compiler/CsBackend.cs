@@ -33,6 +33,41 @@ sealed class CsBackend : IBackend
         ["listLength"] = "(long)({0}).Count",
         ["listGet"] = "({0})[(int)({1})]",
         ["listAppend"] = "Rt.Append({0}, {1})",
+        ["textFind"] = "(long)({0}).IndexOf({1}, System.StringComparison.Ordinal)",
+        ["textContains"] = "({0}).Contains({1}, System.StringComparison.Ordinal)",
+        ["textStartsWith"] = "({0}).StartsWith({1}, System.StringComparison.Ordinal)",
+        ["textEndsWith"] = "({0}).EndsWith({1}, System.StringComparison.Ordinal)",
+        ["textTrim"] = "({0}).Trim()",
+        ["textReplace"] = "({0}).Replace({1}, {2}, System.StringComparison.Ordinal)",
+        ["textToUpper"] = "({0}).ToUpperInvariant()",
+        ["textToLower"] = "({0}).ToLowerInvariant()",
+        ["textCompare"] = "(long)System.Math.Sign(string.CompareOrdinal({0}, {1}))",
+        ["textFromInt"] = "({0}).ToString(System.Globalization.CultureInfo.InvariantCulture)",
+        ["textRepeat"] = "string.Concat(System.Linq.Enumerable.Repeat({0}, (int)({1})))",
+        ["textSplit"] = "new System.Collections.Generic.List<object>(({0}).Split({1}, System.StringSplitOptions.None))",
+        ["textJoin"] = "string.Join({1}, System.Linq.Enumerable.Cast<string>({0}))",
+        ["intMin"] = "System.Math.Min({0}, {1})",
+        ["intMax"] = "System.Math.Max({0}, {1})",
+        ["intAbs"] = "System.Math.Abs({0})",
+        ["intSign"] = "(long)System.Math.Sign({0})",
+        ["intClamp"] = "System.Math.Clamp({0}, {1}, {2})",
+        ["intPow"] = "(long)System.Numerics.BigInteger.Pow({0}, (int)({1}))",
+        ["intGcd"] = "(long)System.Numerics.BigInteger.GreatestCommonDivisor({0}, {1})",
+        ["intAnd"] = "(({0}) & ({1}))",
+        ["intOr"] = "(({0}) | ({1}))",
+        ["intXor"] = "(({0}) ^ ({1}))",
+        ["intNot"] = "(~({0}))",
+        ["intShiftLeft"] = "(({0}) << (int)({1}))",
+        ["intShiftRight"] = "(({0}) >> (int)({1}))",
+        ["listSet"] = "Rt.ListSet({0}, {1}, {2})",
+        ["listInsert"] = "Rt.ListInsert({0}, {1}, {2})",
+        ["listRemoveAt"] = "Rt.ListRemoveAt({0}, {1})",
+        ["listConcat"] = "Rt.ListConcat({0}, {1})",
+        ["listSlice"] = "Rt.ListSlice({0}, {1}, {2})",
+        ["listReverse"] = "Rt.ListReverse({0})",
+        ["listIndexOf"] = "(long)({0}).IndexOf({1})",
+        ["listContains"] = "({0}).Contains({1})",
+        ["listRange"] = "Rt.ListRange({0}, {1})",
         ["mapEmpty"] = "new System.Collections.Generic.Dictionary<object, object>()",
         ["mapSize"] = "(long)({0}).Count",
         ["mapHas"] = "({0}).ContainsKey({1})",
@@ -386,6 +421,48 @@ sealed class CsBackend : IBackend
                 var r = new System.Collections.Generic.List<object>(l.Count + 1);
                 r.AddRange(l);
                 r.Add(item);
+                return r;
+            }
+            public static System.Collections.Generic.List<object> ListSet(System.Collections.Generic.List<object> l, long i, object item)
+            {
+                var r = new System.Collections.Generic.List<object>(l);
+                r[(int)i] = item;
+                return r;
+            }
+            public static System.Collections.Generic.List<object> ListInsert(System.Collections.Generic.List<object> l, long i, object item)
+            {
+                var r = new System.Collections.Generic.List<object>(l);
+                r.Insert((int)i, item);
+                return r;
+            }
+            public static System.Collections.Generic.List<object> ListRemoveAt(System.Collections.Generic.List<object> l, long i)
+            {
+                var r = new System.Collections.Generic.List<object>(l);
+                r.RemoveAt((int)i);
+                return r;
+            }
+            public static System.Collections.Generic.List<object> ListConcat(System.Collections.Generic.List<object> a, System.Collections.Generic.List<object> b)
+            {
+                var r = new System.Collections.Generic.List<object>(a.Count + b.Count);
+                r.AddRange(a);
+                r.AddRange(b);
+                return r;
+            }
+            public static System.Collections.Generic.List<object> ListSlice(System.Collections.Generic.List<object> l, long start, long end)
+            {
+                int a = (int)System.Math.Clamp(start, 0, l.Count), b = (int)System.Math.Clamp(end, a, l.Count);
+                return l.GetRange(a, b - a);
+            }
+            public static System.Collections.Generic.List<object> ListReverse(System.Collections.Generic.List<object> l)
+            {
+                var r = new System.Collections.Generic.List<object>(l);
+                r.Reverse();
+                return r;
+            }
+            public static System.Collections.Generic.List<object> ListRange(long start, long end)
+            {
+                var r = new System.Collections.Generic.List<object>();
+                for (long i = start; i < end; i++) r.Add(i);
                 return r;
             }
             public static object MapGet(System.Collections.Generic.Dictionary<object, object> m, object k) =>

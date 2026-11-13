@@ -1,0 +1,4 @@
+fn intMin(a Int, b Int) -> Int
+  "The smaller of two numbers."
+  pure
+extern

@@ -1,0 +1,4 @@
+fn listConcat(a List<T>, b List<T>) -> List<T>
+  "A new list with all items of a followed by all items of b."
+  pure
+extern

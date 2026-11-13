@@ -1,0 +1,4 @@
+fn textContains(text Text, part Text) -> Bool
+  "True when part occurs in the text."
+  pure
+extern

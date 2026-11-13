@@ -1,0 +1,4 @@
+fn textSplit(text Text, separator Text) -> List<Text>
+  "The pieces between separators; an empty separator gives one piece."
+  pure
+extern

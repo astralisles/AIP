@@ -1,0 +1,4 @@
+fn intOr(a Int, b Int) -> Int
+  "Bitwise or."
+  pure
+extern

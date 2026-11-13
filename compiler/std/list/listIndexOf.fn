@@ -1,0 +1,4 @@
+fn listIndexOf(items List<T>, item T) -> Int
+  "Index of the first equal item, or -1 when it is not there."
+  pure
+extern
