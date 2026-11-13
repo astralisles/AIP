@@ -166,3 +166,43 @@ Shape (builds on `Fn` from T-0928):
 
 Not implemented. Needs `Fn` first. Immediate use: compiling the files of a project in the
 bootstrapped compiler (parse each `.fn` in parallel, check and emit in order).
+
+## Open questions we are not asking yet (T-0944)
+
+Decided so far: global state, function pointers, security, parallelism, profiling, std layout. These are the gaps
+left, ordered by how much they would hurt if answered late. Each is a question, not a decision.
+
+1. **Does an LLM actually write AIP better than it writes Python?** Everything so far is argued, nothing is measured.
+   Build a small benchmark: 20 tasks, the same model writes each in AIP and in a baseline language, score first-try
+   compile rate, test pass rate, tokens used, and edit success. Without it we cannot tell a good rule from a rule that
+   only feels tidy. (`examples/` plus `tests/errors` are a starting corpus.)
+2. **Is the compiler error message good enough for a model to fix its own mistake?** Errors are the LLM's main
+   feedback loop. Check: one stable error code, the file and line, the offending text, and a suggested fix, in a
+   machine-readable form (`--json`). Measure how often a model fixes the error in one retry.
+3. **How does an LLM learn the language it was never trained on?** Needs a short spec (one page) that fits in a
+   prompt, and an `aip` command that prints it (`aip spec`). Decide how big it may get; if the spec outgrows the
+   context budget, the one-function-per-file idea is paying for itself less than we think.
+4. **What happens when the index grows?** One line per function is fine for 50 functions, not for 50,000.
+   Decide: grouping by folder, search (`aip find "parse json"`), or a per-folder summary line.
+5. **How do errors and absence work?** Not yet decided: no exceptions, `Option`/`Result` values, or crash only.
+   Today a runtime error just crashes. A language for LLMs probably wants `Result<T,E>` in the signature so the
+   failure modes show in the index like effects do. This also decides what `ensures` failures become.
+6. **How do people (and models) depend on other people's code?** "No imports" means no libraries. Decide how code is
+   shared: copy a folder in, a versioned package, or only std. Needs an answer for supply-chain trust (see T-0936).
+7. **How do we change the language without breaking old programs?** A version line in each project, and a rule for
+   what may change. Cheap now, painful after the first outside user.
+8. **What is the testing story?** `example` lines are parsed but never run. Running them is the cheapest big win: they
+   are tests that live next to the function and show an LLM how the function is used. Also decide on property tests.
+9. **Which numbers?** Only `Int` exists. Overflow (wrap, crash or big), `Float`, decimals for money, `Bytes`,
+   and Unicode text (code points vs bytes; `textSlice` today) all need an answer before real programs.
+10. **How does a program talk to the outside world?** Network, time, randomness, environment and processes are
+    effects too. Each needs a name, a scope (see T-0936 path scope) and a deterministic replay so tests stay stable.
+11. **Is the bootstrap goal still the right goal?** Self-hosting proves the language is capable, but it costs time that
+    could go to questions 1, 2 and 8. Decide whether self-hosting is a milestone or the project.
+12. **Who is the user: the model or the human who reads its output?** Both read the code. Decide which wins when
+    they conflict (e.g. terse names vs readable names), and whether there is an `aip explain <function>` for humans.
+13. **What does "done" mean for the prototype?** Without a success test (for example: a model builds a 500-line tool
+    from the spec alone, with no human edits) we cannot tell progress from activity.
+
+Recommended next three, in order: 1 (benchmark, it decides whether the rest matters), 8 (run `example` lines),
+5 (errors as values). Nothing here is implemented; this section is documentation only.
