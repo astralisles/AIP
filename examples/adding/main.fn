@@ -1,0 +1,10 @@
+fn main() -> Unit
+  "Print a few additions."
+  effects terminal.write
+body
+  printLine(addLine(2, 3))
+  printLine(addLine(-7, 10))
+  printLine(addLine(1000000, 2345678))
+  printLine("1 + 2 + 3 = {addThree(1, 2, 3)}")
+  let total = add(addThree(10, 20, 30), 5)
+  printLine("Total: {total}")

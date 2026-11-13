@@ -24,7 +24,12 @@ Open PowerShell in this folder, then:
   4. Build for Linux from Windows (run the result on a Linux machine):
        scripts\aip.ps1 build examples\hello --target linux-x64
 
-  5. Run the tests:
+  5. More examples: adding numbers, data types, basic math:
+       scriptsip.ps1 run examplesdding
+       scriptsip.ps1 run examples	ypes
+       scriptsip.ps1 run examplesmath
+
+  6. Run the tests:
        scripts\test.ps1
 
 If PowerShell says scripts are disabled, or you are in cmd.exe, prefix with:

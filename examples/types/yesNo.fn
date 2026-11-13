@@ -1,0 +1,7 @@
+fn yesNo(flag Bool) -> Text
+  "Turn a Bool into the text yes or no."
+  pure
+  example yesNo(true) == "yes"
+  example yesNo(false) == "no"
+body
+  if flag then "yes" else "no"

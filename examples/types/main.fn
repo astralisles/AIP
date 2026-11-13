@@ -1,0 +1,16 @@
+fn main() -> Unit
+  "Show the basic data types: Int, Text and Bool."
+  effects terminal.write
+body
+  let count = 42
+  let word = "hello"
+  let ready = true
+  printLine("Int:  {count}")
+  printLine("Text: {word}")
+  printLine("Bool: {ready}")
+  printLine("Bool from a comparison (count > 40): {count > 40}")
+  printLine("Bool from and/or/not: {ready and not (count < 0)}")
+  let same = word == "hello"
+  printLine("Text equality: {same}")
+  printLine(describe("Ann", 30))
+  printLine(describe("Tim", 12))

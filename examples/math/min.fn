@@ -1,0 +1,6 @@
+fn min(a Int, b Int) -> Int
+  "The smaller of two numbers."
+  pure
+  example min(3, 9) == 3
+body
+  if a < b then a else b
