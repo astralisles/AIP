@@ -1,0 +1,4 @@
+fn sortedMapRemove(m SortedMap<K,V>, key K) -> SortedMap<K,V>
+  "A new map without the key; the original is unchanged."
+  pure
+extern

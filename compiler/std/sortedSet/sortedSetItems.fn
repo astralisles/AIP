@@ -1,0 +1,4 @@
+fn sortedSetItems(s SortedSet<T>) -> List<T>
+  "The items in ascending order (Int by value, Text by character code)."
+  pure
+extern
