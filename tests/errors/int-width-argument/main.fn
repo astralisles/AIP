@@ -1,0 +1,5 @@
+fn main() -> Unit
+  "m"
+  effects terminal.write
+body
+  printLine("{take(numToI32(1))}")

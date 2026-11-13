@@ -42,3 +42,7 @@ Rules:
   `bitShr` is logical for unsigned and arithmetic (sign copied) for signed types. Bits shifted out of `bitShl` are dropped
   (that is what shifting means), but a count outside `0..width-1` is a run-time error instead of C#'s silent masking.
   A literal argument takes the type of the other argument: `bitAnd(flags, 10)`.
+
+## No implicit conversions (iteration 3)
+
+No value changes type on its own: arithmetic, comparison, arguments, `let`, and return values all need the exact same type, otherwise `type-mismatch` (tests: `int-width-mismatch`, `int-width-argument`, `float-width-mismatch`). The only adaptation is an untyped *literal*, which has no type until the context gives it one and is rejected if it does not fit (`out-of-range`). A variable never adapts: `let n = 5` is `Int` and `take(n)` for an `I32` parameter is an error.

@@ -1,0 +1,5 @@
+fn take(x Int) -> Int
+  "t"
+  pure
+body
+  x
