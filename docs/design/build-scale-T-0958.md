@@ -39,6 +39,26 @@ line (types, ranges, effects), so "does a change affect callers?" is answered ex
    functions: clean build, no-op build, one body edit, one signature edit) and fail `scripts\test.ps1` when a
    budget regresses. Without a budget, build time only ever grows.
 
+## What "one assembly per folder" means (clarification)
+An assembly is one compiled output file (a `.dll`). Today the whole program, however many `.fn` files, becomes ONE
+`.dll`, so changing one line recompiles all of it. The idea is to compile each folder of the project into its own `.dll`.
+Example, for a game:
+
+    game/
+      physics/   500 functions   -> physics.dll
+      render/    900 functions   -> render.dll   (calls physics)
+      ai/        300 functions   -> ai.dll
+
+Edit a body in `ai/`: only `ai.dll` is rebuilt (300 functions, not 1,700); `physics.dll` and `render.dll` are reused.
+Edit a signature in `physics/`: `physics.dll` is rebuilt, plus the folders that call the changed function.
+Independent folders compile at the same time on different cores. You do not write anything extra: the compiler
+decides from the folders you already have, nothing changes in the language, and the user still gets one program.
+It is a build detail of the C# back end (a native back end would produce one object file per folder instead).
+Folders that are very large would be split by the compiler, and tiny ones merged, to keep units of roughly
+500 to 5,000 functions. Open choice: folder = unit (simple, predictable, recommended) or a compiler-chosen
+grouping (better balance, harder to predict). Folders must not call each other in a cycle (A calls B calls A);
+see Risks.
+
 ## Targets to hold ourselves to
 | Case | Goal at 1M functions |
 |---|---|
