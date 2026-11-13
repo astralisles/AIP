@@ -10,6 +10,15 @@ point at values created before it. The heap is therefore acyclic and nothing is 
 Tasks (`parallelism-T-0935.md`) share nothing. This removes the hard parts of GC: no cycle collector, no write barriers, no
 stop-the-world coordination between tasks.
 
+**Can two structs passed in point at each other? No.** A struct is built by a constructor call (`Point(1, 2)`) whose fields must
+already be values. For A to hold B, B must exist first; for B to hold A, A must exist first. Both cannot be true, and since a value
+is never changed after it is built, there is no way to patch the link in afterwards. Passing two structs into a function does not
+change this: the function can only build *new* structs that hold the old ones, so the pointers always go from newer to older.
+Data that is truly circular (a graph, parent/child) is written with keys instead, for example a `Map` from id to node, where a node
+stores the other's id. An id is plain data, not a pointer, so reference counting never sees a cycle.
+This guarantee holds only while we do not add: mutation, lazy or recursive `let` (`let a = S(b)` and `let b = S(a)`), or a
+cell/reference type. Any such feature needs a cycle collector, so it must be checked against this note first.
+
 **Recommendation.**
 1. **Own runtime, not user-visible.** Allocation and release live in the runtime folder planned in `bootstrap-gaps-T-0954.md`,
    written in AIP plus a few raw-memory intrinsics that only that folder may use. Users still never see a pointer.
