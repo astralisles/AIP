@@ -1,0 +1,9 @@
+fn printAst(path Text) -> Unit
+  "Print the dump of a function file: the requires, ensures and example lines, then the body lines."
+  effects file.read, terminal.write
+body
+  let lines = textSplit(textReplace(fileRead(path), textFromCode(13), ""), "\n")
+  printHeader(lines, 0, "requires ")
+  printHeader(lines, 0, "ensures ")
+  printHeader(lines, 0, "example ")
+  printBody(lines, findBodyLine(lines, 0), listEmpty(), false)

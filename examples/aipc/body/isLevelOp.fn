@@ -1,0 +1,7 @@
+fn isLevelOp(level Int, tok Text) -> Bool
+  "Whether a token is an operator of the given operator level."
+  pure
+  example isLevelOp(4, "Sym +")
+  example isLevelOp(1, "Ident or")
+body
+  (tokKind(tok) == "Sym" or tokKind(tok) == "Ident") and listContains(levelOps(level), tokText(tok))

@@ -1,0 +1,8 @@
+fn stepArm(indent Int, text Text, pending List<Int>, openIf Bool) -> BodyStep
+  "Read a `Case(a, b) => value` line; a value that is a `match` opens arms two spaces deeper."
+  pure
+body
+  let toks = lexAll(text)
+  let binds = armBinds(toks, if tokAt(toks, 1) == "Sym (" then 2 else 1, listEmpty())
+  let value = parseExpr(toks, binds.next + 1, true)
+  BodyStep("arm {tokText(tokAt(toks, 0))}[{joinCommas(binds.names)}] {sexpr(value.expr)}", if isMatch(value.expr) then listAppend(pending, indent + 2) else pending, openIf)
