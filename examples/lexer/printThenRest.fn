@@ -1,0 +1,6 @@
+fn printThenRest(tokens List<Text>, i Int) -> Unit
+  "Print token i, then the rest."
+  effects terminal.write
+body
+  printLine(listGet(tokens, i))
+  printAll(tokens, i + 1)

@@ -1,0 +1,4 @@
+fn textFromCode(code Int) -> Text
+  "A one-character text for a character code."
+  pure
+extern

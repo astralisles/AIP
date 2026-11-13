@@ -1,0 +1,4 @@
+fn arg(index Int) -> Text
+  "A command line argument by position (first is 0)."
+  effects process.args
+extern
