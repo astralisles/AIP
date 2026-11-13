@@ -59,6 +59,16 @@ sealed class CsBackend : IBackend
         ["sortedSetAdd"] = "Rt.SortedPut({0}, {1}, true)",
         ["sortedSetRemove"] = "Rt.SortedRemove({0}, {1})",
         ["sortedSetItems"] = "new System.Collections.Generic.List<object>(({0}).Keys)",
+        ["queueEmpty"] = "new System.Collections.Generic.List<object>()",
+        ["queueSize"] = "(long)({0}).Count",
+        ["queuePush"] = "Rt.Append({0}, {1})",
+        ["queueFront"] = "Rt.Front({0}, \"queueFront\")",
+        ["queuePop"] = "Rt.Pop({0}, \"queuePop\")",
+        ["priorityQueueEmpty"] = "new System.Collections.Generic.List<object>()",
+        ["priorityQueueSize"] = "(long)({0}).Count",
+        ["priorityQueuePush"] = "Rt.PqPush({0}, {1}, {2})",
+        ["priorityQueueFront"] = "((object[])Rt.Front({0}, \"priorityQueueFront\"))[1]",
+        ["priorityQueuePop"] = "Rt.Pop({0}, \"priorityQueuePop\")",
         ["fileRead"] = "System.IO.File.ReadAllText({0})",
         ["fileWrite"] = "Rt.Write({0}, {1})",
         ["noop"] = "Rt.Nop()",
@@ -73,7 +83,7 @@ sealed class CsBackend : IBackend
             Console.WriteLine($"error unsupported-target: the cs back end cannot build for `{target}` yet\n  fix: use one of: {string.Join(", ", Targets.Keys)}");
             return null;
         }
-        foreach (var fn in program.Fns.Values.Where(f => f.IsExtern && !Externs.ContainsKey(f.Name)))
+        foreach (var fn in program.Fns.Values.Where(f => f.IsExtern && f.NativeLib == null && !Externs.ContainsKey(f.Name)))
         {
             Console.WriteLine($"error backend-missing-extern: the cs back end has no implementation of `{fn.Name}`");
             return null;
@@ -88,6 +98,7 @@ sealed class CsBackend : IBackend
         // to the last build for this target and its output is still there; otherwise keep the cs/obj
         // folder so the publish is incremental instead of restoring from scratch.
         var files = EmitFiles(program);
+        CopyNative(program, binDir);
         var hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
             Encoding.UTF8.GetBytes(rid + "\0" + string.Join("\0", files.Select(p => p.Key + "\0" + p.Value)))));
         var stamp = Path.Combine(binDir, ".aip-build-hash");
@@ -133,11 +144,25 @@ sealed class CsBackend : IBackend
         return exePath;
     }
 
+    /// <summary>Shared libraries shipped with the project: every .dll, .so and .dylib in `<project>/native/`
+    /// is copied next to the program, where the loader looks first.</summary>
+    static void CopyNative(ProgramModel program, string binDir)
+    {
+        var src = Path.Combine(program.Dir, "native");
+        if (!Directory.Exists(src)) return;
+        Directory.CreateDirectory(binDir);
+        foreach (var f in Directory.EnumerateFiles(src).Where(f => Path.GetExtension(f) is ".dll" or ".so" or ".dylib" || Path.GetFileName(f).Contains(".so.", StringComparison.Ordinal)))
+        {
+            var dest = Path.Combine(binDir, Path.GetFileName(f));
+            if (!File.Exists(dest) || File.GetLastWriteTimeUtc(dest) != File.GetLastWriteTimeUtc(f)) File.Copy(f, dest, true);
+        }
+    }
+
     /// <summary>All generated files (name to content), in a fixed order. Pure: used by the build and by `aip emit`.</summary>
     public static SortedDictionary<string, string> EmitFiles(ProgramModel program)
     {
         var files = new SortedDictionary<string, string>(StringComparer.Ordinal);
-        foreach (var fn in program.ProjectFns) files[fn.Name + ".cs"] = fn.IsConst ? EmitConst(fn) : EmitFn(fn);
+        foreach (var fn in program.ProjectFns) files[fn.Name + ".cs"] = fn.IsConst ? EmitConst(fn) : fn.NativeLib != null ? EmitNative(fn) : EmitFn(fn);
         files["Program.cs"] = ProgramCs;
         if (program.Types.Count > 0) files["Types.cs"] = EmitTypes(program);
         files[program.Name + ".csproj"] = Csproj;
@@ -154,11 +179,13 @@ sealed class CsBackend : IBackend
         "Text" => "string",
         "Bool" => "bool",
         "_" => "object",
-        _ when t.StartsWith("List<", StringComparison.Ordinal) => "System.Collections.Generic.List<object>",
+        _ when t.Length == 1 && char.IsAsciiLetterUpper(t[0]) => "object", // a type parameter: erased
+        _ when t.StartsWith("List<", StringComparison.Ordinal) || t.StartsWith("Queue<", StringComparison.Ordinal) || t.StartsWith("PriorityQueue<", StringComparison.Ordinal) => "System.Collections.Generic.List<object>",
         // Maps and sets are insertion-ordered dictionaries (a set maps each item to true); every change copies.
         _ when t.StartsWith("Map<", StringComparison.Ordinal) || t.StartsWith("Set<", StringComparison.Ordinal) => "System.Collections.Generic.Dictionary<object, object>",
         _ when t.StartsWith("SortedMap<", StringComparison.Ordinal) || t.StartsWith("SortedSet<", StringComparison.Ordinal) => "System.Collections.Generic.SortedDictionary<object, object>",
         "Unit" => "void",
+        _ when t.IndexOf('<') is var lt and > 0 => t[..lt], // a generic struct or variant: one erased record
         _ => t, // a struct or variant: a C# record of the same name (see EmitTypes)
     };
 
@@ -183,6 +210,40 @@ sealed class CsBackend : IBackend
     }
 
     static string Pattern(Arm a) => a.Binds.Count == 0 ? $"{a.Path} _" : $"{a.Path}({string.Join(", ", a.Binds.Select(b => $"var @{b}"))})";
+
+    /// <summary>A `native "lib" "symbol"` function: a P/Invoke into a shared library (dll / so / dylib), loaded on first call.
+    /// Int is a 64-bit integer, Bool one byte, Text a UTF-8 C string; a returned string stays owned by the library.</summary>
+    static string EmitNative(Fn fn)
+    {
+        string Raw(string t, bool ret) => t switch
+        {
+            "Int" => "long", "Bool" => "bool", "Unit" => "void", _ => ret ? "System.IntPtr" : "string",
+        };
+        string Attr(string t) => t switch
+        {
+            "Text" => "[System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.LPUTF8Str)] ",
+            "Bool" => "[System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.U1)] ",
+            _ => "",
+        };
+        var ci = System.Globalization.CultureInfo.InvariantCulture;
+        var sb = new StringBuilder();
+        sb.Append(ci, $"// Generated from {fn.Name}.fn. Do not edit.\n");
+        sb.Append("public static partial class Fn\n{\n");
+        sb.Append(ci, $"    [System.Runtime.InteropServices.DllImport({Quote(fn.NativeLib!)}, EntryPoint = {Quote(fn.NativeSymbol)}, CallingConvention = System.Runtime.InteropServices.CallingConvention.Cdecl)]\n");
+        if (fn.Ret.Name == "Bool") sb.Append("    [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.U1)]\n");
+        sb.Append(ci, $"    static extern {Raw(fn.Ret.Name, true)} Native_{fn.Name}({string.Join(", ", fn.Params.Select(p => $"{Attr(p.Type.Name)}{Raw(p.Type.Name, false)} @{p.Name}"))});\n\n");
+        sb.Append(ci, $"    /// <summary>{System.Security.SecurityElement.Escape(fn.Doc)}</summary>\n");
+        sb.Append(ci, $"    public static {CsType(fn.Ret.Name)} @{fn.Name}({string.Join(", ", fn.Params.Select(p => $"{CsType(p.Type.Name)} @{p.Name}"))})\n    {{\n");
+        var call = $"Native_{fn.Name}({string.Join(", ", fn.Params.Select(p => $"@{p.Name}"))})";
+        sb.Append(fn.Ret.Name switch
+        {
+            "Text" => $"        return System.Runtime.InteropServices.Marshal.PtrToStringUTF8({call}) ?? \"\";\n",
+            "Unit" => $"        {call};\n",
+            _ => $"        return {call};\n",
+        });
+        sb.Append("    }\n}\n");
+        return sb.ToString();
+    }
 
     static string EmitFn(Fn fn)
     {
@@ -239,16 +300,16 @@ sealed class CsBackend : IBackend
     {
         IntLit i => i.Value + "L",
         BoolLit b => b.Value ? "true" : "false",
-        NameRef n => n.Const ? "Const.@" + n.Name : "@" + n.Name,
+        NameRef n => n.Const ? "Const.@" + n.Name : Cast(n.Erased, n.Type, "@" + n.Name),
         TextLit t => t.Parts.Count == 1 && t.Parts[0] is string only
             ? Quote(only)
             : "string.Concat(" + string.Join(", ", t.Parts.Select(p => p is string s ? Quote(s) : $"Rt.Text({Emit((Expr)p)})")) + ")",
         Call { Ctor: not null } c => $"new {c.Ctor}({string.Join(", ", c.Args.Select(Emit))})",
-        Field f => $"{Emit(f.Target)}.@{f.Name}",
+        Field f => Cast(f.Erased, f.Type, $"{Emit(f.Target)}.@{f.Name}"),
         MatchExpr m => $"({Emit(m.Subject)} switch {{ {string.Join(", ", m.Arms.Select(a => $"{Pattern(a)} => {Emit(a.Body)}"))}, _ => throw new System.InvalidOperationException() }})",
         Call c => Externs.TryGetValue(c.Name, out var template)
-            ? (c.Name is "listGet" or "mapGet" or "sortedMapGet" ? $"(({CsType(c.Type)})" : "") + string.Format(System.Globalization.CultureInfo.InvariantCulture, template, c.Args.Select(Emit).ToArray<object>()) + (c.Name is "listGet" or "mapGet" or "sortedMapGet" ? ")" : "")
-            : $"Fn.@{c.Name}({string.Join(", ", c.Args.Select(Emit))})",
+            ? (c.Name is "listGet" or "mapGet" or "sortedMapGet" or "queueFront" or "priorityQueueFront" ? $"(({CsType(c.Type)})" : "") + string.Format(System.Globalization.CultureInfo.InvariantCulture, template, c.Args.Select(Emit).ToArray<object>()) + (c.Name is "listGet" or "mapGet" or "sortedMapGet" or "queueFront" or "priorityQueueFront" ? ")" : "")
+            : Cast(c.Erased, c.Type, $"Fn.@{c.Name}({string.Join(", ", c.Args.Select(Emit))})"),
         Unary u => u.Op == "-" ? $"(-{Emit(u.Operand)})" : $"(!{Emit(u.Operand)})",
         Binary b => b.Op switch
         {
@@ -260,6 +321,9 @@ sealed class CsBackend : IBackend
         IfExpr i => $"({Emit(i.Cond)} ? {Emit(i.Then)} : {Emit(i.Else)})",
         _ => throw new InvalidOperationException("unknown expression"),
     };
+
+    /// <summary>A value that is `object` in C# because its declared type is a type parameter is cast back to its real type.</summary>
+    static string Cast(bool erased, string type, string code) => erased && type != "" && CsType(type) != "object" ? $"(({CsType(type)}){code})" : code;
 
     static string Quote(string s)
     {
@@ -356,6 +420,23 @@ sealed class CsBackend : IBackend
             {
                 var r = new System.Collections.Generic.SortedDictionary<object, object>(m, Order);
                 r.Remove(k);
+                return r;
+            }
+            // Queue is a List (front = index 0). PriorityQueue is a List of object[] { priority, item } kept in
+            // ascending priority, and equal priorities keep insertion order.
+            public static object Front(System.Collections.Generic.List<object> l, string fn) =>
+                l.Count > 0 ? l[0] : throw new System.Collections.Generic.KeyNotFoundException(fn + ": the queue is empty");
+            public static System.Collections.Generic.List<object> Pop(System.Collections.Generic.List<object> l, string fn)
+            {
+                if (l.Count == 0) throw new System.Collections.Generic.KeyNotFoundException(fn + ": the queue is empty");
+                return l.GetRange(1, l.Count - 1);
+            }
+            public static System.Collections.Generic.List<object> PqPush(System.Collections.Generic.List<object> l, object item, long priority)
+            {
+                int i = l.Count;
+                while (i > 0 && (long)((object[])l[i - 1])[0] > priority) i--;
+                var r = new System.Collections.Generic.List<object>(l);
+                r.Insert(i, new object[] { priority, item });
                 return r;
             }
             public static void Nop() { }

@@ -1,0 +1,5 @@
+fn main() -> Unit
+  "Use a function that compares type parameters."
+  effects terminal.write
+body
+  printLine("{helper(1, 2)}")

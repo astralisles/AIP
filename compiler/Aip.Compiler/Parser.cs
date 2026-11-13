@@ -138,10 +138,20 @@ sealed class Parser
                     if (text != "pure")
                         fn.Effects = text["effects ".Length..].Split(',').Select(e => e.Trim()).Where(e => e != "").ToList();
                 }
+                else if (text.StartsWith("native ", StringComparison.Ordinal))
+                {
+                    if (fn.NativeLib != null) throw Err("duplicate-native", "`native` is declared twice");
+                    var q = text["native ".Length..].Split('"');
+                    if (q.Length != 5 || q[0].Trim() != "" || q[2].Trim() != "" || q[4].Trim() != "")
+                        throw Err("bad-native", "expected `native \"library\" \"symbol\"`", "for example `native \"c\" \"abs\"`");
+                    fn.NativeLib = q[1];
+                    fn.NativeSymbol = q[3];
+                    fn.NativeLine = _line;
+                }
                 else if (text.StartsWith("requires ", StringComparison.Ordinal)) fn.Requires.Add(ParseExprText(text["requires ".Length..]));
                 else if (text.StartsWith("ensures ", StringComparison.Ordinal)) fn.Ensures.Add(ParseExprText(text["ensures ".Length..]));
                 else if (text.StartsWith("example ", StringComparison.Ordinal)) fn.Examples.Add(ParseExprText(text["example ".Length..]));
-                else throw Err("unexpected-line", $"unknown header line `{text}`", "header lines are: purpose, `pure` or `effects`, `requires`, `ensures`, `example`; then `body`");
+                else throw Err("unexpected-line", $"unknown header line `{text}`", "header lines are: purpose, `pure` or `effects`, `native`, `requires`, `ensures`, `example`; then `body`");
                 continue;
             }
 
@@ -208,7 +218,7 @@ sealed class Parser
     TypeRef ParseType()
     {
         var name = Expect(T.Ident, "a type name").Text;
-        if ((name is "List" or "Set" or "Map" or "SortedSet" or "SortedMap") && IsSym("<"))
+        if (IsSym("<"))
         {
             _pos++;
             var args = new List<string>();
@@ -290,6 +300,16 @@ sealed class Parser
                 bool isVariant = Peek.Text == "variant";
                 _pos++;
                 def = new TypeDef { File = _file, Line = _line, IsVariant = isVariant, Name = Expect(T.Ident, "a type name").Text };
+                if (IsSym("<"))
+                {
+                    _pos++;
+                    do
+                    {
+                        if (def.Params.Count > 0) _pos++; // the comma
+                        def.Params.Add(Expect(T.Ident, "a type parameter such as T").Text);
+                    } while (IsSym(","));
+                    ExpectSym(">");
+                }
                 ExpectEnd();
                 if (!isVariant) def.Cases.Add(new Case { Name = def.Name, Line = _line });
                 continue;

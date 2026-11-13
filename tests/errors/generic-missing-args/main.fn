@@ -1,0 +1,5 @@
+fn main() -> Unit
+  "Use a generic type without arguments."
+  effects terminal.write
+body
+  printLine("{helper(Box(1))}")
