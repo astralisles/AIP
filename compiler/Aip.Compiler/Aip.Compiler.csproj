@@ -7,6 +7,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <!-- Short-lived tool that allocates a lot on big projects: server GC measured ~25% faster at 50k functions. -->
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
   </PropertyGroup>
   <ItemGroup>
     <Content Include="..\std\**\*.fn" LinkBase="std" CopyToOutputDirectory="PreserveNewest" />

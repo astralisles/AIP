@@ -34,13 +34,27 @@ outDir ??= Path.Combine(dir, "build");
 var diags = new List<Diagnostic>();
 var program = new ProgramModel { Name = Path.GetFileName(dir.TrimEnd('\\', '/')), Dir = dir };
 
-void Load(string root, bool isStd)
+void Load(string root, SourceCache? cache)
 {
-    var files = Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories)
-        .Where(f => !Path.GetRelativePath(root, f).Replace('\\', '/').Split('/').Contains("build"))
-        .OrderBy(f => f, StringComparer.Ordinal);
-    foreach (var file in files)
+    bool isStd = cache == null;
+    // FileInfo comes from the directory listing, so size and write time cost no extra file opens.
+    var infos = new DirectoryInfo(root).EnumerateFiles("*", SearchOption.AllDirectories)
+        .Where(f => !Path.GetRelativePath(root, f.FullName).Replace('\\', '/').Split('/').Contains("build"))
+        .OrderBy(f => f.FullName, StringComparer.Ordinal).ToArray();
+    var files = infos.Select(f => f.FullName).ToArray();
+    if (!isStd) Phase($"list files ({files.Length})");
+    // Reading and parsing is ~90% of the time on big projects (mostly opening files), so it runs on
+    // all cores; results are then merged in file order, so output stays the same as a serial run.
+    var parsed = new object?[files.Length];
+    Parallel.For(0, files.Length, i =>
     {
+        if (Path.GetExtension(files[i]) != ".fn") return;
+        try { parsed[i] = cache == null ? Parser.ParseFile(files[i]) : Parser.ParseText(files[i], cache.Read(infos[i])); }
+        catch (CompileException e) { parsed[i] = e.Diagnostic; }
+    });
+    for (int i = 0; i < files.Length; i++)
+    {
+        var file = files[i];
         var ext = Path.GetExtension(file);
         if (ext != ".fn")
         {
@@ -48,21 +62,30 @@ void Load(string root, bool isStd)
                 diags.Add(new Diagnostic(file, 1, "unsupported-file", $"`{ext}` files are not supported by the compiler yet"));
             continue;
         }
-        try
-        {
-            var fn = Parser.ParseFile(file);
-            fn.IsStd = isStd;
-            if (program.Fns.TryGetValue(fn.Name, out var other))
-                diags.Add(new Diagnostic(file, fn.Line, "duplicate-name", $"`{fn.Name}` is already defined in {Path.GetFileName(other.File)}{(other.IsStd ? " (standard library)" : "")}", "names are unique across the project; rename one"));
-            else program.Fns[fn.Name] = fn;
-        }
-        catch (CompileException e) { diags.Add(e.Diagnostic); }
+        if (parsed[i] is Diagnostic d) { diags.Add(d); continue; }
+        var fn = (Fn)parsed[i]!;
+        fn.IsStd = isStd;
+        if (program.Fns.TryGetValue(fn.Name, out var other))
+            diags.Add(new Diagnostic(file, fn.Line, "duplicate-name", $"`{fn.Name}` is already defined in {Path.GetFileName(other.File)}{(other.IsStd ? " (standard library)" : "")}", "names are unique across the project; rename one"));
+        else program.Fns[fn.Name] = fn;
     }
 }
 
-Load(Path.Combine(AppContext.BaseDirectory, "std"), true);
-Load(dir, false);
+var clock = System.Diagnostics.Stopwatch.StartNew();
+void Phase(string name) // AIP_TIMINGS=1 prints where the time goes, to stderr
+{
+    if (Environment.GetEnvironmentVariable("AIP_TIMINGS") == "1") Console.Error.WriteLine($"timing {name}: {clock.ElapsedMilliseconds} ms");
+    clock.Restart();
+}
+var sources = new SourceCache(Path.Combine(dir, "build", "sources.cache"));
+Phase("load cache");
+Load(Path.Combine(AppContext.BaseDirectory, "std"), null);
+Load(dir, sources);
+Phase($"read+parse ({sources.Hits} from cache, {sources.Misses} from disk)");
+sources.Save();
+Phase("save cache");
 if (diags.Count == 0) new Checker(program, diags).Check();
+Phase("check");
 
 if (diags.Count > 0)
 {
@@ -82,7 +105,9 @@ switch (command)
         Console.Write(Index());
         return 0;
     case "query":
-        return Query.Run(program, queryArgs);
+        var code = Query.Run(program, queryArgs);
+        Phase("answer");
+        return code;
 }
 
 var host = (OperatingSystem.IsWindows() ? "windows" : OperatingSystem.IsMacOS() ? "macos" : "linux")

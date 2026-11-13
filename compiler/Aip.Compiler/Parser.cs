@@ -21,10 +21,15 @@ sealed class Parser
     CompileException Err(string code, string message, string? fix = null) =>
         new(new Diagnostic(_file, _line, code, message, fix));
 
-    public static Fn ParseFile(string file)
+    public static Fn ParseFile(string file) => ParseText(file, File.ReadAllText(file));
+
+    /// <summary>Parses source text already in memory; `file` is only used for names and errors.</summary>
+    public static Fn ParseText(string file, string text)
     {
-        var p = new Parser(file);
-        return p.ParseLines(File.ReadAllLines(file));
+        var lines = new List<string>();
+        using (var r = new StringReader(text))
+            for (var l = r.ReadLine(); l != null; l = r.ReadLine()) lines.Add(l); // same split as File.ReadAllLines
+        return new Parser(file).ParseLines(lines.ToArray());
     }
 
     Fn ParseLines(string[] lines)

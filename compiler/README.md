@@ -27,6 +27,14 @@ Supported so far: `.fn` files; Int, Text, Bool, Unit; `let`, calls, operators,
 `callers NAME`, `calls NAME`, `effect NAME` (`terminal`, `terminal.write`, `pure`).
 Output is plain lines, one function per line, errors as `error code: message`.
 
-When is the index updated? Never stored, so never stale: every query re-reads and re-checks the
-sources. Measured (`scripts/bench-query.ps1`): about 0.25 s per query for 10 to 100 functions (mostly .NET start-up), 0.36 s for 1,000, 1.1 s for 5,000. `aip build` still writes `build/index.txt` as a snapshot.
-Scaling later: cache keyed on file hashes, still rebuilt automatically, so no step to remember.
+When is the index updated? On every query, so it is never stale: each run re-parses and re-checks
+the whole program. To make that fast on big projects, file reading and checking run on all cores, and
+the text of every source file is kept in `build/sources.cache` (one file open instead of one per
+function). Each run compares every file's size and last-write time with the cache and re-reads any
+file that changed, was added or was deleted; a missing or damaged cache is rebuilt. Safe to delete.
+`aip build` still writes `build/index.txt` as a snapshot. `AIP_TIMINGS=1` prints where the time goes.
+
+Measured (`python scripts/bench-query.py <dir>`, generated projects, query after one file was edited):
+1,000 functions 0.19 s, 5,000 0.29 s, 20,000 0.46 s, 50,000 1.1 s, 200,000 3.7 s.
+Next step if engine-sized projects need faster answers: a long-running `aip serve` that keeps the
+checked program in memory and re-checks only changed files.

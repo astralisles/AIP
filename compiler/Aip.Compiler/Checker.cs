@@ -15,11 +15,16 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
 
     public void Check()
     {
-        foreach (var fn in program.Fns.Values.OrderBy(f => f.Name, StringComparer.Ordinal))
+        // Each function is checked on its own (it only reads other functions' headers), so this runs on
+        // all cores; errors are collected per function and merged in name order, as a serial run would.
+        var fns = program.Fns.Values.OrderBy(f => f.Name, StringComparer.Ordinal).ToArray();
+        var found = new List<Diagnostic>[fns.Length];
+        Parallel.For(0, fns.Length, i =>
         {
-            _fn = fn;
-            CheckFn(fn);
-        }
+            var c = new Checker(program, found[i] = new List<Diagnostic>()) { _fn = fns[i] };
+            c.CheckFn(fns[i]);
+        });
+        foreach (var list in found) diags.AddRange(list);
         CheckMainAndReachability();
     }
 
