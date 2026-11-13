@@ -4,5 +4,5 @@ fn main() -> Unit
   fails
 body
   let path = "greeting.txt"
-  fileWrite(path, "Hello from AIP!")
+  fileWrite(path, bytesEncode("Hello from AIP!"))
   printLine("Wrote {path}")
