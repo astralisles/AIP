@@ -7,6 +7,7 @@ const string Usage = """
       aip index <projectDir>                          print the index: one line per function
       aip build <projectDir> [--target T] [--out D]   check, then build a program
       aip run <projectDir>                            check, build for this machine, then run it
+      aip std                                         list the standard library by group (std/<group>/)
     options: --verbose (or -v, or env AIP_VERBOSE=1) logs compiler steps and timings to stderr
     run-time: AIP_TRACE=1 makes a crashing program print its full stack trace; `logLine` writes to stderr
     targets: windows-x64, windows-arm64, linux-x64, linux-arm64, macos-arm64 (default: this machine)
@@ -17,7 +18,8 @@ if (args.Length == 2 && args[0] == "tokens")
     Console.Write(Parser.Tokens(Path.GetFullPath(args[1])));
     return 0;
 }
-if (args.Length < 2 || args[0] is not ("check" or "index" or "build" or "run"))
+if (args is ["std"]) args = ["std", AppContext.BaseDirectory];
+if (args.Length < 2 || args[0] is not ("check" or "index" or "build" or "run" or "std"))
 {
     Console.WriteLine(Usage);
     return 2;
@@ -79,6 +81,8 @@ void Load(string root, bool isStd)
         {
             var fn = Parser.ParseFile(file);
             fn.IsStd = isStd;
+            if (isStd && StdLayoutError(root, file, fn) is { } layout)
+                diags.Add(new Diagnostic(file, fn.Line, "std-layout", layout, "see compiler/std/README.md"));
             if (program.Fns.TryGetValue(fn.Name, out var other))
                 diags.Add(new Diagnostic(file, fn.Line, "duplicate-name", $"`{fn.Name}` is already defined in {Path.GetFileName(other.File)}{(other.IsStd ? " (standard library)" : "")}", "names are unique across the project; rename one"));
             else program.Fns[fn.Name] = fn;
@@ -87,8 +91,34 @@ void Load(string root, bool isStd)
     }
 }
 
-Load(Path.Combine(AppContext.BaseDirectory, "std"), true);
+// std is grouped one folder deep: std/<group>/<name>.fn. The name starts with the group (textSlice in text/),
+// or, for effects, the group is the effect's prefix (printLine in terminal/ has effect terminal.write).
+// Only core/ holds functions that fit neither.
+static string StdGroup(string root, string file) =>
+    Path.GetRelativePath(root, file).Replace('\\', '/').Split('/') is { Length: 2 } parts ? parts[0] : "";
+
+static string? StdLayoutError(string root, string file, Fn fn)
+{
+    var group = StdGroup(root, file);
+    if (group == "") return $"std function `{fn.Name}` must be in a group folder, std/<group>/{fn.Name}.fn";
+    if (group == "core" || fn.Name.StartsWith(group, StringComparison.Ordinal)
+        || fn.Effects.Any(e => e.StartsWith(group + ".", StringComparison.Ordinal))) return null;
+    return $"std function `{fn.Name}` in std/{group}/ must start with `{group}` or have an effect `{group}.*`";
+}
+
+var stdRoot = Path.Combine(AppContext.BaseDirectory, "std");
+Load(stdRoot, true);
 Log($"loaded standard library: {program.Fns.Count} function(s)");
+if (command == "std")
+{
+    if (diags.Count > 0) { foreach (var d in diags) Console.WriteLine(d); return 1; }
+    foreach (var g in program.Fns.Values.GroupBy(f => StdGroup(stdRoot, f.File)).OrderBy(g => g.Key, StringComparer.Ordinal))
+    {
+        Console.WriteLine($"{g.Key}/");
+        foreach (var f in g.OrderBy(f => f.Name, StringComparer.Ordinal)) Console.WriteLine($"  {f.Signature} | {f.EffectsText}");
+    }
+    return 0;
+}
 Load(dir, false);
 Log($"loaded project: {program.ProjectFns.Count()} function(s), {program.Types.Count} type(s)");
 foreach (var (name, ctor) in program.Ctors.Where(c => program.Fns.ContainsKey(c.Key)))

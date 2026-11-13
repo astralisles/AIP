@@ -40,8 +40,9 @@ errors are not done. `index.txt` (function list with effects) plus `profile.json
 Entry point: a function named `main`, no parameters, returns Unit. Its `effects`
 line lists everything the program can do. Every function must be reachable from `main`.
 
-Standard library: `std/*.fn` are header-only `extern` functions; each back end
-supplies the implementation (see `Externs` in `CsBackend.cs`).
+Standard library: `std/<group>/*.fn` are header-only `extern` functions, grouped by type or effect
+(`text`, `list`, `map`, `set`, `file`, `terminal`, `log`, `process`, `core`; see `std/README.md`).
+`scripts\aip.ps1 std` lists them. Each back end supplies the implementation (see `Externs` in `CsBackend.cs`).
 
 Supported so far: `.fn` files; Int, Text, Bool, Unit; `List<T>`, `Set<T>`, `Map<K,V>` (immutable: every change returns a new value; see `examples/collections`); `let`, calls, operators,
 `if/then/else`, text with `{expr}` parts; `.struct` and `.variant` files (constructors `Point(1, 2)`,

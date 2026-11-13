@@ -4,6 +4,7 @@
   `powershell -File scripts\render-files-to-frames.ps1 -Files mock\src\Player.struct,mock\src\applyDamage.fn -OutDir <evidence>\frames\<name> -Title "Hello files"`
 
 - `aip.ps1` - builds the compiler only when its sources changed (skips the 2.5 s no-op `dotnet build`), then runs it. Program builds are cached by a hash of the generated C# (identical code is not re-published) and runs it: `scripts\aip.ps1 run examples\hello`, or `build examples\hello [--target linux-x64]`. How to run locally: see the root `README`.
-- `test.ps1` - builds and runs `examples\hello` (also through `aip run`), and checks every project in `tests\errors` is rejected with the text in its `expected.txt`.
+- `test.ps1` - builds and runs `examples\hello` (also through `aip run`), and checks every project in `tests\errors` is rejected with the text in its `expected.txt`. Also checks the std layout (`aip std`, `std-layout` error).
+- `aip.ps1` also rebuilds when std files were moved, added or deleted (same timestamps), and the build removes stale std copies from its output.
 - `capture-session.ps1` - runs commands and writes `> command` plus real output to a log (evidence).
 - `render-log-to-frames.ps1` - renders such a log as PNG frames revealed line by line (for a GIF).
