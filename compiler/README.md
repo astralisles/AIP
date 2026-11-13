@@ -7,6 +7,8 @@ The only back end so far is `CsBackend.cs`: it emits C# and builds it with the .
     scripts\aip.ps1 run examples\hello
     scripts\aip.ps1 check examples\hello
     scripts\aip.ps1 index examples\hello
+    scripts\aip.ps1 find examples\shapes area      search project + std functions
+    scripts\aip.ps1 spec                           one-page language spec for a model
     scripts\aip.ps1 build examples\hello [--target linux-x64]
     scripts\test.ps1
 
@@ -25,6 +27,7 @@ per line, every case required). See `examples/shapes`. Ranges, `requires`, `ensu
 
 ## Design decisions, features and roadmap
 
+Open questions and what was decided (`aip spec`, `aip find`, Result/Option, AI-first rule): `docs/design/open-questions-T-0944.md`.
 One file per topic in `docs/design/` (for example `security-T-0936.md`, `bootstrapping.md`).
 Logging and debugging: `docs/design/logging-T-0934.md`; profiling: `docs/design/profiling-T-0938.md`.
 A new decision is a new file there; do not append it to this README.
