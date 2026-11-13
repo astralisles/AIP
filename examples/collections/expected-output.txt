@@ -1,0 +1,11 @@
+List size: 2, first: pear
+Map size: 2
+Ann is 30
+Has Bob: false
+Updated Ann: 31, original still 30
+Keys: 2, first key: Ann
+After remove: 1
+Set size (3, 5, 3): 2
+Has 5: true, has 4: false
+Set items: 2, first: 3
+Map of lists: apple

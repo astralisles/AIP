@@ -1,8 +1,17 @@
+<<<<<<< HEAD
 # Builds the compiler, builds and runs examples\hello, and checks that every
 # project in tests\errors is rejected with the text in its expected.txt. Then the static analysis:
 # tests\lint (aip lint must warn), tests\contracts (aip test must fail), every example must pass
 # aip lint / aip test / aip fuzz, and the check-*.ps1 consistency gates must pass.
 # Prints one PASS/FAIL line per test; exit code 1 if any test fails.
+=======
+# Test harness. Discovers tests from files, so adding a test never means editing this script
+# (parallel branches used to conflict here):
+#   - examples\<name>\expected-output.txt  -> `aip run examples\<name>` must print exactly these lines
+#   - tests\errors\<case>\expected.txt     -> `aip check` must reject the project with this text
+#   - tests\checks\*.ps1                   -> any other check; each file calls Report (see tests\checks\README.md)
+# Prints one PASS/FAIL line per test; exit code = number of failures.
+>>>>>>> origin/master
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 Set-Location $root
@@ -11,50 +20,26 @@ $failed = 0
 function Report($name, $ok, $detail) {
   if ($ok) { "PASS  $name" } else { "FAIL  $name`n      $detail"; $script:failed++ }
 }
-
-$out = (& $aip build examples\hello | Out-String).Trim()
-Report 'hello: builds' ($LASTEXITCODE -eq 0) $out
-$exe = Join-Path $root 'examples\hello\build\bin\windows-x64\hello.exe'
-if (Test-Path $exe) {
-  $run = (& $exe | Out-String).Trim()
-  Report 'hello: prints "Hello, World!"' ($run -eq 'Hello, World!') "got: $run"
-} else { Report 'hello: prints "Hello, World!"' $false 'no program was built' }
-
-$out = (& $aip run examples\hello | Out-String).Trim()
-Report 'hello: `aip run` prints only "Hello, World!"' ($LASTEXITCODE -eq 0 -and $out -eq 'Hello, World!') "got: $out"
-
-$out = (& $aip build examples\hello --target wasm | Out-String).Trim()
-Report 'hello: wasm is refused with a clear message' ($LASTEXITCODE -ne 0 -and $out.Contains('unsupported-target')) $out
-
-$tmp = Join-Path ([IO.Path]::GetTempPath()) ('aip-writefile-' + [guid]::NewGuid())
-New-Item -ItemType Directory $tmp | Out-Null
-$out = (& $aip build examples\writefile | Out-String).Trim()
-Report 'writefile: builds' ($LASTEXITCODE -eq 0) $out
-Push-Location $tmp
-$run = (& (Join-Path $root 'examples\writefile\build\bin\windows-x64\writefile.exe') | Out-String).Trim()
-$file = Join-Path $tmp 'greeting.txt'
-$content = if (Test-Path $file) { (Get-Content $file -Raw).Trim() } else { '' }
-Pop-Location
-Remove-Item $tmp -Recurse -Force
-Report 'writefile: writes greeting.txt with "Hello from AIP!"' ($content -eq 'Hello from AIP!' -and $run -eq 'Wrote greeting.txt') "file: $content, output: $run"
-
-
-$expectedOut = @{
-  adding = "2 + 3 = 5|-7 + 10 = 3|1000000 + 2345678 = 3345678|1 + 2 + 3 = 6|Total: 65"
-  types  = "Int:  42|Text: hello|Bool: true|Bool from a comparison (count > 40): true|Bool from and/or/not: true|Text equality: true|Ann is 30. Adult: yes|Tim is 12. Adult: no"
-  shapes = "circle of radius 2 at 0,0, area 12|4 by 5 rectangle at 1,2, area 20|(skipping an empty shape)|dot at 7,8, area 0"
-  collections = "List size: 2, first: pear|Map size: 2|Ann is 30|Has Bob: false|Updated Ann: 31, original still 30|Keys: 2, first key: Ann|After remove: 1|Set size (3, 5, 3): 2|Has 5: true, has 4: false|Set items: 2, first: 3|Map of lists: apple"
-  math   = "7 - 10 = -3|6 * 7 = 42|17 / 5 = 3 (whole number division)|17 % 5 = 2 (the rest)|abs(-12) = 12|max(3, 9) = 9|min(3, 9) = 3|square(-4) = 16|clamp(15, 0, 10) = 10|average(4, 10) = 7|isEven(10) = true|isEven(7) = false"
+# run aip in its own process so its stderr is plain text, not PowerShell error records
+function AipBoth { (cmd /c "powershell -NoProfile -File `"$aip`" $($args -join ' ') 2>&1" | Out-String) }
+function AipOut { (cmd /c "powershell -NoProfile -File `"$aip`" $($args -join ' ') 2>nul" | Out-String).Trim() }
+function NewTempDir($prefix) {
+  $d = Join-Path ([IO.Path]::GetTempPath()) ($prefix + [guid]::NewGuid().ToString('N'))
+  New-Item -ItemType Directory $d | Out-Null; $d
 }
-foreach ($name in $expectedOut.Keys | Sort-Object) {
+
+foreach ($file in Get-ChildItem (Join-Path $root 'examples\*\expected-output.txt') | Sort-Object FullName) {
+  $name = $file.Directory.Name
+  $expected = @(Get-Content $file.FullName | Where-Object { $_ -ne '' }) -join '|'
   $lines = @(& $aip run "examples\$name")
-  Report "example $name`: output is as expected" ($LASTEXITCODE -eq 0 -and ($lines -join '|') -eq $expectedOut[$name]) "got: $($lines -join '|')"
+  Report "example $name`: output is as expected" ($LASTEXITCODE -eq 0 -and ($lines -join '|') -eq $expected) "expected: $expected`n      got: $($lines -join '|')"
 }
 foreach ($case in Get-ChildItem (Join-Path $root 'tests\errors') -Directory | Sort-Object Name) {
   $expected = (Get-Content (Join-Path $case.FullName 'expected.txt') -Raw).Trim()
   $out = (& $aip check $case.FullName | Out-String).Trim()
   Report "error: $($case.Name)" ($LASTEXITCODE -ne 0 -and $out.Contains($expected)) "expected: $expected`n      got: $out"
 }
+<<<<<<< HEAD
 $out = (& $aip run examples\hello --target linux-x64 | Out-String).Trim()
 Report 'hello: running a foreign target is refused' ($LASTEXITCODE -ne 0 -and $out.Contains('cannot-run-target')) $out
 $out = (& $aip check (Join-Path $root 'tests\no-such-folder') | Out-String).Trim()
@@ -122,5 +107,12 @@ Remove-Item -Recurse -Force $copy
 Report 'std: misplaced std files are rejected (std-layout)' ($LASTEXITCODE -ne 0 -and $out.Contains('std-layout') -and $out.Contains('`textLength` must be in a group folder') -and $out.Contains('`listGet` in std/map/ must start with `map`')) $out
 $out = (& (Join-Path $PSScriptRoot "compare-lexers.ps1") | Out-String).Trim()
 Report "bootstrap: AIP lexer matches the C# lexer" ($LASTEXITCODE -eq 0) $out
+=======
+foreach ($check in Get-ChildItem (Join-Path $root 'tests\checks\*.ps1') | Sort-Object Name) {
+  try { . $check.FullName }
+  catch { Report "check $($check.Name)" $false "threw: $_" }
+  Set-Location $root
+}
+>>>>>>> origin/master
 if ($failed -eq 0) { 'ALL PASSED' } else { "$failed FAILED" }
 exit $failed

@@ -49,7 +49,7 @@ file name = function name. Then: scripts\aip.ps1 run <your folder>
 FOLDERS
 
   compiler\   the aip compiler (C#) and its standard library (std\<group>\*.fn)
+  docs\       design decisions (docs\design) and instructions for Claude (docs\claude, see CLAUDE.md)
   examples\   programs that compile and run
-  tests\      projects the compiler must reject, with the expected error
-  mock\       hand-written design samples; not compiled yet
+  tests\      errors\ (projects the compiler must reject) and checks\ (one test script per feature)
   scripts\    aip.ps1 (compiler), test.ps1 (tests), evidence helpers
