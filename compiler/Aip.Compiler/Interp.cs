@@ -9,7 +9,7 @@ sealed record Val(Case Case, object?[] Fields);
 /// Tree-walking evaluator for pure functions. It runs `example` lines and checks `requires`, `ensures` and
 /// parameter/result ranges at every call. It follows the C# back end's rules (64-bit checked Int, truncating division).
 /// </summary>
-sealed class Interp(ProgramModel program)
+sealed partial class Interp(ProgramModel program)
 {
     /// <summary>The function needs something the interpreter does not have (an effect, an unsupported extern).</summary>
     public sealed class Unsupported(string message) : Exception(message);
@@ -157,65 +157,17 @@ sealed class Interp(ProgramModel program)
     };
 
     // Same behaviour as the C# back end's Externs; effectful ones are refused before we get here.
-    sealed class OrderCmp : IComparer<object>
-    {
-        public int Compare(object? x, object? y) => x is string s ? string.CompareOrdinal(s, (string)y!) : ((long)x!).CompareTo((long)y!);
-    }
-    static readonly IComparer<object> Order = new OrderCmp();
+    // Each family lives in Interp.Externs.*.cs and returns NotHandled for names it does not know.
+    static readonly object NotHandled = new();
 
     static object? Extern(string name, List<object?> a)
     {
-        List<object?> L(int i) => (List<object?>)a[i]!;
-        Dictionary<object, object?> M(int i) => (Dictionary<object, object?>)a[i]!;
-        SortedDictionary<object, object?> S(int i) => (SortedDictionary<object, object?>)a[i]!;
-        SortedDictionary<object, object?> Copy(int i) => new(S(i), Order);
         try
         {
-            switch (name)
+            foreach (var family in ExternFamilies)
             {
-                case "noop": return null;
-                case "textLength": return (long)((string)a[0]!).Length;
-                case "textSlice":
-                    {
-                        var s = (string)a[0]!;
-                        int st = (int)Math.Clamp((long)a[1]!, 0, s.Length), en = (int)Math.Clamp((long)a[2]!, st, s.Length);
-                        return s.Substring(st, en - st);
-                    }
-                case "textCode": return (long)((string)a[0]!)[(int)(long)a[1]!];
-                case "textFromCode": return ((char)(long)a[0]!).ToString();
-                case "textToInt": return long.Parse((string)a[0]!, CultureInfo.InvariantCulture);
-                case "listEmpty": return new List<object?>();
-                case "listLength": return (long)L(0).Count;
-                case "listGet": return L(0)[(int)(long)a[1]!];
-                case "listAppend": return new List<object?>(L(0)) { a[1] };
-                case "queueEmpty" or "priorityQueueEmpty": return new List<object?>();
-                case "queueSize" or "priorityQueueSize": return (long)L(0).Count;
-                case "queuePush": return new List<object?>(L(0)) { a[1] };
-                case "queueFront": return L(0).Count > 0 ? L(0)[0] : throw new KeyNotFoundException("queueFront: the queue is empty");
-                case "priorityQueueFront": return L(0).Count > 0 ? ((object?[])L(0)[0]!)[1] : throw new KeyNotFoundException("priorityQueueFront: the queue is empty");
-                case "queuePop" or "priorityQueuePop": return L(0).Count > 0 ? L(0).GetRange(1, L(0).Count - 1) : throw new KeyNotFoundException(name + ": the queue is empty");
-                case "priorityQueuePush":
-                    {
-                        var l = L(0); int i = l.Count; long p = (long)a[2]!;
-                        while (i > 0 && (long)((object?[])l[i - 1]!)[0]! > p) i--;
-                        var r = new List<object?>(l); r.Insert(i, new object?[] { p, a[1] }); return r;
-                    }
-                case "sortedMapEmpty" or "sortedSetEmpty": return new SortedDictionary<object, object?>(Order);
-                case "sortedMapSize" or "sortedSetSize": return (long)S(0).Count;
-                case "sortedMapHas" or "sortedSetHas": return S(0).ContainsKey(a[1]!);
-                case "sortedMapGet": return S(0).TryGetValue(a[1]!, out var sv) ? sv : throw new KeyNotFoundException("sortedMapGet: key not in the map");
-                case "sortedMapSet": { var r = Copy(0); r[a[1]!] = a[2]; return r; }
-                case "sortedSetAdd": { var r = Copy(0); r[a[1]!] = true; return r; }
-                case "sortedMapRemove" or "sortedSetRemove": { var r = Copy(0); r.Remove(a[1]!); return r; }
-                case "sortedMapKeys" or "sortedSetItems": return S(0).Keys.Select(k => (object?)k).ToList();
-                case "mapEmpty" or "setEmpty": return new Dictionary<object, object?>();
-                case "mapSize" or "setSize": return (long)M(0).Count;
-                case "mapHas" or "setHas": return M(0).ContainsKey(a[1]!);
-                case "mapGet": return M(0).TryGetValue(a[1]!, out var v) ? v : throw new KeyNotFoundException("mapGet: key not in the map");
-                case "mapSet": return new Dictionary<object, object?>(M(0)) { [a[1]!] = a[2] };
-                case "setAdd": return new Dictionary<object, object?>(M(0)) { [a[1]!] = true };
-                case "mapRemove" or "setRemove": return M(0).Where(p => !p.Key.Equals(a[1])).ToDictionary(p => p.Key, p => p.Value);
-                case "mapKeys" or "setItems": return M(0).Keys.Select(k => (object?)k).ToList();
+                var r = family(name, a);
+                if (!ReferenceEquals(r, NotHandled)) return r;
             }
         }
         catch (Exception ex) when (ex is ArgumentOutOfRangeException or KeyNotFoundException or FormatException or OverflowException)
@@ -224,6 +176,15 @@ sealed class Interp(ProgramModel program)
         }
         throw new Unsupported($"the standard function `{name}` is not available in `aip test`");
     }
+
+    static readonly Func<string, List<object?>, object?>[] ExternFamilies =
+    {
+        CoreExtern,
+        ListExtern,
+        MapExtern,
+        QueueExtern,
+        SortedExtern,
+    };
 
     /// <summary>
     /// Runs every `example` of every project function (on a big stack, like the compiled program).
