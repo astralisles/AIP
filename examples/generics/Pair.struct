@@ -1,0 +1,4 @@
+struct Pair<A,B>
+  "Two values that travel together; they may have different types."
+  first A
+  second B

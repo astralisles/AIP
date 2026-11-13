@@ -1,0 +1,12 @@
+fn main() -> Unit
+  "Show generic types (Option, Pair) and generic functions (firstOf, orElse, swap)."
+  effects terminal.write
+body
+  let numbers = listAppend(listAppend(listEmpty(), 4), 5)
+  let words = listAppend(listEmpty(), "hello")
+  let noWord = "none"
+  printLine("first number: {orElse(firstOf(numbers), 0 - 1)}")
+  printLine("first word: {orElse(firstOf(words), noWord)}")
+  printLine("first of nothing: {orElse(firstOf(listEmpty()), 0 - 1)}")
+  let swapped = swap(Pair(1, "one"))
+  printLine("swapped: {swapped.first} {swapped.second}")
