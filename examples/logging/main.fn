@@ -1,0 +1,7 @@
+fn main() -> Unit
+  "Show logging: normal output goes to stdout, diagnostics to stderr."
+  effects terminal.write, log.write
+body
+  logLine("debug: starting")
+  printLine("Hello from the logging example")
+  logLine("debug: done")
