@@ -91,6 +91,12 @@ Move-Item (Join-Path $copy 'std\list\listGet.fn') (Join-Path $copy 'std\map\list
 $out = (& (Join-Path $copy 'aip.exe') check examples\hello | Out-String).Trim()
 Remove-Item -Recurse -Force $copy
 Report 'std: misplaced std files are rejected (std-layout)' ($LASTEXITCODE -ne 0 -and $out.Contains('`textLength` must be in a group folder') -and $out.Contains('`listGet` in std/map/ must start with `map`')) $out
+$out = (& $aip spec | Out-String)
+Report 'spec: `aip spec` prints a one-page spec' ($LASTEXITCODE -eq 0 -and $out.Contains('AIP spec') -and @($out -split "`r?`n").Count -le 40) "lines: $(@($out -split "`r?`n").Count)"
+$out = (& $aip find examples\shapes area | Out-String).Trim()
+Report 'find: `aip find` ranks the matching project function first' ($LASTEXITCODE -eq 0 -and $out.StartsWith('project | area(shape Shape)')) $out
+$out = (& $aip find examples\hello write file | Out-String).Trim()
+Report 'find: std functions are found by effect or doc' ($LASTEXITCODE -eq 0 -and $out.Contains('fileWrite(')) $out
 $out = (& (Join-Path $PSScriptRoot "compare-lexers.ps1") | Out-String).Trim()
 Report "bootstrap: AIP lexer matches the C# lexer" ($LASTEXITCODE -eq 0) $out
 if ($failed -eq 0) { 'ALL PASSED' } else { "$failed FAILED" }
