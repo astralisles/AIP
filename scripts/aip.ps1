@@ -16,7 +16,7 @@ if (-not $stale) {
   # A moved, added or deleted std file keeps old timestamps: also rebuild when the file lists differ.
   if (-not $stale) {
     $copy = Join-Path (Split-Path $exe) 'std'
-    $list = { param($d) if (Test-Path $d) { (Get-ChildItem $d -Recurse -File -Filter *.fn | ForEach-Object { $_.FullName.Substring($d.Length) }) -join '|' } }
+    $list = { param($d) if (Test-Path $d) { (Get-ChildItem $d -Recurse -File -Include *.fn,*.const | ForEach-Object { $_.FullName.Substring($d.Length) }) -join '|' } }
     $stale = (& $list $std) -ne (& $list $copy)
   }
 }
