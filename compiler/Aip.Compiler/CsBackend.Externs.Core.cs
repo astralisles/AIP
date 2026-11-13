@@ -65,7 +65,7 @@ sealed partial class CsBackend
         d["bitNot"] = "unchecked((<T>)(~{0}))";
         d["bitShl"] = "unchecked((<T>)({0} << Rt.Shift({1}, sizeof(<T>) * 8)))";
         d["bitShr"] = "unchecked((<T>)({0} >> Rt.Shift({1}, sizeof(<T>) * 8)))";
-        d["fileRead"] = "System.IO.File.ReadAllText({0})";
+        d["fileRead"] = "System.IO.File.ReadAllBytes({0})";
         d["fileWrite"] = "Rt.Write({0}, {1})";
         d["noop"] = "Rt.Nop()";
         d["argCount"] = "(long)Rt.Args.Length";
