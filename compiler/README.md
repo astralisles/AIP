@@ -28,7 +28,7 @@ per line, every case required). See `examples/shapes`. `.const` files (`docs/des
 ## Static analysis and consistency checks (T-0933)
 
     scripts\aip.ps1 lint <project>   warnings: unused-param, self-comparison, constant-condition,
-                                     division-by-zero, literal-out-of-range, unbounded-recursion (Lint.cs)
+                                     division-by-zero, literal-out-of-range, requires-always-false, unbounded-recursion (Lint.cs)
     scripts\aip.ps1 test <project>   runs every `example` line of pure functions in an interpreter
                                      (Interp.cs), checking requires / ensures / Int ranges on every call
     scripts\aip.ps1 fuzz <project>   damages each source file many ways; the compiler must report
@@ -70,6 +70,7 @@ and `examples/control`.
 
 Open questions and what was decided (`aip spec`, `aip find`, Result/Option, AI-first rule): `docs/design/open-questions-T-0944.md`.
 One file per topic in `docs/design/` (for example `security-T-0936.md`, `bootstrapping.md`).
+Contracts and static verification (what is checked, what could be proved): `docs/design/contracts-T-0950.md`.
 File types and the parts of each file: `docs/design/file-anatomy-T-0948.md`. Constants: `docs/design/consts-T-0941.md`.
 Logging and debugging: `docs/design/logging-T-0934.md`; profiling: `docs/design/profiling-T-0938.md`.
 A new decision is a new file there; do not append it to this README.
