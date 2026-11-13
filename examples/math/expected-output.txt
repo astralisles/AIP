@@ -1,0 +1,12 @@
+7 - 10 = -3
+6 * 7 = 42
+17 / 5 = 3 (whole number division)
+17 % 5 = 2 (the rest)
+abs(-12) = 12
+max(3, 9) = 9
+min(3, 9) = 3
+square(-4) = 16
+clamp(15, 0, 10) = 10
+average(4, 10) = 7
+isEven(10) = true
+isEven(7) = false
