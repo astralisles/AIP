@@ -1,0 +1,4 @@
+struct Match
+  "One running match and its players."
+  players List<Player> 1..8
+  round Int 0..

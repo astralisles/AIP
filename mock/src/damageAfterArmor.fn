@@ -1,0 +1,8 @@
+fn damageAfterArmor(a Armor, dmg Int 0..) -> Int 0..
+  "Damage that still gets through a piece of armor."
+  pure
+  ensures result <= dmg
+  example damageAfterArmor(Armor(Leather, 100), 10) == 8
+  example damageAfterArmor(Armor(Plate, 100), 3) == 0
+body
+  max(0, dmg - armorRating(a.kind))

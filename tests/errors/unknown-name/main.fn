@@ -1,0 +1,5 @@
+fn main() -> Unit
+  "Greet the world on the terminal."
+  effects terminal.write
+body
+  printLin("Hello")

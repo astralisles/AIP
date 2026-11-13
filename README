@@ -1,0 +1,44 @@
+AIP - a programming language designed for AI (early prototype)
+
+One function per file, no imports, effects in the signature, a generated
+one-line-per-function index. See compiler/README.md for what works so far.
+
+RUN IT LOCALLY (Windows)
+
+Needs: the .NET 10 SDK (check with: dotnet --version). Nothing else to install.
+
+Open PowerShell in this folder, then:
+
+  1. Run Hello World (compiles the compiler on first use, then the program):
+       scripts\aip.ps1 run examples\hello
+     prints: Hello, World!
+
+  2. Or build it, then start the program yourself:
+       scripts\aip.ps1 build examples\hello
+       examples\hello\build\bin\windows-x64\hello.exe
+
+  3. Check without building, and print the index:
+       scripts\aip.ps1 check examples\hello
+       scripts\aip.ps1 index examples\hello
+
+  4. Build for Linux from Windows (run the result on a Linux machine):
+       scripts\aip.ps1 build examples\hello --target linux-x64
+
+  5. Run the tests:
+       scripts\test.ps1
+
+If PowerShell says scripts are disabled, or you are in cmd.exe, prefix with:
+  powershell -ExecutionPolicy Bypass -File scripts\aip.ps1 run examples\hello
+
+MAKE YOUR OWN PROGRAM
+
+Create a folder with a main.fn (copy examples\hello), one function per file,
+file name = function name. Then: scripts\aip.ps1 run <your folder>
+
+FOLDERS
+
+  compiler\   the aip compiler (C#) and its standard library (std\*.fn)
+  examples\   programs that compile and run
+  tests\      projects the compiler must reject, with the expected error
+  mock\       hand-written design samples; not compiled yet
+  scripts\    aip.ps1 (compiler), test.ps1 (tests), evidence helpers

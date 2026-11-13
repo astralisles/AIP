@@ -1,0 +1,1 @@
+error no-main: the program has no `main` function

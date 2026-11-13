@@ -1,0 +1,6 @@
+variant ArmorKind
+  "Kinds of armor a player can wear."
+  None
+  Leather
+  Chain
+  Plate

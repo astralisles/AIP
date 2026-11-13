@@ -1,0 +1,10 @@
+fn applyDamage(p Player, dmg Int 0..) -> Player
+  "Reduce a player's hp by incoming damage after armor."
+  pure
+  ensures result.hp <= p.hp
+  ensures result.name == p.name
+  example applyDamage(Player("Ann", 50, Armor(Leather, 100)), 10).hp == 42
+  example applyDamage(Player("Ann", 5, Armor(None, 0)), 99).hp == 0
+body
+  let d = damageAfterArmor(p.armor, dmg)
+  p with hp = clampHp(p.hp - d)

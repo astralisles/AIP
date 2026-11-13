@@ -1,0 +1,1 @@
+error effect-unused: `main` declares file.write but nothing in its body needs it

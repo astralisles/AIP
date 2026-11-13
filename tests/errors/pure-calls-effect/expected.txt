@@ -1,0 +1,1 @@
+error effect-missing: `greeting` is declared pure but calls `printLine`, which needs terminal.write

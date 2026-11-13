@@ -1,0 +1,5 @@
+struct Player
+  "A player character in a match."
+  name Text 1..24
+  hp Int 0..100
+  armor Armor

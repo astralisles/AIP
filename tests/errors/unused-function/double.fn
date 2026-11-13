@@ -1,0 +1,6 @@
+fn double(n Int) -> Int
+  "Twice a number."
+  pure
+  ensures result == n * 2
+body
+  n + n

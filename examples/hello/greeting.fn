@@ -1,0 +1,6 @@
+fn greeting(name Text 1..) -> Text 1..
+  "A friendly greeting for someone."
+  pure
+  example greeting("Ann") == "Hello, Ann!"
+body
+  "Hello, {name}!"
