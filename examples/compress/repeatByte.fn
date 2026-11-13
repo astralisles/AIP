@@ -1,0 +1,6 @@
+fn repeatByte(out List<Int>, value Int, n Int) -> List<Int>
+  "The list with value added n times at the end."
+  pure
+  example listLength(repeatByte(listEmpty(), 7, 3)) == 3
+body
+  if n <= 0 then out else repeatByte(listAppend(out, value), value, n - 1)

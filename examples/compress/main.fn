@@ -1,0 +1,13 @@
+fn main() -> Unit
+  "Read a line, compress it, show the compressed byte values, decompress it and show the result."
+  effects terminal.read, terminal.write
+  fails
+body
+  printLine("Type some text:")
+  let original = bytesFromText(readLine())
+  printLine("Original ({listLength(original)} bytes): {showBytes(original)}")
+  let packed = compress(original, 0, listEmpty())
+  printLine("Compressed ({listLength(packed)} bytes): {showBytes(packed)}")
+  let restored = decompress(packed, 0, listEmpty())
+  printLine("Decompressed ({listLength(restored)} bytes): {showBytes(restored)}")
+  printLine("Text: {bytesToText(restored)}")
