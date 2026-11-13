@@ -11,4 +11,5 @@ import line merge cleanly; do not put prose here that other branches are likely 
 @docs/claude/compiler.md
 @docs/claude/conflicts.md
 @docs/claude/docs.md
+@docs/claude/source-layout.md
 @docs/claude/testing.md

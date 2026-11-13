@@ -10,7 +10,7 @@ sealed record Val(Case Case, object?[] Fields);
 /// Tree-walking evaluator for pure functions. It runs `example` lines and checks `requires`, `ensures` and
 /// parameter/result ranges at every call. It follows the C# back end's rules (checked sized integers, truncating division, IEEE floats).
 /// </summary>
-sealed class Interp(ProgramModel program)
+sealed partial class Interp(ProgramModel program)
 {
     /// <summary>The function needs something the interpreter does not have (an effect, an unsupported extern).</summary>
     public sealed class Unsupported(string message) : Exception(message);
@@ -224,165 +224,17 @@ sealed class Interp(ProgramModel program)
     };
 
     // Same behaviour as the C# back end's Externs; effectful ones are refused before we get here.
-    sealed class OrderCmp : IComparer<object>
-    {
-        public int Compare(object? x, object? y) => x is string s ? string.CompareOrdinal(s, (string)y!) : ((long)x!).CompareTo((long)y!);
-    }
-    static readonly IComparer<object> Order = new OrderCmp();
+    // Each family lives in Interp.Externs.*.cs and returns NotHandled for names it does not know.
+    static readonly object NotHandled = new();
 
     static object? Extern(string name, List<object?> a)
     {
-        List<object?> L(int i) => (List<object?>)a[i]!;
-        byte[] IntBytes(List<object?> l) => l.Select(x => { var v = (long)x!; if (v < 0 || v > 255) throw new InvalidOperationException("byte out of range 0..255: " + v); return (byte)v; }).ToArray();
-        Dictionary<object, object?> M(int i) => (Dictionary<object, object?>)a[i]!;
-        SortedDictionary<object, object?> S(int i) => (SortedDictionary<object, object?>)a[i]!;
-        SortedDictionary<object, object?> Copy(int i) => new(S(i), Order);
         try
         {
-            switch (name)
+            foreach (var family in ExternFamilies)
             {
-                case "noop": return null;
-                case "bytesEmpty": return Array.Empty<byte>();
-                case "bytesEncode": return new System.Text.UTF8Encoding(false).GetBytes((string)a[0]!);
-                case "bytesDecode": return new System.Text.UTF8Encoding(false).GetString((byte[])a[0]!);
-                case "bytesLength": return (long)((byte[])a[0]!).Length;
-                case "bytesGet": return (long)((byte[])a[0]!)[(int)(long)a[1]!];
-                case "bytesSlice":
-                    {
-                        var d = (byte[])a[0]!;
-                        int st = (int)Math.Clamp((long)a[1]!, 0, d.Length), en = (int)Math.Clamp((long)a[2]!, st, d.Length);
-                        return d[st..en];
-                    }
-                case "bytesJoin": return ((byte[])a[0]!).Concat((byte[])a[1]!).ToArray();
-                case "bytesFromList": return L(0).Select(x => checked((byte)(long)x!)).ToArray();
-                case "textLength": return (long)((string)a[0]!).Length;
-                case "textSlice":
-                    {
-                        var s = (string)a[0]!;
-                        int st = (int)Math.Clamp((long)a[1]!, 0, s.Length), en = (int)Math.Clamp((long)a[2]!, st, s.Length);
-                        return s.Substring(st, en - st);
-                    }
-                case "textCode": return (long)((string)a[0]!)[(int)(long)a[1]!];
-                case "textFromCode": return ((char)(long)a[0]!).ToString();
-                case "textToInt": return long.Parse((string)a[0]!, CultureInfo.InvariantCulture);
-                case "numToI8" or "numToI16" or "numToI32" or "numToU8" or "numToU16" or "numToU32" or "numToU64":
-                    return Fit(Big(a[0]!), name[5..], $"`{name}`");
-                case "numFromI8" or "numFromI16" or "numFromI32" or "numFromU8" or "numFromU16" or "numFromU32" or "numFromU64":
-                    return Fit(Big(a[0]!), "Int", $"`{name}`");
-                case "numToF32": return (float)(long)a[0]!;
-                case "numToF64": return (double)(long)a[0]!;
-                case "numFromF32" or "numFromF64":
-                    {
-                        double d = ToDouble(a[0]!);
-                        if (double.IsNaN(d) || d >= 9223372036854775808.0 || d < -9223372036854775808.0) throw new OverflowException($"{d} does not fit in Int");
-                        return (long)d;
-                    }
-                case "numF32ToF64": return (double)(float)a[0]!;
-                case "numF64ToF32": return (float)(double)a[0]!;
-                case "bitAnd" or "bitOr" or "bitXor" or "bitNot" or "bitShl" or "bitShr":
-                    {
-                        string ty = a[0] switch { long => "Int", sbyte => "I8", short => "I16", int => "I32", byte => "U8", ushort => "U16", uint => "U32", _ => "U64" };
-                        var (_, max) = Limits[ty];
-                        int width = ty switch { "Int" or "U64" => 64, "I32" or "U32" => 32, "I16" or "U16" => 16, _ => 8 };
-                        BigInteger mod = BigInteger.One << width, x = Big(a[0]!);
-                        BigInteger Wrap(BigInteger v) { v = ((v % mod) + mod) % mod; return v > max ? v - mod : v; }
-                        BigInteger res;
-                        if (name is "bitShl" or "bitShr")
-                        {
-                            long n = (long)Big(a[1]!);
-                            if (n < 0 || n >= width) throw new InvalidOperationException($"shift count {n} must be 0 to {width - 1}");
-                            res = name == "bitShl" ? Wrap(x << (int)n) : x >> (int)n;
-                        }
-                        else if (name == "bitNot") res = Wrap(-x - 1);
-                        else
-                        {
-                            BigInteger y = Big(a[1]!), ux = (x + mod) % mod, uy = (y + mod) % mod;
-                            res = Wrap(name == "bitAnd" ? ux & uy : name == "bitOr" ? ux | uy : ux ^ uy);
-                        }
-                        return Fit(res, ty, name);
-                    }
-                case "listEmpty": return new List<object?>();
-                case "listLength": return (long)L(0).Count;
-                case "listGet": return L(0)[(int)(long)a[1]!];
-                case "listAppend": return new List<object?>(L(0)) { a[1] };
-                case "textFind": return (long)((string)a[0]!).IndexOf((string)a[1]!, StringComparison.Ordinal);
-                case "textContains": return ((string)a[0]!).Contains((string)a[1]!, StringComparison.Ordinal);
-                case "textStartsWith": return ((string)a[0]!).StartsWith((string)a[1]!, StringComparison.Ordinal);
-                case "textEndsWith": return ((string)a[0]!).EndsWith((string)a[1]!, StringComparison.Ordinal);
-                case "textTrim": return ((string)a[0]!).Trim();
-                case "textReplace": return ((string)a[0]!).Replace((string)a[1]!, (string)a[2]!, StringComparison.Ordinal);
-                case "textToUpper": return ((string)a[0]!).ToUpperInvariant();
-                case "textToLower": return ((string)a[0]!).ToLowerInvariant();
-                case "textCompare": return (long)Math.Sign(string.CompareOrdinal((string)a[0]!, (string)a[1]!));
-                case "textFromInt": return ((long)a[0]!).ToString(CultureInfo.InvariantCulture);
-                case "textRepeat": return string.Concat(Enumerable.Repeat((string)a[0]!, (int)(long)a[1]!));
-                case "textSplit": return ((string)a[0]!).Split((string)a[1]!, StringSplitOptions.None).Select(x => (object?)x).ToList();
-                case "textJoin": return string.Join((string)a[1]!, L(0).Cast<string>());
-                case "intMin": return Math.Min((long)a[0]!, (long)a[1]!);
-                case "intMax": return Math.Max((long)a[0]!, (long)a[1]!);
-                case "intAbs": return Math.Abs((long)a[0]!);
-                case "intSign": return (long)Math.Sign((long)a[0]!);
-                case "intClamp": return Math.Clamp((long)a[0]!, (long)a[1]!, (long)a[2]!);
-                case "intPow": return (long)System.Numerics.BigInteger.Pow((long)a[0]!, (int)(long)a[1]!);
-                case "intGcd": return (long)System.Numerics.BigInteger.GreatestCommonDivisor((long)a[0]!, (long)a[1]!);
-                case "intAnd": return (long)a[0]! & (long)a[1]!;
-                case "intOr": return (long)a[0]! | (long)a[1]!;
-                case "intXor": return (long)a[0]! ^ (long)a[1]!;
-                case "intNot": return ~(long)a[0]!;
-                case "intShiftLeft": return (long)a[0]! << (int)(long)a[1]!;
-                case "intShiftRight": return (long)a[0]! >> (int)(long)a[1]!;
-                case "listSet": { var r = new List<object?>(L(0)); r[(int)(long)a[1]!] = a[2]; return r; }
-                case "listInsert": { var r = new List<object?>(L(0)); r.Insert((int)(long)a[1]!, a[2]); return r; }
-                case "listRemoveAt": { var r = new List<object?>(L(0)); r.RemoveAt((int)(long)a[1]!); return r; }
-                case "listConcat": return L(0).Concat(L(1)).ToList();
-                case "listSlice":
-                    {
-                        int st = (int)Math.Clamp((long)a[1]!, 0, L(0).Count), en = (int)Math.Clamp((long)a[2]!, st, L(0).Count);
-                        return L(0).GetRange(st, en - st);
-                    }
-                case "hashSha256": return System.Security.Cryptography.SHA256.HashData(IntBytes(L(0))).Select(x => (object?)(long)x).ToList();
-                case "hashHmacSha256": return System.Security.Cryptography.HMACSHA256.HashData(IntBytes(L(0)), IntBytes(L(1))).Select(x => (object?)(long)x).ToList();
-                case "bytesFromText": return System.Text.Encoding.UTF8.GetBytes((string)a[0]!).Select(x => (object?)(long)x).ToList();
-                case "bytesToText": return System.Text.Encoding.UTF8.GetString(IntBytes(L(0)));
-                case "bytesToHex": return Convert.ToHexString(IntBytes(L(0))).ToLowerInvariant();
-                case "bytesFromHex":
-                    {
-                        var h = (string)a[0]!;
-                        if (h.Length % 2 != 0) throw new InvalidOperationException("hex text must have an even number of digits");
-                        return Convert.FromHexString(h).Select(x => (object?)(long)x).ToList();
-                    }
-                case "listReverse": { var r = new List<object?>(L(0)); r.Reverse(); return r; }
-                case "listIndexOf": return (long)L(0).FindIndex(x => Equals(x, a[1]));
-                case "listContains": return L(0).Any(x => Equals(x, a[1]));
-                case "listRange": { var r = new List<object?>(); for (long i = (long)a[0]!; i < (long)a[1]!; i++) r.Add(i); return r; }
-                case "queueEmpty" or "priorityQueueEmpty": return new List<object?>();
-                case "queueSize" or "priorityQueueSize": return (long)L(0).Count;
-                case "queuePush": return new List<object?>(L(0)) { a[1] };
-                case "queueFront": return L(0).Count > 0 ? L(0)[0] : throw new KeyNotFoundException("queueFront: the queue is empty");
-                case "priorityQueueFront": return L(0).Count > 0 ? ((object?[])L(0)[0]!)[1] : throw new KeyNotFoundException("priorityQueueFront: the queue is empty");
-                case "queuePop" or "priorityQueuePop": return L(0).Count > 0 ? L(0).GetRange(1, L(0).Count - 1) : throw new KeyNotFoundException(name + ": the queue is empty");
-                case "priorityQueuePush":
-                    {
-                        var l = L(0); int i = l.Count; long p = (long)a[2]!;
-                        while (i > 0 && (long)((object?[])l[i - 1]!)[0]! > p) i--;
-                        var r = new List<object?>(l); r.Insert(i, new object?[] { p, a[1] }); return r;
-                    }
-                case "sortedMapEmpty" or "sortedSetEmpty": return new SortedDictionary<object, object?>(Order);
-                case "sortedMapSize" or "sortedSetSize": return (long)S(0).Count;
-                case "sortedMapHas" or "sortedSetHas": return S(0).ContainsKey(a[1]!);
-                case "sortedMapGet": return S(0).TryGetValue(a[1]!, out var sv) ? sv : throw new KeyNotFoundException("sortedMapGet: key not in the map");
-                case "sortedMapSet": { var r = Copy(0); r[a[1]!] = a[2]; return r; }
-                case "sortedSetAdd": { var r = Copy(0); r[a[1]!] = true; return r; }
-                case "sortedMapRemove" or "sortedSetRemove": { var r = Copy(0); r.Remove(a[1]!); return r; }
-                case "sortedMapKeys" or "sortedSetItems": return S(0).Keys.Select(k => (object?)k).ToList();
-                case "mapEmpty" or "setEmpty": return new Dictionary<object, object?>();
-                case "mapSize" or "setSize": return (long)M(0).Count;
-                case "mapHas" or "setHas": return M(0).ContainsKey(a[1]!);
-                case "mapGet": return M(0).TryGetValue(a[1]!, out var v) ? v : throw new KeyNotFoundException("mapGet: key not in the map");
-                case "mapSet": return new Dictionary<object, object?>(M(0)) { [a[1]!] = a[2] };
-                case "setAdd": return new Dictionary<object, object?>(M(0)) { [a[1]!] = true };
-                case "mapRemove" or "setRemove": return M(0).Where(p => !p.Key.Equals(a[1])).ToDictionary(p => p.Key, p => p.Value);
-                case "mapKeys" or "setItems": return M(0).Keys.Select(k => (object?)k).ToList();
+                var r = family(name, a);
+                if (!ReferenceEquals(r, NotHandled)) return r;
             }
         }
         catch (Exception ex) when (ex is ArgumentException or KeyNotFoundException or FormatException or OverflowException)
@@ -391,6 +243,16 @@ sealed class Interp(ProgramModel program)
         }
         throw new Unsupported($"the standard function `{name}` is not available in `aip test`");
     }
+
+    static readonly Func<string, List<object?>, object?>[] ExternFamilies =
+    {
+        CoreExtern,
+        ListExtern,
+        MapExtern,
+        QueueExtern,
+        SortedExtern,
+        NetExtern,
+    };
 
     /// <summary>
     /// Runs every `example` of every project function (on a big stack, like the compiled program).
