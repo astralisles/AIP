@@ -59,6 +59,16 @@ sealed class CsBackend : IBackend
         ["sortedSetAdd"] = "Rt.SortedPut({0}, {1}, true)",
         ["sortedSetRemove"] = "Rt.SortedRemove({0}, {1})",
         ["sortedSetItems"] = "new System.Collections.Generic.List<object>(({0}).Keys)",
+        ["queueEmpty"] = "new System.Collections.Generic.List<object>()",
+        ["queueSize"] = "(long)({0}).Count",
+        ["queuePush"] = "Rt.Append({0}, {1})",
+        ["queueFront"] = "Rt.Front({0}, \"queueFront\")",
+        ["queuePop"] = "Rt.Pop({0}, \"queuePop\")",
+        ["priorityQueueEmpty"] = "new System.Collections.Generic.List<object>()",
+        ["priorityQueueSize"] = "(long)({0}).Count",
+        ["priorityQueuePush"] = "Rt.PqPush({0}, {1}, {2})",
+        ["priorityQueueFront"] = "((object[])Rt.Front({0}, \"priorityQueueFront\"))[1]",
+        ["priorityQueuePop"] = "Rt.Pop({0}, \"priorityQueuePop\")",
         ["fileRead"] = "System.IO.File.ReadAllText({0})",
         ["fileWrite"] = "Rt.Write({0}, {1})",
         ["noop"] = "Rt.Nop()",
@@ -154,7 +164,7 @@ sealed class CsBackend : IBackend
         "Text" => "string",
         "Bool" => "bool",
         "_" => "object",
-        _ when t.StartsWith("List<", StringComparison.Ordinal) => "System.Collections.Generic.List<object>",
+        _ when t.StartsWith("List<", StringComparison.Ordinal) || t.StartsWith("Queue<", StringComparison.Ordinal) || t.StartsWith("PriorityQueue<", StringComparison.Ordinal) => "System.Collections.Generic.List<object>",
         // Maps and sets are insertion-ordered dictionaries (a set maps each item to true); every change copies.
         _ when t.StartsWith("Map<", StringComparison.Ordinal) || t.StartsWith("Set<", StringComparison.Ordinal) => "System.Collections.Generic.Dictionary<object, object>",
         _ when t.StartsWith("SortedMap<", StringComparison.Ordinal) || t.StartsWith("SortedSet<", StringComparison.Ordinal) => "System.Collections.Generic.SortedDictionary<object, object>",
@@ -232,7 +242,7 @@ sealed class CsBackend : IBackend
         Field f => $"{Emit(f.Target)}.@{f.Name}",
         MatchExpr m => $"({Emit(m.Subject)} switch {{ {string.Join(", ", m.Arms.Select(a => $"{Pattern(a)} => {Emit(a.Body)}"))}, _ => throw new System.InvalidOperationException() }})",
         Call c => Externs.TryGetValue(c.Name, out var template)
-            ? (c.Name is "listGet" or "mapGet" or "sortedMapGet" ? $"(({CsType(c.Type)})" : "") + string.Format(System.Globalization.CultureInfo.InvariantCulture, template, c.Args.Select(Emit).ToArray<object>()) + (c.Name is "listGet" or "mapGet" or "sortedMapGet" ? ")" : "")
+            ? (c.Name is "listGet" or "mapGet" or "sortedMapGet" or "queueFront" or "priorityQueueFront" ? $"(({CsType(c.Type)})" : "") + string.Format(System.Globalization.CultureInfo.InvariantCulture, template, c.Args.Select(Emit).ToArray<object>()) + (c.Name is "listGet" or "mapGet" or "sortedMapGet" or "queueFront" or "priorityQueueFront" ? ")" : "")
             : $"Fn.@{c.Name}({string.Join(", ", c.Args.Select(Emit))})",
         Unary u => u.Op == "-" ? $"(-{Emit(u.Operand)})" : $"(!{Emit(u.Operand)})",
         Binary b => b.Op switch
@@ -341,6 +351,23 @@ sealed class CsBackend : IBackend
             {
                 var r = new System.Collections.Generic.SortedDictionary<object, object>(m, Order);
                 r.Remove(k);
+                return r;
+            }
+            // Queue is a List (front = index 0). PriorityQueue is a List of object[] { priority, item } kept in
+            // ascending priority, and equal priorities keep insertion order.
+            public static object Front(System.Collections.Generic.List<object> l, string fn) =>
+                l.Count > 0 ? l[0] : throw new System.Collections.Generic.KeyNotFoundException(fn + ": the queue is empty");
+            public static System.Collections.Generic.List<object> Pop(System.Collections.Generic.List<object> l, string fn)
+            {
+                if (l.Count == 0) throw new System.Collections.Generic.KeyNotFoundException(fn + ": the queue is empty");
+                return l.GetRange(1, l.Count - 1);
+            }
+            public static System.Collections.Generic.List<object> PqPush(System.Collections.Generic.List<object> l, object item, long priority)
+            {
+                int i = l.Count;
+                while (i > 0 && (long)((object[])l[i - 1])[0] > priority) i--;
+                var r = new System.Collections.Generic.List<object>(l);
+                r.Insert(i, new object[] { priority, item });
                 return r;
             }
             public static void Nop() { }
