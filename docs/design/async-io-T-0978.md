@@ -1,5 +1,7 @@
 # Design decision: async IO for network, files, etc. (T-0978)
 
+> Update: the Fn and tasks step is implemented, see `fn-and-tasks-implemented-T-0978.md`.
+
 Do not add `async`/`await`. IO stays blocking in the language; concurrency comes from tasks
 (T-0935). Nothing is implemented by this note.
 

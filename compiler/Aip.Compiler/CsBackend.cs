@@ -131,6 +131,8 @@ sealed partial class CsBackend : IBackend
         "Int" => "long", "F32" => "float", "F64" => "double", "I8" => "sbyte", "I16" => "short", "I32" => "int",
         "U8" => "byte", "U16" => "ushort", "U32" => "uint", "U64" => "ulong", "Text" => "string", "Bool" => "bool", "_" => "object",
         "Bytes" => "byte[]",
+        _ when t.StartsWith("Fn<", StringComparison.Ordinal) => "System.Func<object[], object>", // a function value: arguments in an array, result boxed
+        _ when t.StartsWith("Task<", StringComparison.Ordinal) => "object", // a started task, only ever passed to Rt.TaskAwait
         "TcpListener" or "TcpConn" or "UdpSocket" => "object", // handles, opened by effectful std functions
         _ when t.Length == 1 && char.IsAsciiLetterUpper(t[0]) => "object", // a type parameter: erased
         _ when t.StartsWith("List<", StringComparison.Ordinal) => "Aip.Persistent.PList",
@@ -267,6 +269,7 @@ sealed partial class CsBackend : IBackend
         FloatLit { Type: "F32" } f => f.Value.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + "F",
         FloatLit f => f.Value.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + "D",
         BoolLit b => b.Value ? "true" : "false",
+        FnRef r => EmitFnRef(r),
         NameRef n => n.Const ? "Const.@" + n.Name : Cast(n.Erased, n.Type, "@" + n.Name),
         TextLit t => t.Parts.Count == 1 && t.Parts[0] is string only
             ? Quote(only)
@@ -275,7 +278,7 @@ sealed partial class CsBackend : IBackend
         Field f => Cast(f.Erased, f.Type, $"{Emit(f.Target)}.@{f.Name}"),
         MatchExpr m => $"({Emit(m.Subject)} switch {{ {string.Join(", ", m.Arms.Select(a => $"{Pattern(a)} => {Emit(a.Body)}"))}, _ => throw new System.InvalidOperationException() }})",
         Call c => Externs.TryGetValue(c.Name, out var template)
-            ? (c.Name is "listGet" or "mapGet" or "sortedMapGet" or "queueFront" or "priorityQueueFront" ? $"(({CsType(c.Type)})" : "") + string.Format(System.Globalization.CultureInfo.InvariantCulture, template.Replace("<T>", CsType(c.Type)), c.Args.Select(Emit).ToArray<object>()) + (c.Name is "listGet" or "mapGet" or "sortedMapGet" or "queueFront" or "priorityQueueFront" ? ")" : "")
+            ? (c.Name is "listGet" or "listFold" or "taskAwait" or "mapGet" or "sortedMapGet" or "queueFront" or "priorityQueueFront" ? $"(({CsType(c.Type)})" : "") + string.Format(System.Globalization.CultureInfo.InvariantCulture, template.Replace("<T>", CsType(c.Type)), c.Args.Select(Emit).ToArray<object>()) + (c.Name is "listGet" or "listFold" or "taskAwait" or "mapGet" or "sortedMapGet" or "queueFront" or "priorityQueueFront" ? ")" : "")
             : Cast(c.Erased, c.Type, $"Fn.@{c.Name}({string.Join(", ", c.Args.Select(Emit))})"),
         Unary u => u.Op == "-" ? $"(-{Emit(u.Operand)})" : $"(!{Emit(u.Operand)})",
         Binary b => b.Op switch
@@ -291,6 +294,17 @@ sealed partial class CsBackend : IBackend
         IfExpr i => $"({Emit(i.Cond)} ? {Emit(i.Then)} : {Emit(i.Else)})",
         _ => throw new InvalidOperationException("unknown expression"),
     };
+
+    /// <summary>`&name` as a delegate that takes its arguments in an array (so one runtime helper serves every function type).</summary>
+    static string EmitFnRef(FnRef r)
+    {
+        var f = r.Target!;
+        var args = string.Join(", ", f.Params.Select((p, i) => CsType(p.Type.Name) == "object" ? $"a[{i}]" : $"({CsType(p.Type.Name)})a[{i}]"));
+        var call = $"Fn.@{f.Name}({args})";
+        return f.Ret.Name == "Unit"
+            ? $"((System.Func<object[], object>)(a => {{ {call}; return null; }}))"
+            : $"((System.Func<object[], object>)(a => (object){call}))";
+    }
 
     /// <summary>A value that is `object` in C# because its declared type is a type parameter is cast back to its real type.</summary>
     static string Cast(bool erased, string type, string code) => erased && type != "" && CsType(type) != "object" ? $"(({CsType(type)}){code})" : code;
