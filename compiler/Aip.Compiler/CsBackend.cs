@@ -83,7 +83,7 @@ sealed class CsBackend : IBackend
             Console.WriteLine($"error unsupported-target: the cs back end cannot build for `{target}` yet\n  fix: use one of: {string.Join(", ", Targets.Keys)}");
             return null;
         }
-        foreach (var fn in program.Fns.Values.Where(f => f.IsExtern && !Externs.ContainsKey(f.Name)))
+        foreach (var fn in program.Fns.Values.Where(f => f.IsExtern && f.NativeLib == null && !Externs.ContainsKey(f.Name)))
         {
             Console.WriteLine($"error backend-missing-extern: the cs back end has no implementation of `{fn.Name}`");
             return null;
@@ -98,6 +98,7 @@ sealed class CsBackend : IBackend
         // to the last build for this target and its output is still there; otherwise keep the cs/obj
         // folder so the publish is incremental instead of restoring from scratch.
         var files = EmitFiles(program);
+        CopyNative(program, binDir);
         var hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
             Encoding.UTF8.GetBytes(rid + "\0" + string.Join("\0", files.Select(p => p.Key + "\0" + p.Value)))));
         var stamp = Path.Combine(binDir, ".aip-build-hash");
@@ -143,11 +144,25 @@ sealed class CsBackend : IBackend
         return exePath;
     }
 
+    /// <summary>Shared libraries shipped with the project: every .dll, .so and .dylib in `<project>/native/`
+    /// is copied next to the program, where the loader looks first.</summary>
+    static void CopyNative(ProgramModel program, string binDir)
+    {
+        var src = Path.Combine(program.Dir, "native");
+        if (!Directory.Exists(src)) return;
+        Directory.CreateDirectory(binDir);
+        foreach (var f in Directory.EnumerateFiles(src).Where(f => Path.GetExtension(f) is ".dll" or ".so" or ".dylib" || Path.GetFileName(f).Contains(".so.", StringComparison.Ordinal)))
+        {
+            var dest = Path.Combine(binDir, Path.GetFileName(f));
+            if (!File.Exists(dest) || File.GetLastWriteTimeUtc(dest) != File.GetLastWriteTimeUtc(f)) File.Copy(f, dest, true);
+        }
+    }
+
     /// <summary>All generated files (name to content), in a fixed order. Pure: used by the build and by `aip emit`.</summary>
     public static SortedDictionary<string, string> EmitFiles(ProgramModel program)
     {
         var files = new SortedDictionary<string, string>(StringComparer.Ordinal);
-        foreach (var fn in program.ProjectFns) files[fn.Name + ".cs"] = fn.IsConst ? EmitConst(fn) : EmitFn(fn);
+        foreach (var fn in program.ProjectFns) files[fn.Name + ".cs"] = fn.IsConst ? EmitConst(fn) : fn.NativeLib != null ? EmitNative(fn) : EmitFn(fn);
         files["Program.cs"] = ProgramCs;
         if (program.Types.Count > 0) files["Types.cs"] = EmitTypes(program);
         files[program.Name + ".csproj"] = Csproj;
@@ -195,6 +210,40 @@ sealed class CsBackend : IBackend
     }
 
     static string Pattern(Arm a) => a.Binds.Count == 0 ? $"{a.Path} _" : $"{a.Path}({string.Join(", ", a.Binds.Select(b => $"var @{b}"))})";
+
+    /// <summary>A `native "lib" "symbol"` function: a P/Invoke into a shared library (dll / so / dylib), loaded on first call.
+    /// Int is a 64-bit integer, Bool one byte, Text a UTF-8 C string; a returned string stays owned by the library.</summary>
+    static string EmitNative(Fn fn)
+    {
+        string Raw(string t, bool ret) => t switch
+        {
+            "Int" => "long", "Bool" => "bool", "Unit" => "void", _ => ret ? "System.IntPtr" : "string",
+        };
+        string Attr(string t) => t switch
+        {
+            "Text" => "[System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.LPUTF8Str)] ",
+            "Bool" => "[System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.U1)] ",
+            _ => "",
+        };
+        var ci = System.Globalization.CultureInfo.InvariantCulture;
+        var sb = new StringBuilder();
+        sb.Append(ci, $"// Generated from {fn.Name}.fn. Do not edit.\n");
+        sb.Append("public static partial class Fn\n{\n");
+        sb.Append(ci, $"    [System.Runtime.InteropServices.DllImport({Quote(fn.NativeLib!)}, EntryPoint = {Quote(fn.NativeSymbol)}, CallingConvention = System.Runtime.InteropServices.CallingConvention.Cdecl)]\n");
+        if (fn.Ret.Name == "Bool") sb.Append("    [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.U1)]\n");
+        sb.Append(ci, $"    static extern {Raw(fn.Ret.Name, true)} Native_{fn.Name}({string.Join(", ", fn.Params.Select(p => $"{Attr(p.Type.Name)}{Raw(p.Type.Name, false)} @{p.Name}"))});\n\n");
+        sb.Append(ci, $"    /// <summary>{System.Security.SecurityElement.Escape(fn.Doc)}</summary>\n");
+        sb.Append(ci, $"    public static {CsType(fn.Ret.Name)} @{fn.Name}({string.Join(", ", fn.Params.Select(p => $"{CsType(p.Type.Name)} @{p.Name}"))})\n    {{\n");
+        var call = $"Native_{fn.Name}({string.Join(", ", fn.Params.Select(p => $"@{p.Name}"))})";
+        sb.Append(fn.Ret.Name switch
+        {
+            "Text" => $"        return System.Runtime.InteropServices.Marshal.PtrToStringUTF8({call}) ?? \"\";\n",
+            "Unit" => $"        {call};\n",
+            _ => $"        return {call};\n",
+        });
+        sb.Append("    }\n}\n");
+        return sb.ToString();
+    }
 
     static string EmitFn(Fn fn)
     {
