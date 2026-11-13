@@ -17,6 +17,7 @@ static class Lint
         Unary u => new[] { u.Operand },
         Binary b => new[] { b.Left, b.Right },
         IfExpr i => new[] { i.Cond, i.Then, i.Else },
+        BlockExpr k => k.Stmts,
         _ => Array.Empty<Expr>(),
     };
 
