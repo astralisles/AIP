@@ -1,0 +1,5 @@
+fn helper(b Bool 0..5) -> Int
+  "A range on a Bool is not allowed."
+  pure
+body
+  1

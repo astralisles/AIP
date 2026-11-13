@@ -1,0 +1,3 @@
+struct Fn
+  "A reserved name."
+  x Int

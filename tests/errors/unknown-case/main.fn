@@ -1,0 +1,10 @@
+fn main() -> Unit
+  "Name a case that does not exist."
+  effects terminal.write
+body
+  let light = Red()
+  let n = match light
+    Red() => 1
+    Green() => 2
+    Blue() => 3
+  printLine("{n}")

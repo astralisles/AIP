@@ -68,16 +68,12 @@ sealed class CsBackend : IBackend
         var srcDir = Path.Combine(outDir, "cs");
         var csproj = Path.Combine(srcDir, program.Name + ".csproj");
         var binDir = Path.Combine(outDir, "bin", target);
-        var exePath = Path.Combine(binDir, program.Name + (target.StartsWith("windows") ? ".exe" : ""));
+        var exePath = Path.Combine(binDir, program.Name + (target.StartsWith("windows", StringComparison.Ordinal) ? ".exe" : ""));
 
         // Speed: the slow part is `dotnet publish` (~2.5 s). Skip it when the generated C# is identical
         // to the last build for this target and its output is still there; otherwise keep the cs/obj
         // folder so the publish is incremental instead of restoring from scratch.
-        var files = new SortedDictionary<string, string>(StringComparer.Ordinal);
-        foreach (var fn in program.ProjectFns) files[fn.Name + ".cs"] = EmitFn(fn);
-        files["Program.cs"] = ProgramCs;
-        if (program.Types.Count > 0) files["Types.cs"] = EmitTypes(program);
-        files[program.Name + ".csproj"] = Csproj;
+        var files = EmitFiles(program);
         var hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
             Encoding.UTF8.GetBytes(rid + "\0" + string.Join("\0", files.Select(p => p.Key + "\0" + p.Value)))));
         var stamp = Path.Combine(binDir, ".aip-build-hash");
@@ -117,13 +113,30 @@ sealed class CsBackend : IBackend
         return exePath;
     }
 
+    /// <summary>All generated files (name to content), in a fixed order. Pure: used by the build and by `aip emit`.</summary>
+    public static SortedDictionary<string, string> EmitFiles(ProgramModel program)
+    {
+        var files = new SortedDictionary<string, string>(StringComparer.Ordinal);
+        foreach (var fn in program.ProjectFns) files[fn.Name + ".cs"] = EmitFn(fn);
+        files["Program.cs"] = ProgramCs;
+        if (program.Types.Count > 0) files["Types.cs"] = EmitTypes(program);
+        files[program.Name + ".csproj"] = Csproj;
+        return files;
+    }
+
+    /// <summary>The names of the standard-library functions the back end implements.</summary>
+    public static IEnumerable<string> ExternNames => Externs.Keys.OrderBy(k => k, StringComparer.Ordinal);
+
     // Lists are type-erased at run time (List<object>); reads cast back to the element type.
     static string CsType(string t) => t switch
     {
-        "Int" => "long", "Text" => "string", "Bool" => "bool", "_" => "object",
-        _ when t.StartsWith("List<") => "System.Collections.Generic.List<object>",
+        "Int" => "long",
+        "Text" => "string",
+        "Bool" => "bool",
+        "_" => "object",
+        _ when t.StartsWith("List<", StringComparison.Ordinal) => "System.Collections.Generic.List<object>",
         // Maps and sets are insertion-ordered dictionaries (a set maps each item to true); every change copies.
-        _ when t.StartsWith("Map<") || t.StartsWith("Set<") => "System.Collections.Generic.Dictionary<object, object>",
+        _ when t.StartsWith("Map<", StringComparison.Ordinal) || t.StartsWith("Set<", StringComparison.Ordinal) => "System.Collections.Generic.Dictionary<object, object>",
         "Unit" => "void",
         _ => t, // a struct or variant: a C# record of the same name (see EmitTypes)
     };
@@ -136,12 +149,12 @@ sealed class CsBackend : IBackend
         var sb = new StringBuilder("// Generated from the .struct and .variant files. Do not edit.\n");
         foreach (var def in program.Types.Values.OrderBy(d => d.Name, StringComparer.Ordinal))
         {
-            sb.Append($"/// <summary>{System.Security.SecurityElement.Escape(def.Doc)}</summary>\n");
-            if (!def.IsVariant) sb.Append($"public sealed record @{def.Name}({Fields(def.Cases[0])});\n");
+            sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"/// <summary>{System.Security.SecurityElement.Escape(def.Doc)}</summary>\n");
+            if (!def.IsVariant) sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"public sealed record @{def.Name}({Fields(def.Cases[0])});\n");
             else
             {
-                sb.Append($"public abstract record @{def.Name}\n{{\n    private @{def.Name}() {{ }}\n");
-                foreach (var c in def.Cases) sb.Append($"    public sealed record @{c.Name}({Fields(c)}) : @{def.Name};\n");
+                sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"public abstract record @{def.Name}\n{{\n    private @{def.Name}() {{ }}\n");
+                foreach (var c in def.Cases) sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"    public sealed record @{c.Name}({Fields(c)}) : @{def.Name};\n");
                 sb.Append("}\n");
             }
         }
@@ -153,16 +166,16 @@ sealed class CsBackend : IBackend
     static string EmitFn(Fn fn)
     {
         var sb = new StringBuilder();
-        sb.Append($"// Generated from {fn.Name}.fn. Do not edit.\n");
+        sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"// Generated from {fn.Name}.fn. Do not edit.\n");
         sb.Append("public static partial class Fn\n{\n");
-        sb.Append($"    /// <summary>{System.Security.SecurityElement.Escape(fn.Doc)}</summary>\n");
-        sb.Append($"    public static {CsType(fn.Ret.Name)} @{fn.Name}({string.Join(", ", fn.Params.Select(p => $"{CsType(p.Type.Name)} @{p.Name}"))})\n    {{\n");
+        sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"    /// <summary>{System.Security.SecurityElement.Escape(fn.Doc)}</summary>\n");
+        sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"    public static {CsType(fn.Ret.Name)} @{fn.Name}({string.Join(", ", fn.Params.Select(p => $"{CsType(p.Type.Name)} @{p.Name}"))})\n    {{\n");
         for (int i = 0; i < fn.Body.Count; i++)
         {
             var s = fn.Body[i];
             var e = Emit(s.Value);
-            if (s.Let != null) sb.Append($"        var @{s.Let} = {e};\n");
-            else if (i == fn.Body.Count - 1 && fn.Ret.Name != "Unit") sb.Append($"        return {e};\n");
+            if (s.Let != null) sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"        var @{s.Let} = {e};\n");
+            else if (i == fn.Body.Count - 1 && fn.Ret.Name != "Unit") sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"        return {e};\n");
             else sb.Append(EmitUnit(s.Value, "        "));
         }
         sb.Append("    }\n}\n");
@@ -193,7 +206,7 @@ sealed class CsBackend : IBackend
         Field f => $"{Emit(f.Target)}.@{f.Name}",
         MatchExpr m => $"({Emit(m.Subject)} switch {{ {string.Join(", ", m.Arms.Select(a => $"{Pattern(a)} => {Emit(a.Body)}"))}, _ => throw new System.InvalidOperationException() }})",
         Call c => Externs.TryGetValue(c.Name, out var template)
-            ? (c.Name is "listGet" or "mapGet" ? $"(({CsType(c.Type)})" : "") + string.Format(template, c.Args.Select(Emit).ToArray<object>()) + (c.Name is "listGet" or "mapGet" ? ")" : "")
+            ? (c.Name is "listGet" or "mapGet" ? $"(({CsType(c.Type)})" : "") + string.Format(System.Globalization.CultureInfo.InvariantCulture, template, c.Args.Select(Emit).ToArray<object>()) + (c.Name is "listGet" or "mapGet" ? ")" : "")
             : $"Fn.@{c.Name}({string.Join(", ", c.Args.Select(Emit))})",
         Unary u => u.Op == "-" ? $"(-{Emit(u.Operand)})" : $"(!{Emit(u.Operand)})",
         Binary b => b.Op switch

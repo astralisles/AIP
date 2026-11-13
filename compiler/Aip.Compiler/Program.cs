@@ -7,6 +7,10 @@ const string Usage = """
       aip index <projectDir>                          print the index: one line per function
       aip build <projectDir> [--target T] [--out D]   check, then build a program
       aip run <projectDir>                            check, build for this machine, then run it
+      aip lint <projectDir>                           check, then warn about code that is probably wrong
+      aip test <projectDir>                           check, then run every `example` and its contracts
+      aip emit <projectDir> [--out D]                 check, then write the generated C# (no build)
+      aip fuzz <projectDir>                           damage every source file many ways; the compiler must never crash
     targets: windows-x64, windows-arm64, linux-x64, linux-arm64, macos-arm64 (default: this machine)
     """;
 
@@ -15,7 +19,7 @@ if (args.Length == 2 && args[0] == "tokens")
     Console.Write(Parser.Tokens(Path.GetFullPath(args[1])));
     return 0;
 }
-if (args.Length < 2 || args[0] is not ("check" or "index" or "build" or "run"))
+if (args.Length < 2 || args[0] is not ("check" or "index" or "build" or "run" or "lint" or "test" or "emit" or "fuzz"))
 {
     Console.WriteLine(Usage);
     return 2;
@@ -34,57 +38,7 @@ if (!Directory.Exists(dir)) { Console.WriteLine($"error no-project: `{args[1]}` 
 outDir ??= Path.Combine(dir, "build");
 
 var diags = new List<Diagnostic>();
-var program = new ProgramModel { Name = Path.GetFileName(dir.TrimEnd('\\', '/')), Dir = dir };
-
-void AddType(TypeDef def)
-{
-    if (program.Types.TryGetValue(def.Name, out var other))
-    {
-        diags.Add(new Diagnostic(def.File, def.Line, "duplicate-name", $"`{def.Name}` is already defined in {Path.GetFileName(other.File)}", "names are unique across the project; rename one"));
-        return;
-    }
-    program.Types[def.Name] = def;
-    foreach (var c in def.Cases)
-        if (!program.Ctors.TryAdd(c.Name, (def, c)))
-            diags.Add(new Diagnostic(def.File, c.Line, "duplicate-name", $"`{c.Name}` is already defined in {Path.GetFileName(program.Ctors[c.Name].Def.File)}", "case and type names are unique across the project; rename one"));
-}
-
-void Load(string root, bool isStd)
-{
-    var files = Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories)
-        .Where(f => !Path.GetRelativePath(root, f).Replace('\\', '/').Split('/').Contains("build"))
-        .OrderBy(f => f, StringComparer.Ordinal);
-    foreach (var file in files)
-    {
-        var ext = Path.GetExtension(file);
-        if (ext != ".fn")
-        {
-            if (ext is ".struct" or ".variant")
-            {
-                try { AddType(Parser.ParseTypeFile(file)); }
-                catch (CompileException e) { diags.Add(e.Diagnostic); }
-            }
-            else if (ext == ".const")
-                diags.Add(new Diagnostic(file, 1, "unsupported-file", $"`{ext}` files are not supported by the compiler yet"));
-            continue;
-        }
-        try
-        {
-            var fn = Parser.ParseFile(file);
-            fn.IsStd = isStd;
-            if (program.Fns.TryGetValue(fn.Name, out var other))
-                diags.Add(new Diagnostic(file, fn.Line, "duplicate-name", $"`{fn.Name}` is already defined in {Path.GetFileName(other.File)}{(other.IsStd ? " (standard library)" : "")}", "names are unique across the project; rename one"));
-            else program.Fns[fn.Name] = fn;
-        }
-        catch (CompileException e) { diags.Add(e.Diagnostic); }
-    }
-}
-
-Load(Path.Combine(AppContext.BaseDirectory, "std"), true);
-Load(dir, false);
-foreach (var (name, ctor) in program.Ctors.Where(c => program.Fns.ContainsKey(c.Key)))
-    diags.Add(new Diagnostic(ctor.Def.File, ctor.Case.Line, "duplicate-name", $"`{name}` is also a function ({Path.GetFileName(program.Fns[name].File)})", "names are unique across the project; rename one"));
-if (diags.Count == 0) new Checker(program, diags).Check();
+var program = Project.Load(dir, diags);
 
 if (diags.Count > 0)
 {
@@ -103,6 +57,36 @@ switch (command)
     case "index":
         Console.Write(Index());
         return 0;
+    case "lint":
+        {
+            var warnings = Lint.Run(program);
+            foreach (var w in warnings.OrderBy(w => w.File, StringComparer.Ordinal).ThenBy(w => w.Line)) Console.WriteLine(w);
+            Console.WriteLine($"{warnings.Count} warning(s)");
+            return warnings.Count > 0 ? 1 : 0;
+        }
+    case "test":
+        {
+            var (passed, skipped, failures, none) = Interp.RunExamples(program);
+            foreach (var f in failures.OrderBy(f => f.File, StringComparer.Ordinal).ThenBy(f => f.Line)) Console.WriteLine(f);
+            Console.WriteLine($"{passed} example(s) passed, {failures.Count} failed, {skipped} skipped (need effects); {none.Count} pure function(s) without an example");
+            return failures.Count > 0 ? 1 : 0;
+        }
+    case "emit":
+        {
+            var emitDir = outDir;
+            Directory.CreateDirectory(emitDir);
+            foreach (var (name, content) in CsBackend.EmitFiles(program)) File.WriteAllText(Path.Combine(emitDir, name), content);
+            File.WriteAllText(Path.Combine(emitDir, "index.txt"), Index());
+            Console.WriteLine($"ok: wrote the generated files to {Path.GetRelativePath(Environment.CurrentDirectory, emitDir).Replace('\\', '/')}");
+            return 0;
+        }
+    case "fuzz":
+        {
+            var (tried, crashes) = Fuzz.Run(dir);
+            foreach (var c in crashes.Take(20)) Console.WriteLine("crash: " + c);
+            Console.WriteLine($"{tried} damaged input(s) tried, {crashes.Count} crash(es)");
+            return crashes.Count > 0 ? 1 : 0;
+        }
 }
 
 var host = (OperatingSystem.IsWindows() ? "windows" : OperatingSystem.IsMacOS() ? "macos" : "linux")
@@ -115,7 +99,7 @@ if (command == "run" && target != null && target != host)
 target ??= host;
 Directory.CreateDirectory(outDir);
 File.WriteAllText(Path.Combine(outDir, "index.txt"), Index());
-IBackend backend = new CsBackend();
+var backend = new CsBackend();
 var exe = backend.Build(program, outDir, target);
 if (exe == null) return 1;
 if (command == "run")
