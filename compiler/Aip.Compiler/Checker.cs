@@ -12,25 +12,34 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
     };
 
     static bool IsInt(string t) => t == "Int" || SizedInts.ContainsKey(t);
+    static bool IsFloat(string t) => t is "F32" or "F64";
+    static bool IsNum(string t) => IsInt(t) || IsFloat(t);
+    /// <summary>Types a bare literal gets when nothing else is wanted.</summary>
+    static bool IsDefaultLit(string t) => t is "Int" or "F64";
     static bool IsUnsigned(string t) => t.StartsWith('U') && SizedInts.ContainsKey(t);
 
-    static readonly HashSet<string> KnownTypes = new(new[] { "Int", "Text", "Bool", "Unit" }.Concat(SizedInts.Keys));
+    static readonly HashSet<string> KnownTypes = new(new[] { "Int", "F32", "F64", "Text", "Bool", "Unit" }.Concat(SizedInts.Keys));
 
     /// <summary>An integer literal (maybe negated) used where a sized integer is wanted takes that type if it fits.</summary>
     bool FitLiteral(Expr e, string want)
     {
-        if (!SizedInts.TryGetValue(want, out var range)) return false;
-        System.Numerics.BigInteger v;
-        if (e is IntLit l) v = l.Value;
-        else if (e is Unary { Op: "-", Operand: IntLit n }) v = -(System.Numerics.BigInteger)n.Value;
-        else return false;
+        Expr lit = e is Unary { Op: "-", Operand: var inner } ? inner : e;
+        if (want == "F32")
+        {
+            if (lit is not FloatLit f) return false;
+            var d = e == lit ? f.Value : -f.Value;
+            if (float.IsInfinity((float)d)) { Error(e.Line, "out-of-range", $"{d} does not fit in F32", "use F64 or a smaller number"); return true; }
+            e.Type = want; lit.Type = want;
+            return true;
+        }
+        if (!SizedInts.TryGetValue(want, out var range) || lit is not IntLit l) return false;
+        System.Numerics.BigInteger v = e == lit ? l.Value : -(System.Numerics.BigInteger)l.Value;
         if (v < range.Min || v > range.Max)
         {
             Error(e.Line, "out-of-range", $"{v} does not fit in {want} ({range.Min} to {range.Max})", "use a smaller number or a bigger type");
             return true; // reported; do not add a type-mismatch on top
         }
-        e.Type = want;
-        if (e is Unary u) u.Operand.Type = want;
+        e.Type = want; lit.Type = want;
         return true;
     }
 
@@ -222,7 +231,7 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
                 foreach (var f in c.Fields)
                 {
                     if (!seen.Add(f.Name)) Err(c.Line, "duplicate-name", $"field `{f.Name}` is declared twice in `{c.Name}`");
-                    if (!IsKnown(f.Type.Name)) Err(c.Line, "unknown-type", $"unknown type `{f.Type.Name}` for field `{f.Name}`", "types: Int, I8, I16, I32, U8, U16, U32, U64, Text, Bool, List<T>, and your structs and variants");
+                    if (!IsKnown(f.Type.Name)) Err(c.Line, "unknown-type", $"unknown type `{f.Type.Name}` for field `{f.Name}`", "types: Int, I8, I16, I32, U8, U16, U32, U64, F32, F64, Text, Bool, List<T>, and your structs and variants");
                     else if (f.Type.Name == "Unit") Err(c.Line, "type-mismatch", $"field `{f.Name}` cannot be Unit");
                 }
             }
@@ -232,7 +241,7 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
     void CheckType(TypeRef t, bool allowUnit)
     {
         if (!IsKnown(t.Name))
-            Error(_fn.Line, "unknown-type", $"unknown type `{t.Name}`", "types supported so far: Int (64-bit signed), I8, I16, I32, U8, U16, U32, U64, Text, Bool, Unit, List<T>, Set<T>, Map<K,V>, structs and variants");
+            Error(_fn.Line, "unknown-type", $"unknown type `{t.Name}`", "types supported so far: Int (64-bit signed), I8, I16, I32, U8, U16, U32, U64, F32, F64, Text, Bool, Unit, List<T>, Set<T>, Map<K,V>, structs and variants");
         else if (t.Name == "Unit" && !allowUnit)
             Error(_fn.Line, "type-mismatch", "a parameter cannot be Unit");
         else if (t.Range != "" && !IsInt(t.Name) && t.Name != "Text" && !IsList(t.Name))
@@ -252,6 +261,7 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
         {
             IntLit { Value: > long.MaxValue } => "U64", // too big for Int, so it can only be a U64
             IntLit => "Int",
+            FloatLit => "F64",
             BoolLit => "Bool",
             TextLit t => TextType(t, env, used),
             NameRef n => NameType(n, env, used),
@@ -315,10 +325,14 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
             var vars = new Dictionary<string, string>();
             for (int i = 0; i < argTypes.Count; i++)
             {
-                if (argTypes[i] == "Int" && !IsVar(target.Params[i].Type.Name) && FitLiteral(c.Args[i], target.Params[i].Type.Name)) { argTypes[i] = target.Params[i].Type.Name; continue; }
+                var want = target.Params[i].Type.Name;
+                if (IsVar(want) && vars.TryGetValue(want, out var bound)) want = bound; // bitAnd(x, 255): the literal follows x
+                if (IsDefaultLit(argTypes[i]) && !IsVar(want) && FitLiteral(c.Args[i], want)) { argTypes[i] = want; continue; }
                 if (!Unify(target.Params[i].Type.Name, argTypes[i], vars))
                     Error(c.Line, "type-mismatch", $"argument `{target.Params[i].Name}` of `{c.Name}` must be {Subst(target.Params[i].Type.Name, vars)}, found {argTypes[i]}", $"signature: {target.Signature}");
             }
+            if (target.IsStd && c.Name.StartsWith("bit") && vars.TryGetValue("T", out var bt) && bt != "" && bt != "_" && !IsInt(bt))
+                Error(c.Line, "type-mismatch", $"`{c.Name}` needs a whole number (Int, I8..I32, U8..U64), found {bt}");
             return Subst(target.Ret.Name, vars);
         }
         return Subst(target.Ret.Name, new Dictionary<string, string>());
@@ -417,28 +431,28 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
             if (t != "" && t != "Bool") Error(u.Line, "type-mismatch", $"`{u.Op}` needs Bool, found {t}");
             return "Bool";
         }
-        if (t != "" && (!IsInt(t) || IsUnsigned(t))) Error(u.Line, "type-mismatch", $"`-` needs a signed whole number (Int, I8, I16, I32), found {t}");
-        return IsInt(t) && !IsUnsigned(t) ? t : "Int";
+        if (t != "" && (!IsNum(t) || IsUnsigned(t))) Error(u.Line, "type-mismatch", $"`-` needs a signed number (Int, I8, I16, I32, F32, F64), found {t}");
+        return IsNum(t) && !IsUnsigned(t) ? t : "Int";
     }
 
     string BinaryType(Binary b, Dictionary<string, string> env, HashSet<string> used)
     {
         var l = TypeOf(b.Left, env, used);
         var r = TypeOf(b.Right, env, used);
-        if (l == "Int" && SizedInts.ContainsKey(r) && FitLiteral(b.Left, r)) l = r;
-        else if (r == "Int" && SizedInts.ContainsKey(l) && FitLiteral(b.Right, l)) r = l;
+        if (IsDefaultLit(l) && l != r && FitLiteral(b.Left, r)) l = r;
+        else if (IsDefaultLit(r) && l != r && FitLiteral(b.Right, l)) r = l;
         bool known = l != "" && r != "";
         switch (b.Op)
         {
             case "+" or "-" or "*" or "/" or "%":
-                if (known && (!IsInt(l) || l != r))
-                    Error(b.Line, "type-mismatch", $"`{b.Op}` needs the same whole-number type on both sides, found {l} and {r}",
+                if (known && (!IsNum(l) || l != r))
+                    Error(b.Line, "type-mismatch", $"`{b.Op}` needs the same number type on both sides, found {l} and {r}",
                         b.Op == "+" && (l == "Text" || r == "Text") ? "to join texts, write one text with `{...}` parts"
-                        : IsInt(l) && IsInt(r) ? "convert one side first, for example with numFromI32 / numToI32" : null);
-                return IsInt(l) ? l : IsInt(r) ? r : "Int";
+                        : IsNum(l) && IsNum(r) ? "convert one side first, for example with numFromI32 / numToF64" : null);
+                return IsNum(l) ? l : IsNum(r) ? r : "Int";
             case "<" or "<=" or ">" or ">=":
-                if (known && (!IsInt(l) || l != r)) Error(b.Line, "type-mismatch", $"`{b.Op}` needs the same whole-number type on both sides, found {l} and {r}",
-                    IsInt(l) && IsInt(r) ? "convert one side first, for example with numFromI32 / numToI32" : null);
+                if (known && (!IsNum(l) || l != r)) Error(b.Line, "type-mismatch", $"`{b.Op}` needs the same number type on both sides, found {l} and {r}",
+                    IsNum(l) && IsNum(r) ? "convert one side first, for example with numFromI32 / numToF64" : null);
                 return "Bool";
             case "==" or "!=":
                 if (known && (!Compat(l, r) || l == "Unit" || IsList(l) || program.Types.ContainsKey(l)))

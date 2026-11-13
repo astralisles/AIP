@@ -1,0 +1,4 @@
+fn bitNot(a T) -> T
+  "Every bit of a flipped (for unsigned types this is max minus a); T is any whole-number type."
+  pure
+extern

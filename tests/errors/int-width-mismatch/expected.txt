@@ -1,1 +1,1 @@
-error type-mismatch: `+` needs the same whole-number type on both sides, found I32 and I8
+error type-mismatch: `+` needs the same number type on both sides, found I32 and I8

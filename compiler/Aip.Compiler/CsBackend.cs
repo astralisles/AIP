@@ -62,6 +62,19 @@ sealed class CsBackend : IBackend
         ["numFromU32"] = "checked((long)({0}))",
         ["numToU64"] = "checked((ulong)({0}))",
         ["numFromU64"] = "checked((long)({0}))",
+        ["numToF32"] = "((float)({0}))",
+        ["numToF64"] = "((double)({0}))",
+        ["numFromF32"] = "Rt.ToInt((double)({0}))",
+        ["numFromF64"] = "Rt.ToInt({0})",
+        ["numF32ToF64"] = "((double)({0}))",
+        ["numF64ToF32"] = "((float)({0}))",
+        // Bit operations on whole numbers; <T> is the C# type of the result. Shift counts outside 0..width-1 are errors.
+        ["bitAnd"] = "unchecked((<T>)({0} & {1}))",
+        ["bitOr"] = "unchecked((<T>)({0} | {1}))",
+        ["bitXor"] = "unchecked((<T>)({0} ^ {1}))",
+        ["bitNot"] = "unchecked((<T>)(~{0}))",
+        ["bitShl"] = "unchecked((<T>)({0} << Rt.Shift({1}, sizeof(<T>) * 8)))",
+        ["bitShr"] = "unchecked((<T>)({0} >> Rt.Shift({1}, sizeof(<T>) * 8)))",
         ["noop"] = "Rt.Nop()",
         ["argCount"] = "(long)Rt.Args.Length",
         ["arg"] = "Rt.Args[(int)({0})]",
@@ -141,7 +154,7 @@ sealed class CsBackend : IBackend
     // Lists are type-erased at run time (List<object>); reads cast back to the element type.
     static string CsType(string t) => t switch
     {
-        "Int" => "long", "I8" => "sbyte", "I16" => "short", "I32" => "int",
+        "Int" => "long", "F32" => "float", "F64" => "double", "I8" => "sbyte", "I16" => "short", "I32" => "int",
         "U8" => "byte", "U16" => "ushort", "U32" => "uint", "U64" => "ulong", "Text" => "string", "Bool" => "bool", "_" => "object",
         _ when t.StartsWith("List<") => "System.Collections.Generic.List<object>",
         // Maps and sets are insertion-ordered dictionaries (a set maps each item to true); every change copies.
@@ -213,8 +226,10 @@ sealed class CsBackend : IBackend
         IntLit { Type: "U64" } i => i.Value + "UL",
         IntLit { Type: "Int" or "" } i => i.Value + "L",
         IntLit i => $"(({CsType(i.Type)}){i.Value})",
-        Unary { Op: "-", Type: not ("Int" or "") } u when u.Operand is IntLit n => $"(({CsType(u.Type)})(-{n.Value}))",
-        Unary { Op: "-", Type: not ("Int" or "") } u => $"checked(({CsType(u.Type)})(-{Emit(u.Operand)}))",
+        Unary { Op: "-", Type: not ("Int" or "" or "F32" or "F64") } u when u.Operand is IntLit n => $"(({CsType(u.Type)})(-{n.Value}))",
+        Unary { Op: "-", Type: not ("Int" or "" or "F32" or "F64") } u => $"checked(({CsType(u.Type)})(-{Emit(u.Operand)}))",
+        FloatLit { Type: "F32" } f => f.Value.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + "F",
+        FloatLit f => f.Value.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + "D",
         BoolLit b => b.Value ? "true" : "false",
         NameRef n => "@" + n.Name,
         TextLit t => t.Parts.Count == 1 && t.Parts[0] is string only
@@ -224,7 +239,7 @@ sealed class CsBackend : IBackend
         Field f => $"{Emit(f.Target)}.@{f.Name}",
         MatchExpr m => $"({Emit(m.Subject)} switch {{ {string.Join(", ", m.Arms.Select(a => $"{Pattern(a)} => {Emit(a.Body)}"))}, _ => throw new System.InvalidOperationException() }})",
         Call c => Externs.TryGetValue(c.Name, out var template)
-            ? (c.Name is "listGet" or "mapGet" ? $"(({CsType(c.Type)})" : "") + string.Format(template, c.Args.Select(Emit).ToArray<object>()) + (c.Name is "listGet" or "mapGet" ? ")" : "")
+            ? (c.Name is "listGet" or "mapGet" ? $"(({CsType(c.Type)})" : "") + string.Format(template.Replace("<T>", CsType(c.Type)), c.Args.Select(Emit).ToArray<object>()) + (c.Name is "listGet" or "mapGet" ? ")" : "")
             : $"Fn.@{c.Name}({string.Join(", ", c.Args.Select(Emit))})",
         Unary u => u.Op == "-" ? $"(-{Emit(u.Operand)})" : $"(!{Emit(u.Operand)})",
         Binary b => b.Op switch
@@ -233,7 +248,7 @@ sealed class CsBackend : IBackend
             "or" => $"({Emit(b.Left)} || {Emit(b.Right)})",
             "=>" => $"(!{Emit(b.Left)} || {Emit(b.Right)})",
             // Sized integers: C# widens to int, so cast back; `checked` makes overflow a run-time error, never a silent wrap.
-            "+" or "-" or "*" or "/" or "%" when b.Type is not ("Int" or "") =>
+            "+" or "-" or "*" or "/" or "%" when b.Type is not ("Int" or "" or "F32" or "F64") =>
                 $"checked(({CsType(b.Type)})({Emit(b.Left)} {b.Op} {Emit(b.Right)}))",
             _ => $"({Emit(b.Left)} {b.Op} {Emit(b.Right)})",
         },
@@ -406,6 +421,12 @@ sealed class CsBackend : IBackend
             }
             public static void Write(string path, string content) => System.IO.File.WriteAllText(path, content);
             public static string Text(string v) => v;
+            public static string Text(double v) => v.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+            public static string Text(float v) => v.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+            public static string Text(int v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            public static string Text(uint v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            public static int Shift(long count, int width) => count >= 0 && count < width ? (int)count : throw new System.ArgumentOutOfRangeException("count", $"shift count {count} must be 0 to {width - 1}");
+            public static long ToInt(double v) => double.IsNaN(v) || v >= 9223372036854775808.0 || v < -9223372036854775808.0 ? throw new System.OverflowException($"{v} does not fit in Int") : (long)v;
             public static string Text(ulong v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
             public static string Text(long v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
             public static string Text(bool v) => v ? "true" : "false";

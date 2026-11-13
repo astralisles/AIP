@@ -1,0 +1,4 @@
+fn bitXor(a T, b T) -> T
+  "Bits set in exactly one of a and b; T is any whole-number type."
+  pure
+extern

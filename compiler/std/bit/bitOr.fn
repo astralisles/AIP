@@ -1,0 +1,4 @@
+fn bitOr(a T, b T) -> T
+  "Bits set in a or b; T is any whole-number type."
+  pure
+extern

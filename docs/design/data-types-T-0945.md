@@ -23,5 +23,22 @@ Rules:
 - **Overflow is an error, never a silent wrap**: `+ - * / %` on sized types are `checked` in the C# back end.
   Plain `Int` arithmetic still wraps (unchanged; revisit separately).
 - Unary `-` needs a signed type.
-- Not yet: floats (`F32`/`F64`), `I64` alias, bit operations, literals inside `List<U8>` element positions
+- Not yet: `I64` alias, literals inside `List<U8>` element positions
   (use `numToU8`), range checking of `Int 0..255`-style ranges on the sized types.
+
+## Floats and bit operations (iteration 2)
+
+| type | bytes | notes |
+|------|-------|-------|
+| `F32` | 4 | IEEE 754 single |
+| `F64` | 8 | IEEE 754 double |
+
+- A literal with a point (`2.5`, digits on both sides) is `F64`, or `F32` when an `F32` is wanted. `2` is never a float: write `2.0`.
+- `+ - * / %`, comparisons and unary `-` work on one float type at a time; no mixing with each other or with whole numbers.
+  Convert with `numToF32/numToF64(Int)`, `numFromF32/numFromF64(float) -> Int` (drops the fraction; NaN, infinity or out of range is a run-time error), `numF32ToF64`, `numF64ToF32`.
+- Floats follow IEEE 754: overflow gives infinity and `x / 0.0` gives infinity or NaN, not an error. Only the conversion to `Int` is checked.
+- Bit operations are std functions in `bit/`, generic over any whole-number type (`Int`, `I8`..`U64`) and keep the type:
+  `bitAnd`, `bitOr`, `bitXor`, `bitNot`, `bitShl(a, count)`, `bitShr(a, count)`. No new operators.
+  `bitShr` is logical for unsigned and arithmetic (sign copied) for signed types. Bits shifted out of `bitShl` are dropped
+  (that is what shifting means), but a count outside `0..width-1` is a run-time error instead of C#'s silent masking.
+  A literal argument takes the type of the other argument: `bitAnd(flags, 10)`.
