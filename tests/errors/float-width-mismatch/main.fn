@@ -1,5 +1,5 @@
 fn main() -> Unit
-  "Int never turns into a float on its own."
+  "I64 never turns into a float on its own."
   effects terminal.write
 body
   let a = numToF64(1)

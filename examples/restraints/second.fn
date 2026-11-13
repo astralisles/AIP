@@ -1,4 +1,4 @@
-fn second(items List<Int>) -> Int
+fn second(items List<I64>) -> I64
   "The second item; the list must have at least two items."
   pure
   fails

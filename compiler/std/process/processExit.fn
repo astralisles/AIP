@@ -1,0 +1,4 @@
+fn processExit(code I32) -> Unit
+  "End the program now with this exit code."
+  effects process.exit
+extern

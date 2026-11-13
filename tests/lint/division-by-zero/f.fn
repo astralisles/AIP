@@ -1,4 +1,4 @@
-fn f(a Int) -> Int
+fn f(a I64) -> I64
   "Divide by a literal zero."
   pure
 body

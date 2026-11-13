@@ -1,4 +1,4 @@
-fn printHeaderLine(lines List<Text>, i Int, prefix Text) -> Unit
+fn printHeaderLine(lines List<Text>, i I64, prefix Text) -> Unit
   "Print one header line's expression, then go on with the next line."
   effects terminal.write
 body

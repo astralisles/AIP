@@ -1,4 +1,4 @@
-fn fillList(l List<Int>, i Int, n Int) -> List<Int>
+fn fillList(l List<I64>, i I64, n I64) -> List<I64>
   "Append the numbers i up to n - 1 to the list, one at a time."
   pure
 body

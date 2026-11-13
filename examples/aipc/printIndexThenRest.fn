@@ -1,4 +1,4 @@
-fn printIndexThenRest(i Int) -> Unit
+fn printIndexThenRest(i I64) -> Unit
   "Print the index line of the file named by argument i, then the rest."
   effects file.read, process.args, terminal.write
   fails

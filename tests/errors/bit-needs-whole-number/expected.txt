@@ -1,1 +1,1 @@
-error type-mismatch: `bitAnd` needs a whole number (Int, I8..I32, U8..U64), found F64
+error type-mismatch: `bitAnd` needs a whole number (I64, I8..I32, U8..U64), found F64

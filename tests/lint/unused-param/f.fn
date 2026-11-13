@@ -1,4 +1,4 @@
-fn f(a Int, b Int) -> Int
+fn f(a I64, b I64) -> I64
   "Ignore b."
   pure
   example f(1, 2) == 1

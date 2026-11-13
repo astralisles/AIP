@@ -1,4 +1,4 @@
-fn setSize(s Set<T>) -> Int
+fn setSize(s Set<T>) -> I64
   "How many items the set has."
   pure
 extern

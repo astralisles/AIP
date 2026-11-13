@@ -1,4 +1,4 @@
-fn paramTexts(params List<ParamDecl>, i Int, acc List<Text>) -> List<Text>
+fn paramTexts(params List<ParamDecl>, i I64, acc List<Text>) -> List<Text>
   "acc followed by `name Type` for each parameter from position i on."
   pure
   fails

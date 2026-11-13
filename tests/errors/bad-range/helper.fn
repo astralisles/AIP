@@ -1,4 +1,4 @@
-fn helper(b Bool 0..5) -> Int
+fn helper(b Bool 0..5) -> I64
   "A range on a Bool is not allowed."
   pure
 body

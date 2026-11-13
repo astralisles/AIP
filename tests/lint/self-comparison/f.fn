@@ -1,4 +1,4 @@
-fn f(a Int) -> Bool
+fn f(a I64) -> Bool
   "Compare a number with itself."
   pure
   example f(1) == true

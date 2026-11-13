@@ -24,7 +24,7 @@ how much they hurt if answered late. Items marked DONE were answered in iteratio
    versioned package, or std only; needs a supply-chain answer (T-0936).
 7. **How does the language change without breaking old programs?** A version line per project and a change rule.
 8. **Testing.** `example` lines are parsed but never run. Running them is the cheapest big win.
-9. **Which numbers?** Only `Int`. Overflow, `Float`, decimals, `Bytes`, Unicode text all undecided.
+9. **Which numbers?** Only `I64`. Overflow, `Float`, decimals, `Bytes`, Unicode text all undecided.
 10. **Outside-world effects.** Network, time, randomness, environment: names, scopes, deterministic replay.
 11. **Is self-hosting still the right goal?** It costs time that could go to 1, 2 and 8.
 12. **DONE (decision): who is the user?** The AI. AIP is written, read, fixed and searched by a model; a human is a

@@ -1,4 +1,4 @@
-fn area(shape Shape) -> Int
+fn area(shape Shape) -> I64
   "The area of a shape, using 3 for pi."
   pure
   example area(Rect(Point(0, 0), 4, 5)) == 20

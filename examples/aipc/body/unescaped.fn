@@ -1,4 +1,4 @@
-fn unescaped(raw Text, i Int) -> Text
+fn unescaped(raw Text, i I64) -> Text
   "The character an escape stands for: n is a newline, t a tab, any other is itself; at the end a backslash."
   pure
 body

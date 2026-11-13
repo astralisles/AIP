@@ -1,1 +1,1 @@
-error type-mismatch: argument `text` of `printLine` must be Text, found Int
+error type-mismatch: argument `text` of `printLine` must be Text, found I64

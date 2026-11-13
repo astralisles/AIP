@@ -4,7 +4,7 @@ $build = (& $aip build examples\aipc | Out-String).Trim()
 $aipc = Join-Path $root 'examples\aipc\build\bin\windows-x64\aipc.exe'
 if ($LASTEXITCODE -ne 0 -or -not (Test-Path $aipc)) { Report 'bootstrap: aipc index ends on a malformed header' $false $build; return }
 $tmp = NewTempDir 'aipc-hang-'
-$cases = @{ 'unclosed-params' = "fn broken(a Int`n  `"x`"`n  pure`nextern`n"; 'dangling-param' = "fn broken(a Int, b`n  `"x`"`n  pure`nextern`n" }
+$cases = @{ 'unclosed-params' = "fn broken(a I64`n  `"x`"`n  pure`nextern`n"; 'dangling-param' = "fn broken(a I64, b`n  `"x`"`n  pure`nextern`n" }
 foreach ($name in $cases.Keys) {
   $file = Join-Path $tmp "$name.fn"
   [IO.File]::WriteAllText($file, $cases[$name])

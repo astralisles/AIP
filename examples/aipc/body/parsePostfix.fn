@@ -1,4 +1,4 @@
-fn parsePostfix(toks List<Text>, pos Int) -> ExprParsed
+fn parsePostfix(toks List<Text>, pos I64) -> ExprParsed
   "Read a primary expression and the `.field` reads after it."
   pure
 body

@@ -1,4 +1,4 @@
-fn isSpace(c Int) -> Bool
+fn isSpace(c I64) -> Bool
   "Whether a character code is a space, tab or carriage return."
   pure
   example isSpace(32)

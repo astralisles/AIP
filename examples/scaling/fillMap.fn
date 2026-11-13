@@ -1,4 +1,4 @@
-fn fillMap(m Map<Int,Int>, i Int, n Int) -> Map<Int,Int>
+fn fillMap(m Map<I64,I64>, i I64, n I64) -> Map<I64,I64>
   "Store i * 2 under key i for i up to n - 1, one at a time."
   pure
 body

@@ -1,4 +1,4 @@
-fn listRemoveAt(items List<T>, index Int) -> List<T>
+fn listRemoveAt(items List<T>, index I64) -> List<T>
   "A new list without the item at an index; the index must be inside the list."
   pure
   fails

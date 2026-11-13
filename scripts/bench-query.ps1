@@ -11,7 +11,7 @@ foreach ($n in $Sizes) {
   New-Item -ItemType Directory -Force $dir | Out-Null
   for ($i = 0; $i -lt $n; $i++) {
     $body = if ($i -eq 0) { 'printLine("hi")' } else { "f$($i - 1)(x)" }
-    if ($i -eq 0) { $sig = "fn f0(x Int) -> Unit"; $eff = "effects terminal.write" } else { $sig = "fn f$i(x Int) -> Unit"; $eff = "effects terminal.write" }
+    if ($i -eq 0) { $sig = "fn f0(x I64) -> Unit"; $eff = "effects terminal.write" } else { $sig = "fn f$i(x I64) -> Unit"; $eff = "effects terminal.write" }
     Set-Content (Join-Path $dir "f$i.fn") "$sig`n  `"Generated function $i.`"`n  $eff`nbody`n  $body" -Encoding ascii
   }
   Set-Content (Join-Path $dir 'main.fn') "fn main() -> Unit`n  `"Entry.`"`n  effects terminal.write`nbody`n  f$($n - 1)(1)" -Encoding ascii

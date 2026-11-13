@@ -1,4 +1,4 @@
-fn countEven(i Int, last Int, count Int) -> Int
+fn countEven(i I64, last I64, count I64) -> I64
   "Loop with a condition inside: how many even numbers from i to last."
   pure
   example countEven(1, 10, 0) == 5

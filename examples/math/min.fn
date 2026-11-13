@@ -1,4 +1,4 @@
-fn min(a Int, b Int) -> Int
+fn min(a I64, b I64) -> I64
   "The smaller of two numbers."
   pure
   example min(3, 9) == 3

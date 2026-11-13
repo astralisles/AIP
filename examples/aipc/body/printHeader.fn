@@ -1,4 +1,4 @@
-fn printHeader(lines List<Text>, i Int, prefix Text) -> Unit
+fn printHeader(lines List<Text>, i I64, prefix Text) -> Unit
   "Print the header lines that start with prefix (`requires `, `ensures ` or `example `) as `prefix` and the expression."
   effects terminal.write
 body

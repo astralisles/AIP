@@ -1,4 +1,4 @@
-fn armBinds(toks List<Text>, pos Int, acc List<Text>) -> NamesParsed
+fn armBinds(toks List<Text>, pos I64, acc List<Text>) -> NamesParsed
   "Read the names bound by an arm up to the `)`; with no `(` the position is already at `=>` and nothing is read."
   pure
 body

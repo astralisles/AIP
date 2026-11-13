@@ -11,4 +11,4 @@ body
   printLine("shl: {bitShl(flags, 4)}")
   printLine("shr signed keeps sign: {bitShr(numToI8(-16), 2)}")
   printLine("shl U32: {bitShl(numToU32(1), 31)}")
-  printLine("mask Int: {bitAnd(255, 4095)}")
+  printLine("mask I64: {bitAnd(255, 4095)}")

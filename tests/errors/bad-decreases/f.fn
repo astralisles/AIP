@@ -1,4 +1,4 @@
-fn f(n Int 0..) -> Int
+fn f(n I64 0..) -> I64
   "Names a parameter that does not exist."
   pure
   cannot-fail

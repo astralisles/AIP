@@ -1,4 +1,4 @@
-fn netServe(port Int) -> Unit
+fn netServe(port I64) -> Unit
   "Serve one client: greet first, then echo every chunk it sends until it closes."
   effects tcp.listen, tcp.accept, tcp.send, tcp.receive, tcp.close, terminal.write
 body

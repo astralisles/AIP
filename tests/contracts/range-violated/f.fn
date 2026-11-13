@@ -1,4 +1,4 @@
-fn f(n Int 0..150) -> Int
+fn f(n I64 0..150) -> I64
   "Take an age."
   pure
   example f(200) == 200

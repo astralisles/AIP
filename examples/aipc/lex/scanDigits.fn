@@ -1,4 +1,4 @@
-fn scanDigits(src Text, pos Int) -> Int
+fn scanDigits(src Text, pos I64) -> I64
   "The position after the run of digits that starts at pos."
   pure
   fails

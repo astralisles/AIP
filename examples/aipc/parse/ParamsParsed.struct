@@ -1,4 +1,4 @@
 struct ParamsParsed
   "The parameters read from the tokens, and the position of the token after the closing parenthesis."
   items List<ParamDecl>
-  next Int
+  next I64

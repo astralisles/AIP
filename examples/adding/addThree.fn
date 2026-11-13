@@ -1,4 +1,4 @@
-fn addThree(a Int, b Int, c Int) -> Int
+fn addThree(a I64, b I64, c I64) -> I64
   "The sum of three whole numbers, built from add."
   pure
   example addThree(1, 2, 3) == 6

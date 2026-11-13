@@ -1,4 +1,4 @@
-fn helper(b Box) -> Int
+fn helper(b Box) -> I64
   "A generic type used without its type arguments."
   pure
 body

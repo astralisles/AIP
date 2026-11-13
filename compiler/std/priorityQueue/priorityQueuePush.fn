@@ -1,4 +1,4 @@
-fn priorityQueuePush(q PriorityQueue<T>, item T, priority Int) -> PriorityQueue<T>
+fn priorityQueuePush(q PriorityQueue<T>, item T, priority I64) -> PriorityQueue<T>
   "A new queue with the item added; the lowest priority number comes out first, ties in the order added."
   pure
 extern

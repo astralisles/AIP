@@ -8,8 +8,8 @@ sealed partial class Checker
     {
         e.Type = e switch
         {
-            IntLit { Value: > long.MaxValue } => "U64", // too big for Int, so it can only be a U64
-            IntLit => "Int",
+            IntLit { Value: > long.MaxValue } => "U64", // too big for I64, so it can only be a U64
+            IntLit => "I64",
             FloatLit => "F64",
             BoolLit => "Bool",
             TextLit t => TextType(t, env, used),
@@ -97,7 +97,7 @@ sealed partial class Checker
                     Error(c.Line, "type-mismatch", $"argument `{target.Params[i].Name}` of `{c.Name}` must be {Subst(target.Params[i].Type.Name, vars)}, found {argTypes[i]}", $"signature: {target.Signature}");
             }
             if (target.IsStd && c.Name.StartsWith("bit", StringComparison.Ordinal) && vars.TryGetValue("T", out var bt) && bt != "" && bt != "_" && !IsInt(bt))
-                Error(c.Line, "type-mismatch", $"`{c.Name}` needs a whole number (Int, I8..I32, U8..U64), found {bt}");
+                Error(c.Line, "type-mismatch", $"`{c.Name}` needs a whole number (I64, I8..I32, U8..U64), found {bt}");
             return Subst(target.Ret.Name, vars);
         }
         return Subst(target.Ret.Name, new Dictionary<string, string>());
@@ -218,8 +218,8 @@ sealed partial class Checker
             if (t != "" && t != "Bool") Error(u.Line, "type-mismatch", $"`{u.Op}` needs Bool, found {t}");
             return "Bool";
         }
-        if (t != "" && (!IsNum(t) || IsUnsigned(t))) Error(u.Line, "type-mismatch", $"`-` needs a signed number (Int, I8, I16, I32, F32, F64), found {t}");
-        return IsNum(t) && !IsUnsigned(t) ? t : "Int";
+        if (t != "" && (!IsNum(t) || IsUnsigned(t))) Error(u.Line, "type-mismatch", $"`-` needs a signed number (I64, I8, I16, I32, F32, F64), found {t}");
+        return IsNum(t) && !IsUnsigned(t) ? t : "I64";
     }
 
     string BinaryType(Binary b, Dictionary<string, string> env, HashSet<string> used)
@@ -240,7 +240,7 @@ sealed partial class Checker
                     Error(b.Line, "type-mismatch", $"`{b.Op}` needs the same number type on both sides, found {l} and {r}",
                         b.Op == "+" && (l == "Text" || r == "Text") ? "to join texts, write one text with `{...}` parts"
                         : IsNum(l) && IsNum(r) ? "neither type fits in the other; convert one side first, for example with numFromI32 / numToF64" : null);
-                return IsNum(l) ? l : IsNum(r) ? r : "Int";
+                return IsNum(l) ? l : IsNum(r) ? r : "I64";
             case "<" or "<=" or ">" or ">=":
                 if (known && (!IsNum(l) || l != r)) Error(b.Line, "type-mismatch", $"`{b.Op}` needs the same number type on both sides, found {l} and {r}",
                     IsNum(l) && IsNum(r) ? "neither type fits in the other; convert one side first, for example with numFromI32 / numToF64" : null);

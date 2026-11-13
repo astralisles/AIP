@@ -30,7 +30,7 @@ foreach ($n in $std.Keys | Sort-Object) {
   if (-not $templates.ContainsKey($n)) { $problems += "std/$n.fn has no template in CsBackend.cs Externs" }
 }
 foreach ($n in $templates.Keys | Sort-Object) { if (-not $std.ContainsKey($n)) { $problems += "CsBackend.cs Externs has $n but there is no std/$n.fn" } }
-$touches = 'System\.Console|System\.IO|Rt\.Args|Rt\.Write|Rt\.Tcp|Rt\.Udp|Environment'
+$touches = 'System\.Console|System\.IO|Rt\.Args|Rt\.Write|Rt\.Exit|Rt\.FileList|Rt\.MakeFolder|Rt\.Tcp|Rt\.Udp|Environment'
 foreach ($n in $templates.Keys | Sort-Object) {
   if (-not $std.ContainsKey($n)) { continue }
   $impure = $templates[$n] -match $touches

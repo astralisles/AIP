@@ -1,0 +1,5 @@
+fn fileMakeFolder(path Text) -> Unit
+  "Create a folder and any missing parents; nothing happens if it exists."
+  effects file.write
+  fails
+extern

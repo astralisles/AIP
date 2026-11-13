@@ -1,4 +1,4 @@
-fn textPartsFrom(raw Text, i Int, cur Text, parts List<Expr>) -> List<Expr>
+fn textPartsFrom(raw Text, i I64, cur Text, parts List<Expr>) -> List<Expr>
   "Read the raw text from index i, collecting the literal text so far in cur."
   pure
 body

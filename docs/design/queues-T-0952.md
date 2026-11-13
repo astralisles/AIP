@@ -1,7 +1,7 @@
 # Queue and PriorityQueue (T-0952)
 
 `Queue<T>` (std group `queue/`): `queueEmpty`, `queuePush` (to the back), `queueFront`, `queuePop` (returns a new queue), `queueSize`.
-`PriorityQueue<T>` (group `priorityQueue/`): `priorityQueuePush(q, item, priority Int)`, `priorityQueueFront`, `priorityQueuePop`,
+`PriorityQueue<T>` (group `priorityQueue/`): `priorityQueuePush(q, item, priority I64)`, `priorityQueueFront`, `priorityQueuePop`,
 `priorityQueueSize`, `priorityQueueEmpty`. Lowest priority number comes out first; equal priorities keep insertion order (stable).
 
 Values are immutable like every collection: each change returns a new queue. `Front`/`Pop` on an empty queue fail at run time

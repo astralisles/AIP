@@ -1,4 +1,4 @@
-fn lineEnd(toks List<Text>, pos Int) -> Int
+fn lineEnd(toks List<Text>, pos I64) -> I64
   "The position of the Newline token that ends the line holding pos (or the end of the tokens)."
   pure
   fails

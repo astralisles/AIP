@@ -24,22 +24,22 @@ sealed partial class Interp
             case "numToI8" or "numToI16" or "numToI32" or "numToU8" or "numToU16" or "numToU32" or "numToU64":
                 return Fit(Big(a[0]!), name[5..], $"`{name}`");
             case "numFromI8" or "numFromI16" or "numFromI32" or "numFromU8" or "numFromU16" or "numFromU32" or "numFromU64":
-                return Fit(Big(a[0]!), "Int", $"`{name}`");
+                return Fit(Big(a[0]!), "I64", $"`{name}`");
             case "numToF32": return (float)(long)a[0]!;
             case "numToF64": return (double)(long)a[0]!;
             case "numFromF32" or "numFromF64":
                 {
                     double d = ToDouble(a[0]!);
-                    if (double.IsNaN(d) || d >= 9223372036854775808.0 || d < -9223372036854775808.0) throw new OverflowException($"{d} does not fit in Int");
+                    if (double.IsNaN(d) || d >= 9223372036854775808.0 || d < -9223372036854775808.0) throw new OverflowException($"{d} does not fit in I64");
                     return (long)d;
                 }
             case "numF32ToF64": return (double)(float)a[0]!;
             case "numF64ToF32": return (float)(double)a[0]!;
             case "bitAnd" or "bitOr" or "bitXor" or "bitNot" or "bitShl" or "bitShr":
                 {
-                    string ty = a[0] switch { long => "Int", sbyte => "I8", short => "I16", int => "I32", byte => "U8", ushort => "U16", uint => "U32", _ => "U64" };
+                    string ty = a[0] switch { long => "I64", sbyte => "I8", short => "I16", int => "I32", byte => "U8", ushort => "U16", uint => "U32", _ => "U64" };
                     var (_, max) = Limits[ty];
-                    int width = ty switch { "Int" or "U64" => 64, "I32" or "U32" => 32, "I16" or "U16" => 16, _ => 8 };
+                    int width = ty switch { "I64" or "U64" => 64, "I32" or "U32" => 32, "I16" or "U16" => 16, _ => 8 };
                     BigInteger mod = BigInteger.One << width, x = Big(a[0]!);
                     BigInteger Wrap(BigInteger v) { v = ((v % mod) + mod) % mod; return v > max ? v - mod : v; }
                     BigInteger res;

@@ -1,4 +1,4 @@
-fn printBodyLine(lines List<Text>, i Int, step BodyStep) -> Unit
+fn printBodyLine(lines List<Text>, i I64, step BodyStep) -> Unit
   "Print the dump line of a body line, then read the rest."
   effects terminal.write
 body

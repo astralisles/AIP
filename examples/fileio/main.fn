@@ -1,0 +1,17 @@
+fn main() -> Unit
+  "Make a folder, write a text file and a byte file into it, list it, read the bytes back, then exit with code 3."
+  effects file.read, file.write, process.exit, terminal.write
+  fails
+body
+  fileMakeFolder("fileio-out/sub")
+  fileWrite("fileio-out/a.txt", "hi")
+  fileWriteBytes("fileio-out/b.bin", bytesEncode("AB"))
+  let folderThere = fileExists("fileio-out/sub")
+  let missingThere = fileExists("fileio-out/none")
+  let names = textJoin(fileList("fileio-out"), ",")
+  let data = fileReadBytes("fileio-out/b.bin")
+  printLine("exists folder: {folderThere}")
+  printLine("exists missing: {missingThere}")
+  printLine("list: {names}")
+  printLine("bytes: {bytesLength(data)} first {bytesGet(data, 0)}")
+  processExit(3)

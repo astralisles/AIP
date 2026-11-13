@@ -1,4 +1,4 @@
-fn findBodyLine(lines List<Text>, i Int) -> Int
+fn findBodyLine(lines List<Text>, i I64) -> I64
   "The index of the line after `body`, or the number of lines when there is none (an extern function)."
   pure
 body

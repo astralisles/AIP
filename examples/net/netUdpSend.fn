@@ -1,4 +1,4 @@
-fn netUdpSend(port Int) -> Unit
+fn netUdpSend(port I64) -> Unit
   "Send one datagram to this computer."
   effects udp.open, udp.send, udp.close
 body

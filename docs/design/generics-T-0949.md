@@ -21,7 +21,7 @@ Rules:
    already infer type variables for std functions; user functions reuse them.
 3. **No constraints, no traits.** A `T` can be stored, passed and returned, nothing else. Operations that need
    equality or ordering stay in the std functions that have them. This avoids the biggest source of complexity.
-4. **Inferred at calls, never written there.** `first(xs)` infers `T`; there is no `first<Int>(xs)` spelling, so there is
+4. **Inferred at calls, never written there.** `first(xs)` infers `T`; there is no `first<I64>(xs)` spelling, so there is
    one way to write a call. Where nothing fixes the type (e.g. `None()` alone) it stays unknown (`_`, as for
    `listEmpty()`) and matches any type; it becomes concrete when combined with a typed value.
 5. **No effect on safety.** Type parameters add no reach outside the program, so the security rule is unaffected.

@@ -1,4 +1,4 @@
-fn textFromInt(value Int) -> Text
+fn textFromInt(value I64) -> Text
   "The number written in decimal."
   pure
 extern

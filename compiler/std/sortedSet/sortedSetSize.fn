@@ -1,4 +1,4 @@
-fn sortedSetSize(s SortedSet<T>) -> Int
+fn sortedSetSize(s SortedSet<T>) -> I64
   "How many items the set has."
   pure
 extern

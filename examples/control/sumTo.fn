@@ -1,4 +1,4 @@
-fn sumTo(n Int, total Int) -> Int
+fn sumTo(n I64, total I64) -> I64
   "Loop: add n + (n-1) + ... + 1 to total."
   pure
   example sumTo(4, 0) == 10

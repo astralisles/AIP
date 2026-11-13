@@ -1,4 +1,4 @@
-fn tcpListen(port Int) -> TcpListener
+fn tcpListen(port I64) -> TcpListener
   "Start listening for TCP connections on a port."
   effects tcp.listen
 extern

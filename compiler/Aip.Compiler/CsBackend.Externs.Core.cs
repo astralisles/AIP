@@ -67,6 +67,12 @@ sealed partial class CsBackend
         d["bitShr"] = "unchecked((<T>)({0} >> Rt.Shift({1}, sizeof(<T>) * 8)))";
         d["fileRead"] = "System.IO.File.ReadAllText({0})";
         d["fileWrite"] = "Rt.Write({0}, {1})";
+        d["fileList"] = "Rt.FileList({0})";
+        d["fileExists"] = "(System.IO.File.Exists({0}) || System.IO.Directory.Exists({0}))";
+        d["fileMakeFolder"] = "Rt.MakeFolder({0})";
+        d["fileReadBytes"] = "System.IO.File.ReadAllBytes({0})";
+        d["fileWriteBytes"] = "Rt.WriteBytes({0}, {1})";
+        d["processExit"] = "Rt.Exit({0})";
         d["noop"] = "Rt.Nop()";
         d["argCount"] = "(long)Rt.Args.Length";
         d["arg"] = "Rt.Args[(int)({0})]";

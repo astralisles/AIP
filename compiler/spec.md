@@ -2,7 +2,7 @@ AIP spec (one page; print with `aip spec`). AIP is written by AI, read by AI, ch
 
 PROJECT   a folder with main.fn. One definition per file, file name = name. No imports: every name in the folder
           or in std is visible. Find std/project functions with `aip find <projectDir> <words>`.
-FUNCTION  fn name(a Int, b Text) -> Int
+FUNCTION  fn name(a I64, b Text) -> I64
             "One-line doc."                 (required)
             pure | effects terminal.write, file.read   (required; lists everything the function can do)
             requires <bool expr>            (optional, repeatable)
@@ -10,11 +10,11 @@ FUNCTION  fn name(a Int, b Text) -> Int
           body
             <statements, indented 2 spaces>
           std functions have `extern` instead of `body`.
-TYPES     Int, Text, Bool, Unit, List<T>, Set<T>, Map<K,V>, SortedSet<T>, SortedMap<K,V> (Int or Text keys, kept in order), Queue<T> (first in, first out), PriorityQueue<T> (push with an Int priority; lowest comes out first). All values are immutable: mapSet(m, k, v) returns a new map.
-STRUCT    Point.struct:  struct Point / "doc" / x Int / y Int      build: Point(1, 2)   read: p.x
-GENERICS  variant Option<T> / struct Pair<A,B>: declare parameters (single capital letters) in the header; use Option<Int>.
+TYPES     I64, Text, Bool, Unit, List<T>, Set<T>, Map<K,V>, SortedSet<T>, SortedMap<K,V> (I64 or Text keys, kept in order), Queue<T> (first in, first out), PriorityQueue<T> (push with an I64 priority; lowest comes out first). All values are immutable: mapSet(m, k, v) returns a new map.
+STRUCT    Point.struct:  struct Point / "doc" / x I64 / y I64      build: Point(1, 2)   read: p.x
+GENERICS  variant Option<T> / struct Pair<A,B>: declare parameters (single capital letters) in the header; use Option<I64>.
           fn first(items List<T>) -> Option<T>: letters in a fn signature are inferred at calls. A T can only be stored, passed, returned.
-VARIANT   Shape.variant: variant Shape / "doc" / Circle(r Int) / Nothing    one case per line
+VARIANT   Shape.variant: variant Shape / "doc" / Circle(r I64) / Nothing    one case per line
 STATEMENTS  let x = expr        if c then a else b       match v  (one `Case(a, b) => expr` arm per line, every case)
           last expression is the return value. Text: "total {a + b}". Operators: + - * / % == != < <= > >= and or not.
 EFFECTS   a function may call only functions whose effects are in its own effects line. No globals, no mutation.

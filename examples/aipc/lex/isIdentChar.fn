@@ -1,4 +1,4 @@
-fn isIdentChar(c Int) -> Bool
+fn isIdentChar(c I64) -> Bool
   "Whether a character code is a letter, digit or underscore."
   pure
 body

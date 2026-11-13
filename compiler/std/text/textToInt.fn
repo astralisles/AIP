@@ -1,4 +1,4 @@
-fn textToInt(text Text) -> Int
+fn textToInt(text Text) -> I64
   "Parse a whole number written in decimal."
   pure
 extern

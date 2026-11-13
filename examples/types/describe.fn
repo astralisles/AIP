@@ -1,5 +1,5 @@
-fn describe(name Text 1.., age Int 0..150) -> Text
-  "One sentence that mixes Text, Int and Bool values."
+fn describe(name Text 1.., age I64 0..150) -> Text
+  "One sentence that mixes Text, I64 and Bool values."
   pure
   example describe("Ann", 30) == "Ann is 30. Adult: yes"
 body

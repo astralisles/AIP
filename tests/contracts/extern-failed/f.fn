@@ -1,4 +1,4 @@
-fn f(n Text) -> Int
+fn f(n Text) -> I64
   "Read a number from text."
   pure
   example f("abc") == 0

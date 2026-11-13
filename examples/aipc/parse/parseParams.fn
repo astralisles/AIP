@@ -1,4 +1,4 @@
-fn parseParams(toks List<Text>, pos Int, acc List<ParamDecl>) -> ParamsParsed
+fn parseParams(toks List<Text>, pos I64, acc List<ParamDecl>) -> ParamsParsed
   "Read the parameters `name Type, ...` at pos up to and including `)`, adding them to acc."
   pure
   fails

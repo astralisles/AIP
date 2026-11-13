@@ -1,4 +1,4 @@
-fn isLevelOp(level Int, tok Text) -> Bool
+fn isLevelOp(level I64, tok Text) -> Bool
   "Whether a token is an operator of the given operator level."
   pure
   example isLevelOp(4, "Sym +")

@@ -1,4 +1,4 @@
-fn printThenRest(tokens List<Text>, i Int) -> Unit
+fn printThenRest(tokens List<Text>, i I64) -> Unit
   "Print token i, then the rest."
   effects terminal.write
   fails

@@ -1,4 +1,4 @@
-fn isIdentStart(c Int) -> Bool
+fn isIdentStart(c I64) -> Bool
   "Whether a character code is a letter or underscore."
   pure
   example isIdentStart(95)

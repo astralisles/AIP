@@ -1,4 +1,4 @@
-fn parseTypeArgs(toks List<Text>, pos Int, acc Text) -> Parsed
+fn parseTypeArgs(toks List<Text>, pos I64, acc Text) -> Parsed
   "Read the type arguments at pos up to and including `>`; acc is the type text read so far."
   pure
   fails

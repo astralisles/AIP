@@ -1,0 +1,5 @@
+fn fileReadBytes(path Text) -> Bytes
+  "Read a whole file as bytes."
+  effects file.read
+  fails
+extern

@@ -1,4 +1,4 @@
-fn absolute(n Int) -> Int
+fn absolute(n I64) -> I64
   "Absolute value."
   pure
 extern

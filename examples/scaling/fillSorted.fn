@@ -1,4 +1,4 @@
-fn fillSorted(m SortedSet<Int>, i Int, n Int) -> SortedSet<Int>
+fn fillSorted(m SortedSet<I64>, i I64, n I64) -> SortedSet<I64>
   "Add n - 1 down to i to the sorted set, descending, one at a time."
   pure
 body

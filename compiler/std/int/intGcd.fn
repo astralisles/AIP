@@ -1,4 +1,4 @@
-fn intGcd(a Int, b Int) -> Int
+fn intGcd(a I64, b I64) -> I64
   "Greatest common divisor (never negative)."
   pure
 extern

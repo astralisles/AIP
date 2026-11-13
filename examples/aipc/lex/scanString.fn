@@ -1,4 +1,4 @@
-fn scanString(src Text, i Int) -> Int
+fn scanString(src Text, i I64) -> I64
   "The position of the closing double quote, skipping backslash escapes."
   pure
   fails

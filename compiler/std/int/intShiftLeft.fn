@@ -1,4 +1,4 @@
-fn intShiftLeft(a Int, bits Int) -> Int
+fn intShiftLeft(a I64, bits I64) -> I64
   "Bits shifted left; bits is taken modulo 64."
   pure
 extern

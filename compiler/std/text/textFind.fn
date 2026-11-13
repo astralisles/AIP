@@ -1,4 +1,4 @@
-fn textFind(text Text, part Text) -> Int
+fn textFind(text Text, part Text) -> I64
   "Index of the first occurrence of part, or -1 when it is not there."
   pure
 extern

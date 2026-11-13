@@ -1,4 +1,4 @@
-fn arg(index Int) -> Text
+fn arg(index I64) -> Text
   "A command line argument by position (first is 0)."
   effects process.args
 extern

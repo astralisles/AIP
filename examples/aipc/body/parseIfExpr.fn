@@ -1,4 +1,4 @@
-fn parseIfExpr(toks List<Text>, pos Int) -> ExprParsed
+fn parseIfExpr(toks List<Text>, pos I64) -> ExprParsed
   "Read `cond then a else b` at pos (after the `if`)."
   pure
 body

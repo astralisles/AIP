@@ -1,4 +1,4 @@
-fn numFromF64(value F64) -> Int
-  "Convert an F64 to Int by dropping the fraction; NaN, infinity or a value out of range is a run-time error."
+fn numFromF64(value F64) -> I64
+  "Convert an F64 to I64 by dropping the fraction; NaN, infinity or a value out of range is a run-time error."
   pure
 extern

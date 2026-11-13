@@ -1,4 +1,4 @@
-fn levelOps(level Int) -> List<Text>
+fn levelOps(level I64) -> List<Text>
   "The operators of one precedence level, loosest first: =>, or, and, comparisons, + -, * / %."
   pure
   example listLength(levelOps(3)) == 6

@@ -1,4 +1,4 @@
-fn lexStep(src Text, pos Int, acc List<Text>) -> List<Text>
+fn lexStep(src Text, pos I64, acc List<Text>) -> List<Text>
   "Lex the token that starts at pos, then the rest."
   pure
   fails

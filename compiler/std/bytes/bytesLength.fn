@@ -1,4 +1,4 @@
-fn bytesLength(data Bytes) -> Int
+fn bytesLength(data Bytes) -> I64
   "Number of bytes."
   pure
 extern

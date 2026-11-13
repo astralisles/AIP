@@ -1,4 +1,4 @@
-fn f(n Int) -> Int
+fn f(n I64) -> I64
   "No lower bound on n."
   pure
   decreases n

@@ -1,4 +1,4 @@
-fn parseUnary(toks List<Text>, pos Int) -> ExprParsed
+fn parseUnary(toks List<Text>, pos I64) -> ExprParsed
   "Read an expression that may start with `-` or `not`."
   pure
 body

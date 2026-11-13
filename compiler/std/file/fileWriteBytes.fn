@@ -1,0 +1,5 @@
+fn fileWriteBytes(path Text, data Bytes) -> Unit
+  "Write bytes to a file, replacing it."
+  effects file.write
+  fails
+extern

@@ -1,4 +1,4 @@
-fn stepValue(prefix Text, toks List<Text>, pos Int) -> BodyStep
+fn stepValue(prefix Text, toks List<Text>, pos I64) -> BodyStep
   "Read the value of a statement; a `match` leaves its arms to the lines that follow (indented 4)."
   pure
 body

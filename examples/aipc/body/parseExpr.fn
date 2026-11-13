@@ -1,4 +1,4 @@
-fn parseExpr(toks List<Text>, pos Int, matchOk Bool) -> ExprParsed
+fn parseExpr(toks List<Text>, pos I64, matchOk Bool) -> ExprParsed
   "Read an expression at pos. A `match` is read (its subject only) when matchOk is true."
   pure
 body

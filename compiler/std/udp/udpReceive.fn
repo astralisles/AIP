@@ -1,4 +1,4 @@
-fn udpReceive(socket UdpSocket, timeoutMs Int) -> Bytes
+fn udpReceive(socket UdpSocket, timeoutMs I64) -> Bytes
   "Wait for one datagram; empty bytes on timeout."
   effects udp.receive
 extern

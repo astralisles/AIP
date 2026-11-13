@@ -1,4 +1,4 @@
-fn helper(x Int) -> T
+fn helper(x I64) -> T
   "The result type uses a type parameter no parameter has."
   pure
 body

@@ -1,4 +1,4 @@
-fn sexprItems(items List<Expr>, i Int) -> Text
+fn sexprItems(items List<Expr>, i I64) -> Text
   "Each item from index i as a space and its s-expression."
   pure
 body

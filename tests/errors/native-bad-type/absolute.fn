@@ -1,4 +1,4 @@
-fn absolute(n List<Int>) -> Int
+fn absolute(n List<I64>) -> I64
   "Absolute value."
   effects native.ucrtbase
   native "ucrtbase" "_abs64"

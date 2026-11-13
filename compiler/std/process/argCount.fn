@@ -1,4 +1,4 @@
-fn argCount() -> Int
+fn argCount() -> I64
   "Number of command line arguments given to the program."
   effects process.args
 extern

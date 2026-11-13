@@ -1,4 +1,4 @@
-fn parseBinaryRest(toks List<Text>, level Int, left ExprParsed) -> ExprParsed
+fn parseBinaryRest(toks List<Text>, level I64, left ExprParsed) -> ExprParsed
   "Read `op right` pairs of operator level `level` after the expression left, left to right."
   pure
 body

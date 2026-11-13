@@ -1,4 +1,4 @@
-fn listIndexOf(items List<T>, item T) -> Int
+fn listIndexOf(items List<T>, item T) -> I64
   "Index of the first equal item, or -1 when it is not there."
   pure
 extern

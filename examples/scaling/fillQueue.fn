@@ -1,4 +1,4 @@
-fn fillQueue(q Queue<Int>, i Int, n Int) -> Queue<Int>
+fn fillQueue(q Queue<I64>, i I64, n I64) -> Queue<I64>
   "Push the numbers i up to n - 1 onto the queue, one at a time."
   pure
 body

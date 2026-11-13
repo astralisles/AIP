@@ -1,4 +1,4 @@
-fn isDigit(c Int) -> Bool
+fn isDigit(c I64) -> Bool
   "Whether a character code is 0-9."
   pure
   example isDigit(48)

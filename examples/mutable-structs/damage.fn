@@ -1,4 +1,4 @@
-fn damage(h Health, amount Int, tick Int) -> Unit
+fn damage(h Health, amount I64, tick I64) -> Unit
   "Lower the hit points of h in place and record the tick."
   effects mutate
 body

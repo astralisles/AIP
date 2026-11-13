@@ -103,7 +103,7 @@ sealed partial class Interp(ProgramModel program)
     {
         switch (e)
         {
-            case IntLit i: return Coerce((BigInteger)i.Value, i.Type == "" ? "Int" : i.Type);
+            case IntLit i: return Coerce((BigInteger)i.Value, i.Type == "" ? "I64" : i.Type);
             case FloatLit fl: return fl.Type == "F32" ? (object)(float)fl.Value : fl.Value;
             case BoolLit b: return b.Value;
             case NameRef { Const: true } k: return CallFn(program.Fns[k.Name], new List<object?>());
@@ -139,7 +139,7 @@ sealed partial class Interp(ProgramModel program)
                     if (u.Op != "-") return !(bool)v!;
                     if (v is double dv) return -dv;
                     if (v is float fv) return -fv;
-                    return Fit(-Big(v!), u.Type == "" ? "Int" : u.Type, "negation");
+                    return Fit(-Big(v!), u.Type == "" ? "I64" : u.Type, "negation");
                 }
             case BlockExpr k:
                 foreach (var s in k.Stmts) Eval(s, env);
@@ -170,7 +170,7 @@ sealed partial class Interp(ProgramModel program)
                     BigInteger x = Big(l!), y = Big(r!);
                     if (b.Op is "/" or "%" && y.IsZero) throw new Failed("arithmetic", $"`{x} {b.Op} {y}`: division by zero");
                     BigInteger z = b.Op switch { "+" => x + y, "-" => x - y, "*" => x * y, "/" => BigInteger.Divide(x, y), "%" => BigInteger.Remainder(x, y), _ => throw new Unsupported($"operator {b.Op}") };
-                    return Fit(z, b.Type == "" ? "Int" : b.Type, $"`{x} {b.Op} {y}`");
+                    return Fit(z, b.Type == "" ? "I64" : b.Type, $"`{x} {b.Op} {y}`");
                 }
         }
         throw new Unsupported("expression " + e.GetType().Name);
@@ -194,7 +194,7 @@ sealed partial class Interp(ProgramModel program)
 
     static readonly Dictionary<string, (BigInteger Min, BigInteger Max)> Limits = new()
     {
-        ["Int"] = (long.MinValue, long.MaxValue), ["I8"] = (sbyte.MinValue, sbyte.MaxValue), ["I16"] = (short.MinValue, short.MaxValue),
+        ["I64"] = (long.MinValue, long.MaxValue), ["I8"] = (sbyte.MinValue, sbyte.MaxValue), ["I16"] = (short.MinValue, short.MaxValue),
         ["I32"] = (int.MinValue, int.MaxValue), ["U8"] = (0, byte.MaxValue), ["U16"] = (0, ushort.MaxValue),
         ["U32"] = (0, uint.MaxValue), ["U64"] = (0, ulong.MaxValue),
     };
@@ -206,7 +206,7 @@ sealed partial class Interp(ProgramModel program)
         if (v < min || v > max) throw new Failed("arithmetic", $"{what}: {v} does not fit in {type}");
         return type switch
         {
-            "Int" => (long)v, "I8" => (sbyte)v, "I16" => (short)v, "I32" => (int)v,
+            "I64" => (long)v, "I8" => (sbyte)v, "I16" => (short)v, "I32" => (int)v,
             "U8" => (byte)v, "U16" => (ushort)v, "U32" => (uint)v, _ => (ulong)v,
         };
     }

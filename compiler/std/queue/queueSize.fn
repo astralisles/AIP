@@ -1,4 +1,4 @@
-fn queueSize(q Queue<T>) -> Int
+fn queueSize(q Queue<T>) -> I64
   "How many items the queue has."
   pure
 extern

@@ -1,4 +1,4 @@
-fn joinTexts(items List<Text>, sep Text, i Int, acc Text) -> Text
+fn joinTexts(items List<Text>, sep Text, i I64, acc Text) -> Text
   "acc followed by items from position i on, with sep between items."
   pure
   fails

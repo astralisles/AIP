@@ -1,4 +1,4 @@
-fn parseBound(toks List<Text>, pos Int) -> Parsed
+fn parseBound(toks List<Text>, pos I64) -> Parsed
   "Read an optional range bound at pos: a number, maybe negative; empty text if there is none."
   pure
   fails

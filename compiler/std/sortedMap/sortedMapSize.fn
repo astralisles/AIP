@@ -1,4 +1,4 @@
-fn sortedMapSize(m SortedMap<K,V>) -> Int
+fn sortedMapSize(m SortedMap<K,V>) -> I64
   "How many entries the map has."
   pure
 extern

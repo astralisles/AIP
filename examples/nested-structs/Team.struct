@@ -2,4 +2,4 @@ struct Team
   "A named team that holds a list of member names and a map of scores."
   name Text
   members List<Text>
-  scores Map<Text, Int>
+  scores Map<Text, I64>

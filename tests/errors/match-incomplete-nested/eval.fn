@@ -1,4 +1,4 @@
-fn eval(e Expr) -> Int
+fn eval(e Expr) -> I64
   "The value of an expression."
   pure
   example eval(Add(Num(2), Neg(Num(5)))) == -3

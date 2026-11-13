@@ -1,4 +1,4 @@
 I8 + I32 is I32: 1000100
-U8 into an Int parameter: 400
+U8 into an I64 parameter: 400
 F32 + F64 is F64: 3.5
 U8 + I16 is I16: -100

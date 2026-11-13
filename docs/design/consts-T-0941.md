@@ -2,7 +2,7 @@
 
 One named, typed, immutable value per file (`maxRetries.const`), read by name anywhere like a value. See `examples/consts`.
 
-    const maxRetries Int
+    const maxRetries I64
       "How many times a step is tried before giving up."
       value 3
 

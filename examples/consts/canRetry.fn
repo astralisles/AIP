@@ -1,4 +1,4 @@
-fn canRetry(attempt Int) -> Bool
+fn canRetry(attempt I64) -> Bool
   "True while another attempt is allowed; a function reads a constant like a value."
   pure
   example canRetry(1) == true
