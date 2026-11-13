@@ -1,0 +1,6 @@
+fn f(a Int) -> Bool
+  "Compare a number with itself."
+  pure
+  example f(1) == true
+body
+  a == a

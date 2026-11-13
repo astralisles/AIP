@@ -1,0 +1,5 @@
+fn main() -> Unit
+   "Three-space indent."
+  effects terminal.write
+body
+  printLine("hi")

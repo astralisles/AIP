@@ -1,0 +1,5 @@
+fn main() -> Unit
+  "Call a helper."
+  effects terminal.write
+body
+  printLine("{helper()}")

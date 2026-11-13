@@ -1,0 +1,5 @@
+fn helper(x Foo) -> Int
+  "Unknown parameter type."
+  pure
+body
+  1

@@ -1,0 +1,6 @@
+fn f(n Int) -> Int
+  "Divide by a value that is zero."
+  pure
+  example f(1) == 0
+body
+  10 / (n - 1)

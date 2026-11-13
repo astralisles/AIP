@@ -1,0 +1,3 @@
+fn main() -> Unit
+  "No body line."
+  effects terminal.write

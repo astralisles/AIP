@@ -1,0 +1,6 @@
+fn f(a Int, b Int) -> Int
+  "Ignore b."
+  pure
+  example f(1, 2) == 1
+body
+  a

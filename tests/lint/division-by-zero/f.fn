@@ -1,0 +1,5 @@
+fn f(a Int) -> Int
+  "Divide by a literal zero."
+  pure
+body
+  a / 0

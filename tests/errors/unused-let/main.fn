@@ -1,0 +1,6 @@
+fn main() -> Unit
+  "Bind a value and never use it."
+  effects terminal.write
+body
+  let a = 1
+  printLine("hi")
