@@ -1,0 +1,4 @@
+fn gfxViewport(window GfxWindow, x Int, y Int, width Int, height Int) -> Unit
+  "Choose the pixel rectangle that drawing maps to; the origin is the bottom left."
+  effects gfx.draw
+extern

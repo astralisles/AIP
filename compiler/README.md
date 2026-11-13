@@ -76,5 +76,6 @@ Contracts and static verification (what is checked, what could be proved): `docs
 Function restraints (`cannot-fail`, `fails`, `decreases`): `docs/design/function-restraints-T-0966.md`.
 File types and the parts of each file: `docs/design/file-anatomy-T-0948.md`. Constants: `docs/design/consts-T-0941.md`.
 Logging and debugging: `docs/design/logging-T-0934.md`; profiling: `docs/design/profiling-T-0938.md`.
+OpenGL graphics (`gfx*` std functions, desktop and WebGL portable): `docs/design/opengl-T-0986.md`.
 Native shared libraries (`native "lib" "symbol"`, dll/so/dylib): `docs/design/native-libraries-T-0956.md`.
 A new decision is a new file there; do not append it to this README.

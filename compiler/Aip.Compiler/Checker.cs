@@ -18,7 +18,7 @@ sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
     static bool IsDefaultLit(string t) => t is "Int" or "F64";
     static bool IsUnsigned(string t) => t.StartsWith('U') && SizedInts.ContainsKey(t);
 
-    static readonly HashSet<string> KnownTypes = new(new[] { "Int", "F32", "F64", "Text", "Bool", "Unit", "Bytes", "TcpListener", "TcpConn", "UdpSocket" }.Concat(SizedInts.Keys));
+    static readonly HashSet<string> KnownTypes = new(new[] { "Int", "F32", "F64", "Text", "Bool", "Unit", "Bytes", "TcpListener", "TcpConn", "UdpSocket", "GfxWindow" }.Concat(SizedInts.Keys));
 
     /// <summary>An integer literal (maybe negated) used where a sized integer is wanted takes that type if it fits.</summary>
     bool FitLiteral(Expr e, string want)

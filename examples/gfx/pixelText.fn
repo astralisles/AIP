@@ -1,0 +1,5 @@
+fn pixelText(pixel Bytes) -> Text
+  "One RGBA pixel as `r g b a`, each 0 to 255."
+  pure
+body
+  "{bytesGet(pixel, 0)} {bytesGet(pixel, 1)} {bytesGet(pixel, 2)} {bytesGet(pixel, 3)}"

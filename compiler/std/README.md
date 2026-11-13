@@ -15,6 +15,7 @@ List them with `scripts\aip.ps1 std`.
 | `priorityQueue/` | `PriorityQueue<T>`, lowest priority first | name starts with `priorityQueue` |
 | `sortedSet/` | `SortedSet<T>`, items in order   | name starts with `sortedSet` |
 | `bytes/`    | `Bytes`, an immutable byte array        | name starts with `bytes`     |
+| `gfx/`      | OpenGL ES 2 / WebGL subset (windows, shaders, buffers) | effect `gfx.*`          |
 | `file/`     | read/write files                       | name starts with `file`      |
 | `terminal/` | console I/O (`printLine`, `readLine`) | effect `terminal.*`          |
 | `tcp/`      | TCP connections that stay open (bytes)  | effect `tcp.*`               |

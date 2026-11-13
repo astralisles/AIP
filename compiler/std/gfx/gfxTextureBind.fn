@@ -1,0 +1,5 @@
+fn gfxTextureBind(window GfxWindow, texture Int, unit Int) -> Unit
+  "Bind a texture to a texture unit (0 to 7) for later draws."
+  effects gfx.draw
+  fails
+extern

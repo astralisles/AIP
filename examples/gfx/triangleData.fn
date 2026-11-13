@@ -1,0 +1,5 @@
+fn triangleData() -> List<F64>
+  "Three corners of a triangle in clip space (x, y per vertex)."
+  pure
+body
+  listAppend(listAppend(listAppend(listAppend(listAppend(listAppend(listEmpty(), -1.0), -1.0), 1.0), -1.0), 0.0), 1.0)
