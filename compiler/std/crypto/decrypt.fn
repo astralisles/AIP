@@ -1,4 +1,0 @@
-fn decrypt(key List<Int>, nonce List<Int>, data List<Int>) -> List<Int>
-  "Undo encrypt; fails when the key, nonce or data is wrong or was changed."
-  pure
-extern

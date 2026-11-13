@@ -65,6 +65,12 @@ sealed class CsBackend : IBackend
         ["listConcat"] = "Rt.ListConcat({0}, {1})",
         ["listSlice"] = "Rt.ListSlice({0}, {1}, {2})",
         ["listReverse"] = "Rt.ListReverse({0})",
+        ["hashSha256"] = "Rt.HashSha256({0})",
+        ["hashHmacSha256"] = "Rt.HashHmacSha256({0}, {1})",
+        ["bytesFromText"] = "Rt.BytesFromText({0})",
+        ["bytesToText"] = "Rt.BytesToText({0})",
+        ["bytesToHex"] = "Rt.BytesToHex({0})",
+        ["bytesFromHex"] = "Rt.BytesFromHex({0})",
         ["listIndexOf"] = "(long)({0}).IndexOf({1})",
         ["listContains"] = "({0}).Contains({1})",
         ["listRange"] = "Rt.ListRange({0}, {1})",
@@ -486,6 +492,40 @@ sealed class CsBackend : IBackend
             {
                 int a = (int)System.Math.Clamp(start, 0, l.Count), b = (int)System.Math.Clamp(end, a, l.Count);
                 return l.GetRange(a, b - a);
+            }
+            static byte[] ToBytes(System.Collections.Generic.List<object> l)
+            {
+                var r = new byte[l.Count];
+                for (int i = 0; i < r.Length; i++)
+                {
+                    long v = (long)l[i];
+                    if (v < 0 || v > 255) throw new System.InvalidOperationException("byte out of range 0..255: " + v);
+                    r[i] = (byte)v;
+                }
+                return r;
+            }
+            static System.Collections.Generic.List<object> FromBytes(byte[] b)
+            {
+                var r = new System.Collections.Generic.List<object>();
+                foreach (var x in b) r.Add((long)x);
+                return r;
+            }
+            public static System.Collections.Generic.List<object> HashSha256(System.Collections.Generic.List<object> d) => FromBytes(System.Security.Cryptography.SHA256.HashData(ToBytes(d)));
+            public static System.Collections.Generic.List<object> HashHmacSha256(System.Collections.Generic.List<object> k, System.Collections.Generic.List<object> d) => FromBytes(System.Security.Cryptography.HMACSHA256.HashData(ToBytes(k), ToBytes(d)));
+            public static System.Collections.Generic.List<object> BytesFromText(string t)
+            {
+                var r = new System.Collections.Generic.List<object>();
+                foreach (var x in System.Text.Encoding.UTF8.GetBytes(t)) r.Add((long)x);
+                return r;
+            }
+            public static string BytesToText(System.Collections.Generic.List<object> l) => System.Text.Encoding.UTF8.GetString(ToBytes(l));
+            public static string BytesToHex(System.Collections.Generic.List<object> l) => System.Convert.ToHexString(ToBytes(l)).ToLowerInvariant();
+            public static System.Collections.Generic.List<object> BytesFromHex(string h)
+            {
+                if (h.Length % 2 != 0) throw new System.InvalidOperationException("hex text must have an even number of digits");
+                var r = new System.Collections.Generic.List<object>();
+                foreach (var x in System.Convert.FromHexString(h)) r.Add((long)x);
+                return r;
             }
             public static System.Collections.Generic.List<object> ListReverse(System.Collections.Generic.List<object> l)
             {
