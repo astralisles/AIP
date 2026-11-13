@@ -47,7 +47,9 @@ Test cases: `tests\errors` (`aip check` must reject), `tests\lint` (`aip lint` m
 
 `aip query <project> <verb> [arg]` answers from the checked program: `list`, `fn NAME`
 (signature, purpose, header, file:line, calls, called by), `find WORDS` (names and purposes),
-`callers NAME`, `calls NAME`, `effect NAME` (`terminal`, `terminal.write`, `pure`).
+`callers NAME`, `calls NAME`, `effect NAME` (`terminal`, `terminal.write`, `pure`),
+`type NAME` (fields or cases, and who uses it), `users TYPE` (functions that take, return, construct, match or
+read a field of a struct/variant, and types with a field of it).
 Output is plain lines, one function per line, errors as `error code: message`.
 
 When is the index updated? On every query, so it is never stale: each run re-parses and re-checks
