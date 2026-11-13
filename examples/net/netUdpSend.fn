@@ -1,0 +1,7 @@
+fn netUdpSend(port Int) -> Unit
+  "Send one datagram to this computer."
+  effects udp.open, udp.send, udp.close
+body
+  let socket = udpOpen(0)
+  udpSend(socket, "127.0.0.1", port, bytesFromText("datagram"))
+  udpClose(socket)

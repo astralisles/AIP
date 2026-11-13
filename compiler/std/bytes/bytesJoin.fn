@@ -1,0 +1,4 @@
+fn bytesJoin(first Bytes, second Bytes) -> Bytes
+  "The two byte arrays one after the other."
+  pure
+extern

@@ -72,10 +72,25 @@ sealed class CsBackend : IBackend
         ["fileRead"] = "System.IO.File.ReadAllText({0})",
         ["fileWrite"] = "Rt.Write({0}, {1})",
         ["readLine"] = "(System.Console.In.ReadLine() ?? \"\")",
-        ["tcpRequest"] = "Rt.TcpRequest({0}, {1}, {2})",
-        ["tcpServeOnce"] = "Rt.TcpServeOnce({0}, {1})",
-        ["udpSend"] = "Rt.UdpSend({0}, {1}, {2})",
+        ["tcpListen"] = "Rt.TcpListen({0})",
+        ["tcpAccept"] = "Rt.TcpAccept({0})",
+        ["tcpConnect"] = "Rt.TcpConnect({0}, {1})",
+        ["tcpSend"] = "Rt.TcpSend({0}, {1})",
+        ["tcpReceive"] = "Rt.TcpReceive({0}, {1})",
+        ["tcpClose"] = "Rt.TcpClose({0})",
+        ["tcpStop"] = "Rt.TcpClose({0})",
+        ["udpOpen"] = "Rt.UdpOpen({0})",
+        ["udpSend"] = "Rt.UdpSend({0}, {1}, {2}, {3})",
         ["udpReceive"] = "Rt.UdpReceive({0}, {1})",
+        ["udpClose"] = "Rt.TcpClose({0})",
+        ["bytesFromText"] = "new System.Text.UTF8Encoding(false).GetBytes({0})",
+        ["bytesToText"] = "new System.Text.UTF8Encoding(false).GetString({0})",
+        ["bytesLength"] = "(long)({0}).Length",
+        ["bytesGet"] = "(long)({0})[(int)({1})]",
+        ["bytesSlice"] = "Rt.BytesSlice({0}, {1}, {2})",
+        ["bytesJoin"] = "Rt.BytesJoin({0}, {1})",
+        ["bytesFromList"] = "Rt.BytesFromList({0})",
+        ["bytesEmpty"] = "System.Array.Empty<byte>()",
         ["noop"] = "Rt.Nop()",
         ["argCount"] = "(long)Rt.Args.Length",
         ["arg"] = "Rt.Args[(int)({0})]",
@@ -183,6 +198,8 @@ sealed class CsBackend : IBackend
         "Int" => "long",
         "Text" => "string",
         "Bool" => "bool",
+        "Bytes" => "byte[]",
+        "TcpListener" or "TcpConn" or "UdpSocket" => "object", // handles, opened by effectful std functions
         "_" => "object",
         _ when t.Length == 1 && char.IsAsciiLetterUpper(t[0]) => "object", // a type parameter: erased
         _ when t.StartsWith("List<", StringComparison.Ordinal) || t.StartsWith("Queue<", StringComparison.Ordinal) || t.StartsWith("PriorityQueue<", StringComparison.Ordinal) => "System.Collections.Generic.List<object>",
@@ -531,49 +548,42 @@ sealed class CsBackend : IBackend
                 Out(profPath, sb.ToString());
             }
             public static void Write(string path, string content) => System.IO.File.WriteAllText(path, content);
-            public static string TcpRequest(string host, long port, string data)
+            // Network handles (TcpListener, TcpConn, UdpSocket) are erased to object; the effects say who may open them.
+            public static object TcpListen(long port) { var l = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Any, (int)port); l.Start(); return l; }
+            public static object TcpAccept(object l) { var c = ((System.Net.Sockets.TcpListener)l).AcceptTcpClient(); c.NoDelay = true; return c; }
+            public static object TcpConnect(string host, long port) { var c = new System.Net.Sockets.TcpClient(host, (int)port); c.NoDelay = true; return c; }
+            public static void TcpSend(object c, byte[] data) { var st = ((System.Net.Sockets.TcpClient)c).GetStream(); st.Write(data, 0, data.Length); st.Flush(); }
+            public static byte[] TcpReceive(object c, long max)
             {
-                using var c = new System.Net.Sockets.TcpClient(host, (int)port);
-                using var st = c.GetStream();
-                var b = new System.Text.UTF8Encoding(false).GetBytes(data);
-                st.Write(b, 0, b.Length);
-                c.Client.Shutdown(System.Net.Sockets.SocketShutdown.Send);
-                using var r = new System.IO.StreamReader(st, new System.Text.UTF8Encoding(false));
-                return r.ReadToEnd();
+                var buf = new byte[System.Math.Max(1, (int)max)];
+                int n = ((System.Net.Sockets.TcpClient)c).GetStream().Read(buf, 0, buf.Length);
+                return buf[..n];
             }
-            public static string TcpServeOnce(long port, string reply)
+            public static void TcpClose(object o)
             {
-                var l = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Any, (int)port);
-                l.Start();
-                try
-                {
-                    using var c = l.AcceptTcpClient();
-                    using var st = c.GetStream();
-                    var enc = new System.Text.UTF8Encoding(false);
-                    var r = new System.IO.StreamReader(st, enc);
-                    var line = r.ReadLine() ?? "";
-                    var b = enc.GetBytes(reply);
-                    st.Write(b, 0, b.Length);
-                    return line;
-                }
-                finally { l.Stop(); }
+                if (o is System.Net.Sockets.TcpListener l) l.Stop();
+                else ((System.IDisposable)o).Dispose();
             }
-            public static void UdpSend(string host, long port, string data)
+            public static object UdpOpen(long port) => new System.Net.Sockets.UdpClient((int)port);
+            public static void UdpSend(object s, string host, long port, byte[] data) => ((System.Net.Sockets.UdpClient)s).Send(data, data.Length, host, (int)port);
+            public static byte[] UdpReceive(object s, long timeoutMs)
             {
-                using var u = new System.Net.Sockets.UdpClient();
-                var b = new System.Text.UTF8Encoding(false).GetBytes(data);
-                u.Send(b, b.Length, host, (int)port);
-            }
-            public static string UdpReceive(long port, long timeoutMs)
-            {
-                using var u = new System.Net.Sockets.UdpClient((int)port);
+                var u = (System.Net.Sockets.UdpClient)s;
                 u.Client.ReceiveTimeout = (int)timeoutMs;
-                try
-                {
-                    var ep = new System.Net.IPEndPoint(System.Net.IPAddress.Any, 0);
-                    return new System.Text.UTF8Encoding(false).GetString(u.Receive(ref ep));
-                }
-                catch (System.Net.Sockets.SocketException) { return ""; }
+                try { var ep = new System.Net.IPEndPoint(System.Net.IPAddress.Any, 0); return u.Receive(ref ep); }
+                catch (System.Net.Sockets.SocketException) { return System.Array.Empty<byte>(); }
+            }
+            public static byte[] BytesSlice(byte[] d, long start, long end)
+            {
+                int a = (int)System.Math.Clamp(start, 0, d.Length), b = (int)System.Math.Clamp(end, a, d.Length);
+                return d[a..b];
+            }
+            public static byte[] BytesJoin(byte[] a, byte[] b) { var r = new byte[a.Length + b.Length]; a.CopyTo(r, 0); b.CopyTo(r, a.Length); return r; }
+            public static byte[] BytesFromList(System.Collections.Generic.List<object> l)
+            {
+                var r = new byte[l.Count];
+                for (int i = 0; i < r.Length; i++) r[i] = checked((byte)(long)l[i]);
+                return r;
             }
             public static string Text(string v) => v;
             public static string Text(long v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);

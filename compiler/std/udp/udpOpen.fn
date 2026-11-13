@@ -1,0 +1,4 @@
+fn udpOpen(port Int) -> UdpSocket
+  "Open a UDP socket bound to a port (0 = any free port)."
+  effects udp.open
+extern

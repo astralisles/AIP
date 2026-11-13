@@ -1,0 +1,12 @@
+fn netEchoLoop(conn TcpConn) -> Unit
+  "Receive a chunk, answer with `echo:` plus the same bytes, repeat until the client closes."
+  effects tcp.send, tcp.receive, terminal.write
+body
+  let data = tcpReceive(conn, 1024)
+  let size = bytesLength(data)
+  if size == 0 then
+    printLine("server: client closed")
+  else
+    printLine("server: got {size} bytes")
+    tcpSend(conn, bytesJoin(bytesFromText("echo:"), data))
+    netEchoLoop(conn)

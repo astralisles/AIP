@@ -3,7 +3,7 @@ namespace Aip;
 /// <summary>Checks names, types, effects and completeness. Contracts are type-checked only; nothing is proved yet.</summary>
 sealed class Checker(ProgramModel program, List<Diagnostic> diags)
 {
-    static readonly HashSet<string> KnownTypes = new() { "Int", "Text", "Bool", "Unit" };
+    static readonly HashSet<string> KnownTypes = new() { "Int", "Text", "Bool", "Unit", "Bytes", "TcpListener", "TcpConn", "UdpSocket" };
 
     static readonly Dictionary<string, int> Generics = new() { ["List"] = 1, ["Set"] = 1, ["Map"] = 2, ["SortedSet"] = 1, ["SortedMap"] = 2, ["Queue"] = 1, ["PriorityQueue"] = 1 };
 

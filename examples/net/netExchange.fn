@@ -1,0 +1,9 @@
+fn netExchange(conn TcpConn, data Bytes) -> Unit
+  "Send bytes, wait for the answer and print its size and last byte."
+  effects tcp.send, tcp.receive, terminal.write
+body
+  tcpSend(conn, data)
+  let answer = tcpReceive(conn, 1024)
+  let size = bytesLength(answer)
+  let last = bytesGet(answer, size - 1)
+  printLine("client: answer {size} bytes, last byte {last}")

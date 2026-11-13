@@ -1,0 +1,4 @@
+fn tcpClose(conn TcpConn) -> Unit
+  "Close a connection."
+  effects tcp.close
+extern

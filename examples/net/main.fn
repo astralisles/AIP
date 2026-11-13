@@ -1,12 +1,7 @@
 fn main() -> Unit
-  "Console and network demo: `net echo`, `net serve PORT`, `net request PORT`, `net udp-send PORT`, `net udp-receive PORT`."
-  effects process.args, terminal.read, terminal.write, tcp.connect, tcp.listen, udp.send, udp.receive
+  "Console and network demo: `net echo`, `net serve PORT`, `net client PORT`, `net udp-receive PORT`, `net udp-send PORT`."
+  effects process.args, terminal.read, terminal.write, tcp.connect, tcp.listen, tcp.accept, tcp.send, tcp.receive, tcp.close, udp.open, udp.send, udp.receive, udp.close
 body
   let mode = if argCount() > 0 then arg(0) else "help"
   let port = if argCount() > 1 then textToInt(arg(1)) else 9000
-  let typed = if mode == "echo" then readLine() else ""
-  let served = if mode == "serve" then tcpServeOnce(port, "pong") else ""
-  let answer = if mode == "request" then tcpRequest("127.0.0.1", port, "ping") else ""
-  let datagram = if mode == "udp-receive" then udpReceive(port, 10000) else ""
-  if mode == "udp-send" then udpSend("127.0.0.1", port, "datagram") else noop()
-  printLine("{mode}: typed=[{typed}] served=[{served}] answer=[{answer}] datagram=[{datagram}]")
+  if mode == "echo" then printLine("you typed: {readLine()}") else if mode == "serve" then netServe(port) else if mode == "client" then netClient(port) else if mode == "udp-receive" then netUdpReceive(port) else if mode == "udp-send" then netUdpSend(port) else printLine("usage: net echo | serve PORT | client PORT | udp-receive PORT | udp-send PORT")
