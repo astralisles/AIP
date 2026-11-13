@@ -4,12 +4,12 @@ fn main() -> Unit
   fails
 body
   fileMakeFolder("fileio-out/sub")
-  fileWrite("fileio-out/a.txt", "hi")
-  fileWriteBytes("fileio-out/b.bin", bytesEncode("AB"))
+  fileWrite("fileio-out/a.txt", bytesEncode("hi"))
+  fileWrite("fileio-out/b.bin", bytesEncode("AB"))
   let folderThere = fileExists("fileio-out/sub")
   let missingThere = fileExists("fileio-out/none")
   let names = textJoin(fileList("fileio-out"), ",")
-  let data = fileReadBytes("fileio-out/b.bin")
+  let data = fileRead("fileio-out/b.bin")
   printLine("exists folder: {folderThere}")
   printLine("exists missing: {missingThere}")
   printLine("list: {names}")

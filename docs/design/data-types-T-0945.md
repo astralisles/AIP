@@ -37,7 +37,7 @@ Rules:
 - `+ - * / %`, comparisons and unary `-` work on one float type at a time; no mixing with each other or with whole numbers.
   Convert with `numToF32/numToF64(I64)`, `numFromF32/numFromF64(float) -> I64` (drops the fraction; NaN, infinity or out of range is a run-time error), `numF32ToF64`, `numF64ToF32`.
 - Floats follow IEEE 754: overflow gives infinity and `x / 0.0` gives infinity or NaN, not an error. Only the conversion to `I64` is checked.
-- Bit operations are std functions in `bit/`, generic over any whole-number type (`I64`, `I8`..`U64`) and keep the type:
+- (Replaced by operators in T-0979, see `bit-operators-T-0979.md`.) Bit operations were std functions in `bit/`, generic over any whole-number type (`I64`, `I8`..`U64`) and keep the type:
   `bitAnd`, `bitOr`, `bitXor`, `bitNot`, `bitShl(a, count)`, `bitShr(a, count)`. No new operators.
   `bitShr` is logical for unsigned and arithmetic (sign copied) for signed types. Bits shifted out of `bitShl` are dropped
   (that is what shifting means), but a count outside `0..width-1` is a run-time error instead of C#'s silent masking.

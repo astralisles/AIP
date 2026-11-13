@@ -1,5 +1,5 @@
-fn fileWrite(path Text, content Text) -> Unit
-  "Write a whole text file, replacing it."
+fn fileWrite(path Text, content Bytes) -> Unit
+  "Write bytes as a whole file, replacing it. Use bytesEncode for text."
   effects file.write
   fails
 extern

@@ -3,5 +3,5 @@ fn printIndexThenRest(i I64) -> Unit
   effects file.read, process.args, terminal.write
   fails
 body
-  printLine(indexLine(parseHeader(lexAll(fileRead(arg(i))))))
+  printLine(indexLine(parseHeader(lexAll(bytesDecode(fileRead(arg(i)))))))
   printIndex(i + 1)

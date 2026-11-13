@@ -19,7 +19,6 @@ List them with `scripts\aip.ps1 std`.
 | `terminal/` | console I/O (`printLine`, `readLine`) | effect `terminal.*`          |
 | `tcp/`      | TCP connections that stay open (bytes)  | effect `tcp.*`               |
 | `udp/`      | UDP sockets (bytes)                     | effect `udp.*`               |
-| `bit/`      | bit operations (`bitAnd`, `bitShl`)    | name starts with `bit`       |
 | `num/`      | number conversions (`numToU8`, `numToF64`) | name starts with `num`       |
 | `log/`      | diagnostics to stderr (`logLine`)      | effect `log.*`               |
 | `process/`  | command line (`arg`, `argCount`)       | effect `process.*`           |

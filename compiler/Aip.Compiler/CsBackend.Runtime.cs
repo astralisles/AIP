@@ -62,11 +62,10 @@ sealed partial class CsBackend
                 return r;
             }
             public static void Nop() { }
-            public static void Write(string path, string content) => System.IO.File.WriteAllText(path, content);
             public static Aip.Persistent.PList FileList(string p) { var n = System.IO.Directory.GetFileSystemEntries(p); for (int i = 0; i < n.Length; i++) n[i] = System.IO.Path.GetFileName(n[i]); System.Array.Sort(n, System.StringComparer.Ordinal); return Aip.Persistent.PList.From(n); }
             public static void MakeFolder(string p) => System.IO.Directory.CreateDirectory(p);
-            public static void WriteBytes(string p, byte[] d) => System.IO.File.WriteAllBytes(p, d);
             public static void Exit(int c) { System.Console.Out.Flush(); System.Environment.Exit(c); }
+            public static void Write(string path, byte[] content) => System.IO.File.WriteAllBytes(path, content);
             public static string Text(string v) => v;
             public static string Text(double v) => v.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
             public static string Text(float v) => v.ToString("R", System.Globalization.CultureInfo.InvariantCulture);

@@ -35,28 +35,6 @@ sealed partial class Interp
                 }
             case "numF32ToF64": return (double)(float)a[0]!;
             case "numF64ToF32": return (float)(double)a[0]!;
-            case "bitAnd" or "bitOr" or "bitXor" or "bitNot" or "bitShl" or "bitShr":
-                {
-                    string ty = a[0] switch { long => "I64", sbyte => "I8", short => "I16", int => "I32", byte => "U8", ushort => "U16", uint => "U32", _ => "U64" };
-                    var (_, max) = Limits[ty];
-                    int width = ty switch { "I64" or "U64" => 64, "I32" or "U32" => 32, "I16" or "U16" => 16, _ => 8 };
-                    BigInteger mod = BigInteger.One << width, x = Big(a[0]!);
-                    BigInteger Wrap(BigInteger v) { v = ((v % mod) + mod) % mod; return v > max ? v - mod : v; }
-                    BigInteger res;
-                    if (name is "bitShl" or "bitShr")
-                    {
-                        long n = (long)Big(a[1]!);
-                        if (n < 0 || n >= width) throw new InvalidOperationException($"shift count {n} must be 0 to {width - 1}");
-                        res = name == "bitShl" ? Wrap(x << (int)n) : x >> (int)n;
-                    }
-                    else if (name == "bitNot") res = Wrap(-x - 1);
-                    else
-                    {
-                        BigInteger y = Big(a[1]!), ux = (x + mod) % mod, uy = (y + mod) % mod;
-                        res = Wrap(name == "bitAnd" ? ux & uy : name == "bitOr" ? ux | uy : ux ^ uy);
-                    }
-                    return Fit(res, ty, name);
-                }
             case "textFind": return (long)((string)a[0]!).IndexOf((string)a[1]!, StringComparison.Ordinal);
             case "textContains": return ((string)a[0]!).Contains((string)a[1]!, StringComparison.Ordinal);
             case "textStartsWith": return ((string)a[0]!).StartsWith((string)a[1]!, StringComparison.Ordinal);

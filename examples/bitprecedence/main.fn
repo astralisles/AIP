@@ -1,0 +1,12 @@
+fn main() -> Unit
+  "Bit operators bind tighter than comparisons and looser than + and shifts."
+  effects terminal.write
+  fails
+body
+  let a = numToU8(6)
+  let one = numToU8(1)
+  printLine("{a & 3 == 2}")
+  printLine("{a | one << 3}")
+  printLine("{a ^ one & a}")
+  printLine("{~a & 15}")
+  printLine("{1 + 2 << 3}")

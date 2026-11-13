@@ -1,0 +1,6 @@
+fn runLength(data List<I64>, start I64, value I64, n I64) -> I64
+  "How many times value repeats in data from start on, at most 255."
+  pure
+  fails
+body
+  if start + n >= listLength(data) then n else if n >= 255 then n else if listGet(data, start + n) == value then runLength(data, start, value, n + 1) else n

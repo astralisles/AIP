@@ -136,6 +136,7 @@ sealed partial class Interp(ProgramModel program)
             case Unary u:
                 {
                     var v = Eval(u.Operand, env);
+                    if (u.Op == "~") return BitOp("~", Big(v!), 0, u.Type == "" ? "I64" : u.Type);
                     if (u.Op != "-") return !(bool)v!;
                     if (v is double dv) return -dv;
                     if (v is float fv) return -fv;
@@ -168,12 +169,35 @@ sealed partial class Interp(ProgramModel program)
                         return b.Type == "F32" ? (object)(float)res : res;
                     }
                     BigInteger x = Big(l!), y = Big(r!);
+                    if (b.Op is "&" or "|" or "^" or "<<" or ">>") return BitOp(b.Op, x, y, b.Type == "" ? "I64" : b.Type);
                     if (b.Op is "/" or "%" && y.IsZero) throw new Failed("arithmetic", $"`{x} {b.Op} {y}`: division by zero");
                     BigInteger z = b.Op switch { "+" => x + y, "-" => x - y, "*" => x * y, "/" => BigInteger.Divide(x, y), "%" => BigInteger.Remainder(x, y), _ => throw new Unsupported($"operator {b.Op}") };
                     return Fit(z, b.Type == "" ? "I64" : b.Type, $"`{x} {b.Op} {y}`");
                 }
         }
         throw new Unsupported("expression " + e.GetType().Name);
+    }
+
+    /// <summary>`&amp; | ^ ~ &lt;&lt; &gt;&gt;` on a whole number of type `ty`: the result keeps the type, bits shifted out are lost, a bad shift count is an error.</summary>
+    static object BitOp(string op, BigInteger x, BigInteger y, string ty)
+    {
+        var (_, max) = Limits[ty];
+        int width = ty switch { "I64" or "U64" => 64, "I32" or "U32" => 32, "I16" or "U16" => 16, _ => 8 };
+        BigInteger mod = BigInteger.One << width;
+        BigInteger Wrap(BigInteger v) { v = ((v % mod) + mod) % mod; return v > max ? v - mod : v; }
+        BigInteger res;
+        if (op is "<<" or ">>")
+        {
+            if (y < 0 || y >= width) throw new InvalidOperationException($"shift count {y} must be 0 to {width - 1}");
+            res = op == "<<" ? Wrap(x << (int)y) : x >> (int)y;
+        }
+        else if (op == "~") res = Wrap(-x - 1);
+        else
+        {
+            BigInteger ux = (x + mod) % mod, uy = (y + mod) % mod;
+            res = Wrap(op == "&" ? ux & uy : op == "|" ? ux | uy : ux ^ uy);
+        }
+        return Fit(res, ty, op);
     }
 
     static bool IsInteger(object v) => v is long or int or short or sbyte or ulong or uint or ushort or byte;

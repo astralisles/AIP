@@ -1,0 +1,6 @@
+fn byteTexts(data List<I64>, i I64, out List<Text>) -> List<Text>
+  "Each byte from i on as decimal text."
+  pure
+  fails
+body
+  if i >= listLength(data) then out else byteTexts(data, i + 1, listAppend(out, textFromInt(listGet(data, i))))

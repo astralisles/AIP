@@ -1,4 +1,0 @@
-fn bitAnd(a T, b T) -> T
-  "Bits set in both a and b; T is any whole-number type (I64, I8..I32, U8..U64)."
-  pure
-extern
