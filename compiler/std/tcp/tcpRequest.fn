@@ -1,0 +1,4 @@
+fn tcpRequest(host Text, port Int, data Text) -> Text
+  "Connect over TCP, send the text, read the reply until the server closes."
+  effects tcp.connect
+extern

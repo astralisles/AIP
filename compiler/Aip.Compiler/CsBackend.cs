@@ -71,6 +71,11 @@ sealed class CsBackend : IBackend
         ["priorityQueuePop"] = "Rt.Pop({0}, \"priorityQueuePop\")",
         ["fileRead"] = "System.IO.File.ReadAllText({0})",
         ["fileWrite"] = "Rt.Write({0}, {1})",
+        ["readLine"] = "(System.Console.In.ReadLine() ?? \"\")",
+        ["tcpRequest"] = "Rt.TcpRequest({0}, {1}, {2})",
+        ["tcpServeOnce"] = "Rt.TcpServeOnce({0}, {1})",
+        ["udpSend"] = "Rt.UdpSend({0}, {1}, {2})",
+        ["udpReceive"] = "Rt.UdpReceive({0}, {1})",
         ["noop"] = "Rt.Nop()",
         ["argCount"] = "(long)Rt.Args.Length",
         ["arg"] = "Rt.Args[(int)({0})]",
@@ -477,6 +482,50 @@ sealed class CsBackend : IBackend
                 Out(profPath, sb.ToString());
             }
             public static void Write(string path, string content) => System.IO.File.WriteAllText(path, content);
+            public static string TcpRequest(string host, long port, string data)
+            {
+                using var c = new System.Net.Sockets.TcpClient(host, (int)port);
+                using var st = c.GetStream();
+                var b = new System.Text.UTF8Encoding(false).GetBytes(data);
+                st.Write(b, 0, b.Length);
+                c.Client.Shutdown(System.Net.Sockets.SocketShutdown.Send);
+                using var r = new System.IO.StreamReader(st, new System.Text.UTF8Encoding(false));
+                return r.ReadToEnd();
+            }
+            public static string TcpServeOnce(long port, string reply)
+            {
+                var l = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Any, (int)port);
+                l.Start();
+                try
+                {
+                    using var c = l.AcceptTcpClient();
+                    using var st = c.GetStream();
+                    var enc = new System.Text.UTF8Encoding(false);
+                    var r = new System.IO.StreamReader(st, enc);
+                    var line = r.ReadLine() ?? "";
+                    var b = enc.GetBytes(reply);
+                    st.Write(b, 0, b.Length);
+                    return line;
+                }
+                finally { l.Stop(); }
+            }
+            public static void UdpSend(string host, long port, string data)
+            {
+                using var u = new System.Net.Sockets.UdpClient();
+                var b = new System.Text.UTF8Encoding(false).GetBytes(data);
+                u.Send(b, b.Length, host, (int)port);
+            }
+            public static string UdpReceive(long port, long timeoutMs)
+            {
+                using var u = new System.Net.Sockets.UdpClient((int)port);
+                u.Client.ReceiveTimeout = (int)timeoutMs;
+                try
+                {
+                    var ep = new System.Net.IPEndPoint(System.Net.IPAddress.Any, 0);
+                    return new System.Text.UTF8Encoding(false).GetString(u.Receive(ref ep));
+                }
+                catch (System.Net.Sockets.SocketException) { return ""; }
+            }
             public static string Text(string v) => v;
             public static string Text(long v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
             public static string Text(bool v) => v ? "true" : "false";

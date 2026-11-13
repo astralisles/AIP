@@ -1,0 +1,4 @@
+fn udpSend(host Text, port Int, data Text) -> Unit
+  "Send one UDP datagram containing the text."
+  effects udp.send
+extern

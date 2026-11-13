@@ -1,0 +1,4 @@
+fn udpReceive(port Int, timeoutMs Int) -> Text
+  "Wait for one UDP datagram on a port and return its text; empty text on timeout."
+  effects udp.receive
+extern

@@ -1,0 +1,4 @@
+fn readLine() -> Text
+  "Read one line from the terminal (standard input); empty text at end of input."
+  effects terminal.read
+extern

@@ -14,7 +14,9 @@ List them with `scripts\aip.ps1 std`.
 | `priorityQueue/` | `PriorityQueue<T>`, lowest priority first | name starts with `priorityQueue` |
 | `sortedSet/` | `SortedSet<T>`, items in order   | name starts with `sortedSet` |
 | `file/`     | read/write files                       | name starts with `file`      |
-| `terminal/` | normal output (`printLine`)            | effect `terminal.*`          |
+| `terminal/` | console I/O (`printLine`, `readLine`) | effect `terminal.*`          |
+| `tcp/`      | TCP client and one-shot server         | effect `tcp.*`               |
+| `udp/`      | UDP send and receive                   | effect `udp.*`               |
 | `log/`      | diagnostics to stderr (`logLine`)      | effect `log.*`               |
 | `process/`  | command line (`arg`, `argCount`)       | effect `process.*`           |
 | `core/`     | language helpers (`noop`)              | only for what fits no group  |

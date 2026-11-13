@@ -1,0 +1,4 @@
+fn tcpServeOnce(port Int, reply Text) -> Text
+  "Listen on a TCP port, accept one client, read one line from it, send the reply, return the line."
+  effects tcp.listen
+extern
