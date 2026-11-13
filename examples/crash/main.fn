@@ -1,0 +1,8 @@
+fn main() -> Unit
+  "Crash on purpose (reads a missing map key) to show run-time error reporting."
+  effects terminal.write
+body
+  let ages = mapSet(mapEmpty(), "Ann", 30)
+  printLine("before")
+  let missing = mapGet(ages, "Bob")
+  printLine("unreachable {missing}")
