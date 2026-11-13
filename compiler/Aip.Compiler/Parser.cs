@@ -158,13 +158,19 @@ sealed class Parser
     TypeRef ParseType()
     {
         var name = Expect(T.Ident, "a type name").Text;
-        if (name == "List" && IsSym("<"))
+        if ((name == "List" || name == "Set" || name == "Map") && IsSym("<"))
         {
             _pos++;
-            var inner = ParseType();
-            if (inner.Range != "") throw Err("syntax", "a list element type cannot have a range");
+            var args = new List<string>();
+            do
+            {
+                if (args.Count > 0) _pos++; // the comma
+                var inner = ParseType();
+                if (inner.Range != "") throw Err("syntax", "an element type cannot have a range");
+                args.Add(inner.Name);
+            } while (IsSym(","));
             ExpectSym(">");
-            name = $"List<{inner.Name}>";
+            name = $"{name}<{string.Join(",", args)}>";
         }
         var range = new StringBuilder();
         if (Peek.Kind == T.Int || IsSym("-") || IsSym(".."))

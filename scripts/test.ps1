@@ -24,11 +24,24 @@ Report 'hello: `aip run` prints only "Hello, World!"' ($LASTEXITCODE -eq 0 -and 
 $out = (& $aip build examples\hello --target wasm | Out-String).Trim()
 Report 'hello: wasm is refused with a clear message' ($LASTEXITCODE -ne 0 -and $out.Contains('unsupported-target')) $out
 
+$tmp = Join-Path ([IO.Path]::GetTempPath()) ('aip-writefile-' + [guid]::NewGuid())
+New-Item -ItemType Directory $tmp | Out-Null
+$out = (& $aip build examples\writefile | Out-String).Trim()
+Report 'writefile: builds' ($LASTEXITCODE -eq 0) $out
+Push-Location $tmp
+$run = (& (Join-Path $root 'examples\writefile\build\bin\windows-x64\writefile.exe') | Out-String).Trim()
+$file = Join-Path $tmp 'greeting.txt'
+$content = if (Test-Path $file) { (Get-Content $file -Raw).Trim() } else { '' }
+Pop-Location
+Remove-Item $tmp -Recurse -Force
+Report 'writefile: writes greeting.txt with "Hello from AIP!"' ($content -eq 'Hello from AIP!' -and $run -eq 'Wrote greeting.txt') "file: $content, output: $run"
+
 
 $expectedOut = @{
   adding = "2 + 3 = 5|-7 + 10 = 3|1000000 + 2345678 = 3345678|1 + 2 + 3 = 6|Total: 65"
   types  = "Int:  42|Text: hello|Bool: true|Bool from a comparison (count > 40): true|Bool from and/or/not: true|Text equality: true|Ann is 30. Adult: yes|Tim is 12. Adult: no"
   shapes = "circle of radius 2 at 0,0, area 12|4 by 5 rectangle at 1,2, area 20|(skipping an empty shape)|dot at 7,8, area 0"
+  collections = "List size: 2, first: pear|Map size: 2|Ann is 30|Has Bob: false|Updated Ann: 31, original still 30|Keys: 2, first key: Ann|After remove: 1|Set size (3, 5, 3): 2|Has 5: true, has 4: false|Set items: 2, first: 3|Map of lists: apple"
   math   = "7 - 10 = -3|6 * 7 = 42|17 / 5 = 3 (whole number division)|17 % 5 = 2 (the rest)|abs(-12) = 12|max(3, 9) = 9|min(3, 9) = 3|square(-4) = 16|clamp(15, 0, 10) = 10|average(4, 10) = 7|isEven(10) = true|isEven(7) = false"
 }
 foreach ($name in $expectedOut.Keys | Sort-Object) {

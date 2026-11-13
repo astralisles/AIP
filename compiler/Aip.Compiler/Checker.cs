@@ -5,16 +5,47 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
 {
     static readonly HashSet<string> KnownTypes = new() { "Int", "Text", "Bool", "Unit" };
 
-    static bool IsList(string t) => t.StartsWith("List<");
-    static string Inner(string t) => t[5..^1];
+    static readonly Dictionary<string, int> Generics = new() { ["List"] = 1, ["Set"] = 1, ["Map"] = 2 };
+
+    /// <summary>Splits `Map<Text,List<Int>>` into its name and argument types; null for a plain type.</summary>
+    static (string Name, List<string> Args)? Split(string t)
+    {
+        int lt = t.IndexOf('<');
+        if (lt < 0 || !t.EndsWith('>')) return null;
+        var args = new List<string>();
+        int depth = 0, start = lt + 1;
+        for (int i = start; i < t.Length - 1; i++)
+        {
+            if (t[i] == '<') depth++;
+            else if (t[i] == '>') depth--;
+            else if (t[i] == ',' && depth == 0) { args.Add(t[start..i]); start = i + 1; }
+        }
+        args.Add(t[start..^1]);
+        return (t[..lt], args);
+    }
+
+    static bool IsList(string t) => Split(t) != null; // any generic container (List, Set, Map)
+    static string Join(string name, IEnumerable<string> args) => $"{name}<{string.Join(",", args)}>";
     static bool IsVar(string t) => t.Length == 1 && char.IsAsciiLetterUpper(t[0]);
 
-    /// <summary>Types match; `_` (the element type of an empty list) matches anything.</summary>
-    static bool Compat(string a, string b) =>
-        a == b || a == "_" || b == "_" || (IsList(a) && IsList(b) && Compat(Inner(a), Inner(b)));
+    /// <summary>Types match; `_` (an element type not known yet, e.g. in an empty list) matches anything.</summary>
+    static bool Compat(string a, string b)
+    {
+        if (a == b || a == "_" || b == "_") return true;
+        var x = Split(a); var y = Split(b);
+        return x != null && y != null && x.Value.Name == y.Value.Name && x.Value.Args.Count == y.Value.Args.Count
+            && x.Value.Args.Zip(y.Value.Args).All(p => Compat(p.First, p.Second));
+    }
 
     /// <summary>The more specific of two compatible types.</summary>
-    static string Merge(string a, string b) => a == "_" || (IsList(a) && Inner(a) == "_" && b != "_") ? b : a;
+    static string Merge(string a, string b)
+    {
+        if (a == "_") return b;
+        var x = Split(a); var y = Split(b);
+        if (x != null && y != null && x.Value.Args.Count == y.Value.Args.Count)
+            return Join(x.Value.Name, x.Value.Args.Zip(y.Value.Args).Select(p => Merge(p.First, p.Second)));
+        return a;
+    }
 
     static bool Unify(string pattern, string actual, Dictionary<string, string> vars)
     {
@@ -26,15 +57,32 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
             vars[pattern] = Merge(bound, actual);
             return true;
         }
-        if (IsList(pattern)) return IsList(actual) ? Unify(Inner(pattern), Inner(actual), vars) : actual == "_";
+        var p = Split(pattern);
+        if (p != null)
+        {
+            if (actual == "_") return true;
+            var a = Split(actual);
+            if (a == null || a.Value.Name != p.Value.Name || a.Value.Args.Count != p.Value.Args.Count) return false;
+            for (int i = 0; i < p.Value.Args.Count; i++)
+                if (!Unify(p.Value.Args[i], a.Value.Args[i], vars)) return false;
+            return true;
+        }
         return Compat(pattern, actual);
     }
 
-    static string Subst(string t, Dictionary<string, string> vars) =>
-        IsVar(t) ? vars.GetValueOrDefault(t, "_") : IsList(t) ? $"List<{Subst(Inner(t), vars)}>" : t;
+    static string Subst(string t, Dictionary<string, string> vars)
+    {
+        if (IsVar(t)) return vars.GetValueOrDefault(t, "_");
+        var s = Split(t);
+        return s == null ? t : Join(s.Value.Name, s.Value.Args.Select(a => Subst(a, vars)));
+    }
 
-    bool IsKnown(string t) =>
-        KnownTypes.Contains(t) || program.Types.ContainsKey(t) || (IsList(t) && IsKnown(Inner(t))) || (_fn?.IsStd == true && (t == "_" || IsVar(t)));
+    bool IsKnown(string t)
+    {
+        if (KnownTypes.Contains(t) || program.Types.ContainsKey(t) || (_fn?.IsStd == true && (t == "_" || IsVar(t)))) return true;
+        var s = Split(t);
+        return s != null && Generics.TryGetValue(s.Value.Name, out var n) && n == s.Value.Args.Count && s.Value.Args.All(IsKnown);
+    }
 
     static readonly HashSet<string> ReservedTypeNames = new() { "Fn", "Rt", "Program" };
     HashSet<string> _patNames = new();
@@ -155,7 +203,7 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
     void CheckType(TypeRef t, bool allowUnit)
     {
         if (!IsKnown(t.Name))
-            Error(_fn.Line, "unknown-type", $"unknown type `{t.Name}`", "types supported so far: Int, Text, Bool, Unit, List<T>, structs and variants");
+            Error(_fn.Line, "unknown-type", $"unknown type `{t.Name}`", "types supported so far: Int, Text, Bool, Unit, List<T>, Set<T>, Map<K,V>, structs and variants");
         else if (t.Name == "Unit" && !allowUnit)
             Error(_fn.Line, "type-mismatch", "a parameter cannot be Unit");
         else if (t.Range != "" && t.Name != "Int" && t.Name != "Text" && !IsList(t.Name))
@@ -194,7 +242,7 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
         {
             var pt = TypeOf(part, env, used);
             if (pt == "Unit") Error(t.Line, "type-mismatch", "a Unit value cannot be put into a text");
-            else if (IsList(pt)) Error(t.Line, "type-mismatch", "a List cannot be put into a text", "build the text from the items");
+            else if (IsList(pt)) Error(t.Line, "type-mismatch", "a List, Set or Map cannot be put into a text", "build the text from the items");
             else if (program.Types.ContainsKey(pt)) Error(t.Line, "type-mismatch", $"a {pt} cannot be put into a text", "put its fields into the text instead");
         }
         return "Text";
@@ -354,7 +402,7 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
             case "==" or "!=":
                 if (known && (!Compat(l, r) || l == "Unit" || IsList(l) || program.Types.ContainsKey(l)))
                     Error(b.Line, "type-mismatch", $"`{b.Op}` compares {l} with {r}",
-                        IsList(l) ? "lists cannot be compared; compare their lengths or items" : program.Types.ContainsKey(l) ? "structs and variants cannot be compared; compare their fields, or use `match`" : null);
+                        IsList(l) ? "lists, sets and maps cannot be compared; compare their sizes or items" : program.Types.ContainsKey(l) ? "structs and variants cannot be compared; compare their fields, or use `match`" : null);
                 return "Bool";
             default: // and, or, =>
                 if (known && (l != "Bool" || r != "Bool")) Error(b.Line, "type-mismatch", $"`{b.Op}` needs Bool on both sides, found {l} and {r}");

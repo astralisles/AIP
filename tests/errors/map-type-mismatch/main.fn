@@ -1,0 +1,7 @@
+fn main() -> Unit
+  "Use a Text key in a map whose keys are numbers."
+  effects terminal.write
+body
+  let ages = mapSet(mapEmpty(), 1, "one")
+  let found = mapHas(ages, "two")
+  printLine("{found}")
