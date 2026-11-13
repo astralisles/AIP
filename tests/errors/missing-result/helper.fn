@@ -1,0 +1,5 @@
+fn helper() -> Int
+  "Ends with let."
+  pure
+body
+  let a = 1

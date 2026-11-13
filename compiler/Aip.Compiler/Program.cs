@@ -8,6 +8,10 @@ const string Usage = """
       aip query <projectDir> <verb> [arg]             ask the index (always fresh); verbs: list, fn NAME, find WORDS, callers NAME, calls NAME, effect NAME
       aip build <projectDir> [--target T] [--out D]   check, then build a program
       aip run <projectDir>                            check, build for this machine, then run it
+      aip lint <projectDir>                           check, then warn about code that is probably wrong
+      aip test <projectDir>                           check, then run every `example` and its contracts
+      aip emit <projectDir> [--out D]                 check, then write the generated C# (no build)
+      aip fuzz <projectDir>                           damage every source file many ways; the compiler must never crash
       aip std                                         list the standard library by group (std/<group>/)
       aip find <projectDir> <word>...                 search project and std functions by name, doc, effect (best match first)
       aip spec                                        print the one-page language spec (for a model to read first)
@@ -29,7 +33,7 @@ if (args is ["spec"])
 string[] findWords = [];
 if (args.Length >= 3 && args[0] == "find") { findWords = args[2..]; args = args[..2]; }
 if (args is ["std"]) args = ["std", AppContext.BaseDirectory];
-if (args.Length < 2 || args[0] is not ("check" or "index" or "query" or "build" or "run" or "std" or "find"))
+if (args.Length < 2 || args[0] is not ("check" or "index" or "query" or "build" or "run" or "lint" or "test" or "emit" or "fuzz" or "std" or "find"))
 {
     Console.WriteLine(Usage);
     return 2;
@@ -61,102 +65,20 @@ void Phase(string name) // AIP_TIMINGS=1 prints where the time goes, to stderr
 }
 
 var diags = new List<Diagnostic>();
-var program = new ProgramModel { Name = Path.GetFileName(dir.TrimEnd('\\', '/')), Dir = dir };
-
-void AddType(TypeDef def)
-{
-    if (program.Types.TryGetValue(def.Name, out var other))
-    {
-        diags.Add(new Diagnostic(def.File, def.Line, "duplicate-name", $"`{def.Name}` is already defined in {Path.GetFileName(other.File)}", "names are unique across the project; rename one"));
-        return;
-    }
-    program.Types[def.Name] = def;
-    foreach (var c in def.Cases)
-        if (!program.Ctors.TryAdd(c.Name, (def, c)))
-            diags.Add(new Diagnostic(def.File, c.Line, "duplicate-name", $"`{c.Name}` is already defined in {Path.GetFileName(program.Ctors[c.Name].Def.File)}", "case and type names are unique across the project; rename one"));
-}
-
-void Load(string root, SourceCache? cache)
-{
-    bool isStd = cache == null;
-    // FileInfo comes from the directory listing, so size and write time cost no extra file opens.
-    var infos = new DirectoryInfo(root).EnumerateFiles("*", SearchOption.AllDirectories)
-        .Where(f => !Path.GetRelativePath(root, f.FullName).Replace('\\', '/').Split('/').Contains("build"))
-        .OrderBy(f => f.FullName, StringComparer.Ordinal).ToArray();
-    var files = infos.Select(f => f.FullName).ToArray();
-    if (!isStd) Phase($"list files ({files.Length})");
-    // Reading and parsing is ~90% of the time on big projects (mostly opening files), so it runs on
-    // all cores; results are then merged in file order, so output stays the same as a serial run.
-    var parsed = new object?[files.Length];
-    Parallel.For(0, files.Length, i =>
-    {
-        if (Path.GetExtension(files[i]) != ".fn") return;
-        try { parsed[i] = cache == null ? Parser.ParseFile(files[i]) : Parser.ParseText(files[i], cache.Read(infos[i])); }
-        catch (CompileException e) { parsed[i] = e.Diagnostic; }
-    });
-    for (int i = 0; i < files.Length; i++)
-    {
-        var file = files[i];
-        var ext = Path.GetExtension(file);
-        if (ext != ".fn")
-        {
-            if (ext is ".struct" or ".variant")
-            {
-                try { AddType(Parser.ParseTypeFile(file)); }
-                catch (CompileException e) { diags.Add(e.Diagnostic); }
-            }
-            else if (ext == ".const")
-                diags.Add(new Diagnostic(file, 1, "unsupported-file", $"`{ext}` files are not supported by the compiler yet"));
-            continue;
-        }
-        if (parsed[i] is Diagnostic d) { diags.Add(d); continue; }
-        var fn = (Fn)parsed[i]!;
-        fn.IsStd = isStd;
-        if (isStd && StdLayoutError(root, file, fn) is { } layout)
-            diags.Add(new Diagnostic(file, fn.Line, "std-layout", layout, "see compiler/std/README.md"));
-        if (program.Fns.TryGetValue(fn.Name, out var other))
-            diags.Add(new Diagnostic(file, fn.Line, "duplicate-name", $"`{fn.Name}` is already defined in {Path.GetFileName(other.File)}{(other.IsStd ? " (standard library)" : "")}", "names are unique across the project; rename one"));
-        else program.Fns[fn.Name] = fn;
-    }
-}
-
-// std is grouped one folder deep: std/<group>/<name>.fn. The name starts with the group (textSlice in text/),
-// or, for effects, the group is the effect's prefix (printLine in terminal/ has effect terminal.write).
-// Only core/ holds functions that fit neither.
-static string StdGroup(string root, string file) =>
-    Path.GetRelativePath(root, file).Replace('\\', '/').Split('/') is { Length: 2 } parts ? parts[0] : "";
-
-static string? StdLayoutError(string root, string file, Fn fn)
-{
-    var group = StdGroup(root, file);
-    if (group == "") return $"std function `{fn.Name}` must be in a group folder, std/<group>/{fn.Name}.fn";
-    if (group == "core" || fn.Name.StartsWith(group, StringComparison.Ordinal)
-        || fn.Effects.Any(e => e.StartsWith(group + ".", StringComparison.Ordinal))) return null;
-    return $"std function `{fn.Name}` in std/{group}/ must start with `{group}` or have an effect `{group}.*`";
-}
-
-var stdRoot = Path.Combine(AppContext.BaseDirectory, "std");
-Load(stdRoot, null);
-Log($"loaded standard library: {program.Fns.Count} function(s)");
+var sources = new SourceCache(Path.Combine(dir, "build", "sources.cache"));
+var program = Project.Load(dir, diags, stdOnly: command == "std", cache: command == "std" ? null : sources, phase: Phase);
+Log($"loaded: {program.Fns.Count} function(s), {program.Types.Count} type(s)");
 if (command == "std")
 {
     if (diags.Count > 0) { foreach (var d in diags) Console.WriteLine(d); return 1; }
-    foreach (var g in program.Fns.Values.GroupBy(f => StdGroup(stdRoot, f.File)).OrderBy(g => g.Key, StringComparer.Ordinal))
+    var stdRoot = Path.Combine(AppContext.BaseDirectory, "std");
+    foreach (var g in program.Fns.Values.GroupBy(f => Project.StdGroup(stdRoot, f.File)).OrderBy(g => g.Key, StringComparer.Ordinal))
     {
         Console.WriteLine($"{g.Key}/");
         foreach (var f in g.OrderBy(f => f.Name, StringComparer.Ordinal)) Console.WriteLine($"  {f.Signature} | {f.EffectsText}");
     }
     return 0;
 }
-var sources = new SourceCache(Path.Combine(dir, "build", "sources.cache"));
-Phase("load cache");
-Load(dir, sources);
-Phase($"read+parse ({sources.Hits} from cache, {sources.Misses} from disk)");
-sources.Save();
-Phase("save cache");
-Log($"loaded project: {program.ProjectFns.Count()} function(s), {program.Types.Count} type(s)");
-foreach (var (name, ctor) in program.Ctors.Where(c => program.Fns.ContainsKey(c.Key)))
-    diags.Add(new Diagnostic(ctor.Def.File, ctor.Case.Line, "duplicate-name", $"`{name}` is also a function ({Path.GetFileName(program.Fns[name].File)})", "names are unique across the project; rename one"));
 if (command == "find")
 {
     if (findWords.Length == 0) { Console.WriteLine(Usage); return 2; }
@@ -175,8 +97,6 @@ if (command == "find")
     if (hits.Count == 0) Console.WriteLine($"no function matches: {string.Join(" ", findWords)}");
     return 0;
 }
-if (diags.Count == 0) new Checker(program, diags).Check();
-Phase("check");
 
 Log($"checked: {diags.Count} error(s)");
 if (diags.Count > 0)
@@ -197,9 +117,41 @@ switch (command)
         Console.Write(Index());
         return 0;
     case "query":
-        var code = Query.Run(program, queryArgs);
-        Phase("answer");
-        return code;
+        {
+            var code = Query.Run(program, queryArgs);
+            Phase("answer");
+            return code;
+        }
+    case "lint":
+        {
+            var warnings = Lint.Run(program);
+            foreach (var w in warnings.OrderBy(w => w.File, StringComparer.Ordinal).ThenBy(w => w.Line)) Console.WriteLine(w);
+            Console.WriteLine($"{warnings.Count} warning(s)");
+            return warnings.Count > 0 ? 1 : 0;
+        }
+    case "test":
+        {
+            var (passed, skipped, failures, none) = Interp.RunExamples(program);
+            foreach (var f in failures.OrderBy(f => f.File, StringComparer.Ordinal).ThenBy(f => f.Line)) Console.WriteLine(f);
+            Console.WriteLine($"{passed} example(s) passed, {failures.Count} failed, {skipped} skipped (need effects); {none.Count} pure function(s) without an example");
+            return failures.Count > 0 ? 1 : 0;
+        }
+    case "emit":
+        {
+            var emitDir = outDir;
+            Directory.CreateDirectory(emitDir);
+            foreach (var (name, content) in CsBackend.EmitFiles(program)) File.WriteAllText(Path.Combine(emitDir, name), content);
+            File.WriteAllText(Path.Combine(emitDir, "index.txt"), Index());
+            Console.WriteLine($"ok: wrote the generated files to {Path.GetRelativePath(Environment.CurrentDirectory, emitDir).Replace('\\', '/')}");
+            return 0;
+        }
+    case "fuzz":
+        {
+            var (tried, crashes) = Fuzz.Run(dir);
+            foreach (var c in crashes.Take(20)) Console.WriteLine("crash: " + c);
+            Console.WriteLine($"{tried} damaged input(s) tried, {crashes.Count} crash(es)");
+            return crashes.Count > 0 ? 1 : 0;
+        }
 }
 
 var host = (OperatingSystem.IsWindows() ? "windows" : OperatingSystem.IsMacOS() ? "macos" : "linux")
@@ -212,7 +164,7 @@ if (command == "run" && target != null && target != host)
 target ??= host;
 Directory.CreateDirectory(outDir);
 File.WriteAllText(Path.Combine(outDir, "index.txt"), Index());
-IBackend backend = new CsBackend { Log = Log };
+var backend = new CsBackend { Log = Log };
 Log($"building for {target} into {outDir}");
 var exe = backend.Build(program, outDir, target);
 if (exe == null) { Log("build failed"); return 1; }

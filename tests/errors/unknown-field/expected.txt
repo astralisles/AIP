@@ -1,1 +1,1 @@
-`Car` has no field `speeed`
+error unknown-field: `Car` has no field `speeed`

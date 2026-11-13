@@ -43,7 +43,7 @@ static class Query
                 break;
             case "effect":
                 if (arg == "") return Usage();
-                hits = all.Where(g => arg == "pure" ? g.Effects.Count == 0 : g.Effects.Any(e => e == arg || e.StartsWith(arg + ".")));
+                hits = all.Where(g => arg == "pure" ? g.Effects.Count == 0 : g.Effects.Any(e => e == arg || e.StartsWith(arg + ".", StringComparison.Ordinal)));
                 break;
             default:
                 return Usage();

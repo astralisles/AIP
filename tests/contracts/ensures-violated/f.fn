@@ -1,0 +1,7 @@
+fn f(n Int) -> Int
+  "Claims to grow a number, but does not."
+  pure
+  ensures result > n
+  example f(1) == 1
+body
+  n

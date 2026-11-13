@@ -23,7 +23,11 @@ sealed class Parser
     CompileException Err(string code, string message, string? fix = null) =>
         new(new Diagnostic(_file, _line, code, message, fix));
 
-    public static Fn ParseFile(string file) => ParseText(file, File.ReadAllText(file));
+    public static Fn ParseFile(string file, string[]? lines = null)
+    {
+        var p = new Parser(file);
+        return p.ParseLines(lines ?? File.ReadAllLines(file));
+    }
 
     /// <summary>Parses source text already in memory; `file` is only used for names and errors.</summary>
     public static Fn ParseText(string file, string text)
@@ -31,7 +35,7 @@ sealed class Parser
         var lines = new List<string>();
         using (var r = new StringReader(text))
             for (var l = r.ReadLine(); l != null; l = r.ReadLine()) lines.Add(l); // same split as File.ReadAllLines
-        return new Parser(file).ParseLines(lines.ToArray());
+        return ParseFile(file, lines.ToArray());
     }
 
     /// <summary>One line per token (`Kind text`), and `Newline` after each non-blank line. Used to compare with the lexer written in AIP.</summary>
@@ -45,7 +49,7 @@ sealed class Parser
             var text = raw.Trim();
             if (text.Length == 0) continue;
             p.Lex(text);
-            foreach (var t in p._toks.Where(t => t.Kind != T.End)) sb.Append($"{t.Kind} {t.Text}\n");
+            foreach (var t in p._toks.Where(t => t.Kind != T.End)) sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"{t.Kind} {t.Text}\n");
             sb.Append("Newline\n");
         }
         return sb.ToString();
@@ -69,7 +73,7 @@ sealed class Parser
 
             if (state == 0)
             {
-                if (indent != 0 || !text.StartsWith("fn "))
+                if (indent != 0 || !text.StartsWith("fn ", StringComparison.Ordinal))
                     throw Err("missing-signature", "the first line must declare the function", "start the file with `fn name(params) -> Type`");
                 Lex(text);
                 ParseSignature(fn);
@@ -104,7 +108,7 @@ sealed class Parser
                         throw Err("missing-doc", "line 2 must be the purpose of the function", "add a one-line description in double quotes as line 2");
                     fn.Doc = text[1..^1];
                 }
-                else if (text == "pure" || text.StartsWith("effects "))
+                else if (text == "pure" || text.StartsWith("effects ", StringComparison.Ordinal))
                 {
                     if (sawEffects) throw Err("duplicate-effects", "effects are declared twice");
                     sawEffects = true;
@@ -112,9 +116,9 @@ sealed class Parser
                     if (text != "pure")
                         fn.Effects = text["effects ".Length..].Split(',').Select(e => e.Trim()).Where(e => e != "").ToList();
                 }
-                else if (text.StartsWith("requires ")) fn.Requires.Add(ParseExprText(text["requires ".Length..]));
-                else if (text.StartsWith("ensures ")) fn.Ensures.Add(ParseExprText(text["ensures ".Length..]));
-                else if (text.StartsWith("example ")) fn.Examples.Add(ParseExprText(text["example ".Length..]));
+                else if (text.StartsWith("requires ", StringComparison.Ordinal)) fn.Requires.Add(ParseExprText(text["requires ".Length..]));
+                else if (text.StartsWith("ensures ", StringComparison.Ordinal)) fn.Ensures.Add(ParseExprText(text["ensures ".Length..]));
+                else if (text.StartsWith("example ", StringComparison.Ordinal)) fn.Examples.Add(ParseExprText(text["example ".Length..]));
                 else throw Err("unexpected-line", $"unknown header line `{text}`", "header lines are: purpose, `pure` or `effects`, `requires`, `ensures`, `example`; then `body`");
                 continue;
             }
@@ -192,7 +196,9 @@ sealed class Parser
     {
         var sign = "";
         if (IsSym("-")) { _pos++; sign = "-"; }
-        return sign + Expect(T.Int, "a number").Text;
+        var digits = Expect(T.Int, "a number").Text;
+        if (!long.TryParse(sign + digits, out _)) throw Err("bad-number", $"`{sign}{digits}` is too large for Int");
+        return sign + digits;
     }
 
     void ParseArm(MatchExpr m, string text)
@@ -216,10 +222,10 @@ sealed class Parser
         m.Arms.Add(arm);
     }
 
-    public static TypeDef ParseTypeFile(string file)
+    public static TypeDef ParseTypeFile(string file, string[]? lines = null)
     {
         var p = new Parser(file);
-        return p.ParseTypeLines(File.ReadAllLines(file));
+        return p.ParseTypeLines(lines ?? File.ReadAllLines(file));
     }
 
     /// <summary>`struct Name` or `variant Name`, a purpose line, then fields (`name Type`) or cases (`Case(name Type, ...)`), all indented by two spaces.</summary>
@@ -236,7 +242,7 @@ sealed class Parser
             var text = raw.Trim();
             if (def == null)
             {
-                if (indent != 0 || !(text.StartsWith("struct ") || text.StartsWith("variant ")))
+                if (indent != 0 || !(text.StartsWith("struct ", StringComparison.Ordinal) || text.StartsWith("variant ", StringComparison.Ordinal)))
                     throw Err("missing-signature", "the first line must declare the type", "start the file with `struct Name` or `variant Name`");
                 Lex(text);
                 bool isVariant = Peek.Text == "variant";

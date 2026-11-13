@@ -1,0 +1,6 @@
+fn main() -> Unit
+  "Leave a value unused."
+  effects terminal.write
+body
+  1
+  printLine("hi")

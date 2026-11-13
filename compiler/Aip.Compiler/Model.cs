@@ -82,11 +82,13 @@ sealed class Diagnostic(string file, int line, string code, string message, stri
     public string Code = code;
     public string Message = message;
     public string? Fix = fix;
+    /// <summary>"error" or "warning" (warnings come from `aip lint`).</summary>
+    public string Kind = "error";
 
     public override string ToString()
     {
         var rel = Path.GetRelativePath(Environment.CurrentDirectory, File).Replace('\\', '/');
-        var s = $"{rel}:{Line}: error {Code}: {Message}";
+        var s = $"{rel}:{Line}: {Kind} {Code}: {Message}";
         return Fix == null ? s : s + "\n  fix: " + Fix;
     }
 }

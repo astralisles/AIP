@@ -1,0 +1,7 @@
+fn main() -> Unit
+  "A match without cases."
+  effects terminal.write
+body
+  let light = Red()
+  let n = match light
+  printLine("{light}")

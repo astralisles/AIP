@@ -1,0 +1,5 @@
+fn main() -> Unit
+	"Tab indent."
+  effects terminal.write
+body
+  printLine("hi")

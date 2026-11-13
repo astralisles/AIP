@@ -1,0 +1,6 @@
+fn main() -> Unit
+  "Call the function under test."
+  effects terminal.write
+body
+  let one = f("1")
+  printLine("{one}")
