@@ -1,0 +1,6 @@
+fn stepBody(indent Int, text Text, pending List<Int>, openIf Bool) -> BodyStep
+  "Read one body line (indent and trimmed text) given the open matches and whether an `if` block is open."
+  pure
+body
+  let open = popPending(pending, indent)
+  if listLength(open) > 0 and indent == listGet(open, listLength(open) - 1) then stepArm(indent, text, open, openIf) else if indent == 4 and openIf then stepBlockStmt(text, open) else if openIf and text == "else" then BodyStep("else", open, true) else stepTop(text)

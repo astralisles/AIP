@@ -4,7 +4,7 @@ using System.Text;
 namespace Aip;
 
 /// <summary>Back end that emits C# and builds it with the .NET SDK.</summary>
-sealed class CsBackend : IBackend
+sealed partial class CsBackend : IBackend
 {
     public Action<string> Log { get; init; } = _ => { };
     public string Name => "cs";
@@ -17,125 +17,6 @@ sealed class CsBackend : IBackend
         ["linux-x64"] = "linux-x64",
         ["linux-arm64"] = "linux-arm64",
         ["macos-arm64"] = "osx-arm64",
-    };
-
-    /// <summary>How each std extern function is written in C#. {0}, {1}... are the arguments.</summary>
-    static readonly Dictionary<string, string> Externs = new()
-    {
-        ["logLine"] = "System.Console.Error.Write({0} + \"\\n\")",
-        ["printLine"] = "System.Console.Out.Write({0} + \"\\n\")",
-        ["textLength"] = "(long)({0}).Length",
-        ["textSlice"] = "Rt.Slice({0}, {1}, {2})",
-        ["textCode"] = "(long)({0})[(int)({1})]",
-        ["textFromCode"] = "((char)({0})).ToString()",
-        ["textToInt"] = "long.Parse({0}, System.Globalization.CultureInfo.InvariantCulture)",
-        ["listEmpty"] = "Aip.Persistent.PList.Empty",
-        ["listLength"] = "(long)({0}).Count",
-        ["listGet"] = "({0})[(int)({1})]",
-        ["listAppend"] = "({0}).Append({1})",
-        ["textFind"] = "(long)({0}).IndexOf({1}, System.StringComparison.Ordinal)",
-        ["textContains"] = "({0}).Contains({1}, System.StringComparison.Ordinal)",
-        ["textStartsWith"] = "({0}).StartsWith({1}, System.StringComparison.Ordinal)",
-        ["textEndsWith"] = "({0}).EndsWith({1}, System.StringComparison.Ordinal)",
-        ["textTrim"] = "({0}).Trim()",
-        ["textReplace"] = "({0}).Replace({1}, {2}, System.StringComparison.Ordinal)",
-        ["textToUpper"] = "({0}).ToUpperInvariant()",
-        ["textToLower"] = "({0}).ToLowerInvariant()",
-        ["textCompare"] = "(long)System.Math.Sign(string.CompareOrdinal({0}, {1}))",
-        ["textFromInt"] = "({0}).ToString(System.Globalization.CultureInfo.InvariantCulture)",
-        ["textRepeat"] = "string.Concat(System.Linq.Enumerable.Repeat({0}, (int)({1})))",
-        ["textSplit"] = "Aip.Persistent.PList.From(({0}).Split({1}, System.StringSplitOptions.None))",
-        ["textJoin"] = "string.Join({1}, System.Linq.Enumerable.Cast<string>({0}))",
-        ["intMin"] = "System.Math.Min({0}, {1})",
-        ["intMax"] = "System.Math.Max({0}, {1})",
-        ["intAbs"] = "System.Math.Abs({0})",
-        ["intSign"] = "(long)System.Math.Sign({0})",
-        ["intClamp"] = "System.Math.Clamp({0}, {1}, {2})",
-        ["intPow"] = "(long)System.Numerics.BigInteger.Pow({0}, (int)({1}))",
-        ["intGcd"] = "(long)System.Numerics.BigInteger.GreatestCommonDivisor({0}, {1})",
-        ["intAnd"] = "(({0}) & ({1}))",
-        ["intOr"] = "(({0}) | ({1}))",
-        ["intXor"] = "(({0}) ^ ({1}))",
-        ["intNot"] = "(~({0}))",
-        ["intShiftLeft"] = "(({0}) << (int)({1}))",
-        ["intShiftRight"] = "(({0}) >> (int)({1}))",
-        ["listSet"] = "({0}).Set((int)({1}), {2})",
-        ["listInsert"] = "({0}).Insert((int)({1}), {2})",
-        ["listRemoveAt"] = "({0}).RemoveAt((int)({1}))",
-        ["listConcat"] = "({0}).Concat({1})",
-        ["listSlice"] = "({0}).Slice({1}, {2})",
-        ["listReverse"] = "({0}).Reverse()",
-        ["listIndexOf"] = "(long)({0}).IndexOf({1})",
-        ["listContains"] = "({0}).Contains({1})",
-        ["listRange"] = "Rt.ListRange({0}, {1})",
-        ["mapEmpty"] = "Aip.Persistent.PMap.Empty",
-        ["mapSize"] = "(long)({0}).Count",
-        ["mapHas"] = "({0}).ContainsKey({1})",
-        ["mapGet"] = "Rt.MapGet({0}, {1})",
-        ["mapSet"] = "({0}).Set({1}, {2})",
-        ["mapRemove"] = "({0}).Remove({1})",
-        ["mapKeys"] = "({0}).Keys()",
-        ["setEmpty"] = "Aip.Persistent.PMap.Empty",
-        ["setSize"] = "(long)({0}).Count",
-        ["setHas"] = "({0}).ContainsKey({1})",
-        ["setAdd"] = "({0}).Set({1}, true)",
-        ["setRemove"] = "({0}).Remove({1})",
-        ["setItems"] = "({0}).Keys()",
-        ["sortedMapEmpty"] = "new Aip.Persistent.PSorted(Rt.Order)",
-        ["sortedMapSize"] = "(long)({0}).Count",
-        ["sortedMapHas"] = "({0}).ContainsKey({1})",
-        ["sortedMapGet"] = "Rt.SortedGet({0}, {1})",
-        ["sortedMapSet"] = "({0}).Set({1}, {2})",
-        ["sortedMapRemove"] = "({0}).Remove({1})",
-        ["sortedMapKeys"] = "Aip.Persistent.PList.From({0})",
-        ["sortedSetEmpty"] = "new Aip.Persistent.PSorted(Rt.Order)",
-        ["sortedSetSize"] = "(long)({0}).Count",
-        ["sortedSetHas"] = "({0}).ContainsKey({1})",
-        ["sortedSetAdd"] = "({0}).Set({1}, true)",
-        ["sortedSetRemove"] = "({0}).Remove({1})",
-        ["sortedSetItems"] = "Aip.Persistent.PList.From({0})",
-        ["queueEmpty"] = "Aip.Persistent.PFifo.Empty",
-        ["queueSize"] = "(long)({0}).Count",
-        ["queuePush"] = "({0}).Push({1})",
-        ["queueFront"] = "({0}).Front(\"queueFront\")",
-        ["queuePop"] = "({0}).Pop(\"queuePop\")",
-        ["priorityQueueEmpty"] = "Aip.Persistent.PQueue.Empty",
-        ["priorityQueueSize"] = "(long)({0}).Count",
-        ["priorityQueuePush"] = "({0}).Push({1}, {2})",
-        ["priorityQueueFront"] = "({0}).Front(\"priorityQueueFront\")",
-        ["priorityQueuePop"] = "({0}).Pop(\"priorityQueuePop\")",
-        ["fileRead"] = "System.IO.File.ReadAllText({0})",
-        ["fileWrite"] = "Rt.Write({0}, {1})",
-        ["numToI8"] = "checked((sbyte)({0}))",
-        ["numFromI8"] = "checked((long)({0}))",
-        ["numToI16"] = "checked((short)({0}))",
-        ["numFromI16"] = "checked((long)({0}))",
-        ["numToI32"] = "checked((int)({0}))",
-        ["numFromI32"] = "checked((long)({0}))",
-        ["numToU8"] = "checked((byte)({0}))",
-        ["numFromU8"] = "checked((long)({0}))",
-        ["numToU16"] = "checked((ushort)({0}))",
-        ["numFromU16"] = "checked((long)({0}))",
-        ["numToU32"] = "checked((uint)({0}))",
-        ["numFromU32"] = "checked((long)({0}))",
-        ["numToU64"] = "checked((ulong)({0}))",
-        ["numFromU64"] = "checked((long)({0}))",
-        ["numToF32"] = "((float)({0}))",
-        ["numToF64"] = "((double)({0}))",
-        ["numFromF32"] = "Rt.ToInt((double)({0}))",
-        ["numFromF64"] = "Rt.ToInt({0})",
-        ["numF32ToF64"] = "((double)({0}))",
-        ["numF64ToF32"] = "((float)({0}))",
-        // Bit operations on whole numbers; <T> is the C# type of the result. Shift counts outside 0..width-1 are errors.
-        ["bitAnd"] = "unchecked((<T>)({0} & {1}))",
-        ["bitOr"] = "unchecked((<T>)({0} | {1}))",
-        ["bitXor"] = "unchecked((<T>)({0} ^ {1}))",
-        ["bitNot"] = "unchecked((<T>)(~{0}))",
-        ["bitShl"] = "unchecked((<T>)({0} << Rt.Shift({1}, sizeof(<T>) * 8)))",
-        ["bitShr"] = "unchecked((<T>)({0} >> Rt.Shift({1}, sizeof(<T>) * 8)))",
-        ["noop"] = "Rt.Nop()",
-        ["argCount"] = "(long)Rt.Args.Length",
-        ["arg"] = "Rt.Args[(int)({0})]",
     };
 
     public string? Build(ProgramModel program, string outDir, string target)
@@ -235,6 +116,7 @@ sealed class CsBackend : IBackend
         foreach (var fn in program.ProjectFns) files[fn.Name + ".cs"] = fn.IsConst ? EmitConst(fn) : fn.NativeLib != null ? EmitNative(fn) : EmitFn(fn);
         files["Program.cs"] = ProgramCs;
         files["Persistent.cs"] = PersistentRt.Source;
+        foreach (var (name, source) in RuntimeParts) files[name] = source;
         if (program.Types.Count > 0) files["Types.cs"] = EmitTypes(program);
         files[program.Name + ".csproj"] = Csproj;
         return files;
@@ -248,6 +130,8 @@ sealed class CsBackend : IBackend
     {
         "Int" => "long", "F32" => "float", "F64" => "double", "I8" => "sbyte", "I16" => "short", "I32" => "int",
         "U8" => "byte", "U16" => "ushort", "U32" => "uint", "U64" => "ulong", "Text" => "string", "Bool" => "bool", "_" => "object",
+        "Bytes" => "byte[]",
+        "TcpListener" or "TcpConn" or "UdpSocket" => "object", // handles, opened by effectful std functions
         _ when t.Length == 1 && char.IsAsciiLetterUpper(t[0]) => "object", // a type parameter: erased
         _ when t.StartsWith("List<", StringComparison.Ordinal) => "Aip.Persistent.PList",
         _ when t.StartsWith("Queue<", StringComparison.Ordinal) => "Aip.Persistent.PFifo",
@@ -459,129 +343,6 @@ sealed class CsBackend : IBackend
             }
         }
 
-        public static class Rt
-        {
-            public static string[] Args = System.Array.Empty<string>();
-            public static string Slice(string s, long start, long end)
-            {
-                int a = (int)System.Math.Clamp(start, 0, s.Length), b = (int)System.Math.Clamp(end, a, s.Length);
-                return s.Substring(a, b - a);
-            }
-            // Collections are persistent (Persistent.cs); only these helpers are left here.
-            public static Aip.Persistent.PList ListRange(long start, long end)
-            {
-                var r = Aip.Persistent.PList.Empty;
-                for (long i = start; i < end; i++) r = r.Append(i);
-                return r;
-            }
-            public static object MapGet(Aip.Persistent.PMap m, object k) =>
-                m.TryGetValue(k, out var v) ? v : throw new System.Collections.Generic.KeyNotFoundException("mapGet: key not in the map");
-            // Sorted maps and sets are balanced trees: keys come back in ascending order (Int by value, Text by ordinal).
-            sealed class OrderCmp : System.Collections.Generic.IComparer<object>
-            {
-                public int Compare(object? a, object? b) => a is string s ? string.CompareOrdinal(s, (string)b!) : ((long)a!).CompareTo((long)b!);
-            }
-            public static readonly System.Collections.Generic.IComparer<object> Order = new OrderCmp();
-            public static object SortedGet(Aip.Persistent.PSorted m, object k) =>
-                m.TryGetValue(k, out var v) ? v : throw new System.Collections.Generic.KeyNotFoundException("sortedMapGet: key not in the map");
-            public static void Nop() { }
-
-            // ---- opt-in profiling and call log (one program thread; parallel tasks (T-0935) will need per-thread state) ----
-            public static bool Prof, Calls;
-            public static string? Error;
-            static string? profPath, callsPath;
-            static long startTs, depth, maxDepth, callLimit, callCount;
-            static System.Text.StringBuilder callLog = new();
-            sealed class Stat { public long Calls, Self; }
-            static readonly System.Collections.Generic.Dictionary<string, Stat> stats = new();
-            static readonly System.Collections.Generic.List<long> childTime = new();
-            static readonly System.Globalization.CultureInfo Inv = System.Globalization.CultureInfo.InvariantCulture;
-            public static void Init()
-            {
-                profPath = System.Environment.GetEnvironmentVariable("AIP_PROFILE");
-                callsPath = System.Environment.GetEnvironmentVariable("AIP_CALLS");
-                Prof = !string.IsNullOrEmpty(profPath);
-                Calls = !string.IsNullOrEmpty(callsPath);
-                callLimit = long.TryParse(System.Environment.GetEnvironmentVariable("AIP_CALLS_MAX"), out var n) ? n : 10000;
-                startTs = System.Diagnostics.Stopwatch.GetTimestamp();
-            }
-            public static long Enter()
-            {
-                depth++;
-                if (depth > maxDepth) maxDepth = depth;
-                childTime.Add(0);
-                return System.Diagnostics.Stopwatch.GetTimestamp();
-            }
-            public static void Leave(string name, long t0)
-            {
-                long total = System.Diagnostics.Stopwatch.GetTimestamp() - t0;
-                long kids = childTime[^1];
-                childTime.RemoveAt(childTime.Count - 1);
-                if (childTime.Count > 0) childTime[^1] += total;
-                if (!stats.TryGetValue(name, out var s)) stats[name] = s = new Stat();
-                s.Calls++;
-                s.Self += total - kids;
-                depth--;
-            }
-            public static void Call(string name, object[] a)
-            {
-                callCount++;
-                if (callCount > callLimit) return;
-                callLog.Append("{\"n\":").Append(callCount).Append(",\"depth\":").Append(depth).Append(",\"fn\":\"").Append(name).Append("\",\"args\":[");
-                for (int i = 0; i < a.Length; i++)
-                {
-                    var v = a[i] is string str ? str : System.Convert.ToString(a[i], Inv) ?? "null";
-                    if (v.Length > 120) v = v.Substring(0, 120) + "...";
-                    callLog.Append(i > 0 ? "," : "").Append(Json(v));
-                }
-                callLog.Append("]}\n");
-            }
-            static string Json(string v)
-            {
-                var sb = new System.Text.StringBuilder("\"");
-                foreach (var c in v)
-                    sb.Append(c switch { '"' => "\\\"", '\\' => "\\\\", '\n' => "\\n", '\r' => "\\r", '\t' => "\\t", _ when c < ' ' => "\\u" + ((int)c).ToString("X4"), _ => c.ToString() });
-                return sb.Append('"').ToString();
-            }
-            static void Out(string? path, string text)
-            {
-                if (path == "-") System.Console.Error.Write(text);
-                else if (path != null) System.IO.File.WriteAllText(path, text);
-            }
-            public static void Report(int code)
-            {
-                if (Calls)
-                {
-                    if (callCount > callLimit) callLog.Append("{\"truncated\":true,\"calls\":").Append(callCount).Append(",\"logged\":").Append(callLimit).Append("}\n");
-                    Out(callsPath, callLog.ToString());
-                }
-                if (!Prof) return;
-                string ms(long ts) => (ts * 1000.0 / System.Diagnostics.Stopwatch.Frequency).ToString("0.###", Inv);
-                var proc = System.Diagnostics.Process.GetCurrentProcess();
-                var sb = new System.Text.StringBuilder("{\n");
-                sb.Append($"  \"schema\": 1,\n  \"exitCode\": {code},\n  \"error\": {(Error == null ? "null" : Json(Error))},\n");
-                sb.Append($"  \"wallMs\": {ms(System.Diagnostics.Stopwatch.GetTimestamp() - startTs)},\n");
-                sb.Append($"  \"cpuMs\": {proc.TotalProcessorTime.TotalMilliseconds.ToString("0.###", Inv)},\n");
-                sb.Append($"  \"peakWorkingSetBytes\": {proc.PeakWorkingSet64},\n  \"allocatedBytes\": {System.GC.GetTotalAllocatedBytes()},\n");
-                sb.Append($"  \"gcCollections\": [{System.GC.CollectionCount(0)}, {System.GC.CollectionCount(1)}, {System.GC.CollectionCount(2)}],\n");
-                sb.Append($"  \"maxCallDepth\": {maxDepth},\n  \"functions\": [\n");
-                sb.Append(string.Join(",\n", System.Linq.Enumerable.Select(System.Linq.Enumerable.OrderByDescending(stats, p => p.Value.Self),
-                    p => $"    {{\"fn\": \"{p.Key}\", \"calls\": {p.Value.Calls}, \"selfMs\": {ms(p.Value.Self)}}}")));
-                sb.Append("\n  ]\n}\n");
-                Out(profPath, sb.ToString());
-            }
-            public static void Write(string path, string content) => System.IO.File.WriteAllText(path, content);
-            public static string Text(string v) => v;
-            public static string Text(double v) => v.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
-            public static string Text(float v) => v.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
-            public static string Text(int v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
-            public static string Text(uint v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
-            public static int Shift(long count, int width) => count >= 0 && count < width ? (int)count : throw new System.ArgumentOutOfRangeException("count", $"shift count {count} must be 0 to {width - 1}");
-            public static long ToInt(double v) => double.IsNaN(v) || v >= 9223372036854775808.0 || v < -9223372036854775808.0 ? throw new System.OverflowException($"{v} does not fit in Int") : (long)v;
-            public static string Text(ulong v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
-            public static string Text(long v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
-            public static string Text(bool v) => v ? "true" : "false";
-        }
 
         """;
 

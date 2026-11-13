@@ -1,0 +1,5 @@
+fn parsePostfix(toks List<Text>, pos Int) -> ExprParsed
+  "Read a primary expression and the `.field` reads after it."
+  pure
+body
+  postfixRest(toks, parsePrimary(toks, pos))

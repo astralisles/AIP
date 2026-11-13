@@ -1,4 +1,0 @@
-fn compressDecode(data List<Int>) -> List<Int>
-  "Undo compress (gzip); fails when the bytes are not valid gzip."
-  pure
-extern

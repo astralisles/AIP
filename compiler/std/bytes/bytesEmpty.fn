@@ -1,0 +1,4 @@
+fn bytesEmpty() -> Bytes
+  "No bytes."
+  pure
+extern

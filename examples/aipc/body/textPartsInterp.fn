@@ -1,0 +1,5 @@
+fn textPartsInterp(raw Text, close Int, hole Expr, cur Text, parts List<Expr>) -> List<Expr>
+  "Add the literal text so far (if any) and the hole, then go on after the `}` at index close."
+  pure
+body
+  textPartsFrom(raw, close + 1, "", listAppend(if cur == "" then parts else listAppend(parts, Lit(cur)), hole))

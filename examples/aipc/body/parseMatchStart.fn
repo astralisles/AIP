@@ -1,0 +1,6 @@
+fn parseMatchStart(toks List<Text>, pos Int) -> ExprParsed
+  "Read the subject of a `match` at pos (the arms are separate lines)."
+  pure
+body
+  let subject = parseExpr(toks, pos, false)
+  ExprParsed(MatchOn(subject.expr), subject.next)

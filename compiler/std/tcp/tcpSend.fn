@@ -1,0 +1,4 @@
+fn tcpSend(conn TcpConn, data Bytes) -> Unit
+  "Send bytes on an open connection (any time, any number of times)."
+  effects tcp.send
+extern

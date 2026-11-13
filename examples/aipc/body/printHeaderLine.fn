@@ -1,0 +1,6 @@
+fn printHeaderLine(lines List<Text>, i Int, prefix Text) -> Unit
+  "Print one header line's expression, then go on with the next line."
+  effects terminal.write
+body
+  printLine("{prefix}{sexpr(parseExprText(textSlice(listGet(lines, i), textLength(prefix) + 2, textLength(listGet(lines, i)))))}")
+  printHeader(lines, i + 1, prefix)

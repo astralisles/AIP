@@ -1,0 +1,6 @@
+fn stepTop(text Text) -> BodyStep
+  "A statement at the body's own indent: an `if cond then` block start, a `let`, or an expression."
+  pure
+body
+  let size = textLength(text)
+  if size > 8 and textSlice(text, 0, 3) == "if " and textSlice(text, size - 5, size) == " then" then BodyStep("if {sexpr(parseExprText(textSlice(text, 3, size - 5)))}", listEmpty(), true) else stepLet(lexAll(text))

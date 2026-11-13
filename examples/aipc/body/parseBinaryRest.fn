@@ -1,0 +1,5 @@
+fn parseBinaryRest(toks List<Text>, level Int, left ExprParsed) -> ExprParsed
+  "Read `op right` pairs of operator level `level` after the expression left, left to right."
+  pure
+body
+  if isLevelOp(level, tokAt(toks, left.next)) then parseBinaryRest(toks, level, binaryStep(toks, level, left)) else left

@@ -1,0 +1,5 @@
+fn textPartsHole(raw Text, i Int, rel Int, cur Text, parts List<Expr>) -> List<Expr>
+  "A `{` at i whose `}` is rel characters later (-1: none, which is an error in the C# parser)."
+  pure
+body
+  if rel < 0 then textPartsEnd(cur, parts) else textPartsInterp(raw, i + rel, parseExprText(textSlice(raw, i + 1, i + rel)), cur, parts)

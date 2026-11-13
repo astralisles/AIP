@@ -1,0 +1,6 @@
+fn levelOps(level Int) -> List<Text>
+  "The operators of one precedence level, loosest first: =>, or, and, comparisons, + -, * / %."
+  pure
+  example listLength(levelOps(3)) == 6
+body
+  if level == 0 then textSplit("=>", " ") else if level == 1 then textSplit("or", " ") else if level == 2 then textSplit("and", " ") else if level == 3 then textSplit("== != < <= > >=", " ") else if level == 4 then textSplit("+ -", " ") else textSplit("* / %", " ")

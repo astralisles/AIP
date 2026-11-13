@@ -1,0 +1,18 @@
+fn isMatch(e Expr) -> Bool
+  "Whether an expression is a `match` whose arms follow on the next lines."
+  pure
+body
+  match e
+    MatchOn(subject) => true
+    IntNum(text) => false
+    FloatNum(text) => false
+    BoolVal(value) => false
+    Lit(text) => false
+    TextParts(parts) => false
+    NameRef(name) => false
+    CallFn(name, args) => false
+    FieldOf(target, name) => false
+    UnaryOp(op, operand) => false
+    BinaryOp(op, left, right) => false
+    IfExpr(cond, whenTrue, whenFalse) => false
+    BadExpr(message) => false

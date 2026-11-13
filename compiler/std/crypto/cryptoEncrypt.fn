@@ -1,4 +1,0 @@
-fn cryptoEncrypt(key List<Int>, nonce List<Int>, data List<Int>) -> List<Int>
-  "AES-GCM: key 16 or 32 bytes, nonce 12 bytes (never reuse a nonce with a key); returns ciphertext followed by a 16-byte tag."
-  pure
-extern

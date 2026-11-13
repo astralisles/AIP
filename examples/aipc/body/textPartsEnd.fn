@@ -1,0 +1,5 @@
+fn textPartsEnd(cur Text, parts List<Expr>) -> List<Expr>
+  "Finish: add the last literal piece; a text with no parts at all gets one empty piece."
+  pure
+body
+  if cur != "" or listLength(parts) == 0 then listAppend(parts, Lit(cur)) else parts

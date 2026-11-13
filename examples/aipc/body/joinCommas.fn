@@ -1,0 +1,6 @@
+fn joinCommas(names List<Text>) -> Text
+  "The names separated by commas, without spaces."
+  pure
+  example joinCommas(textSplit("a b", " ")) == "a,b"
+body
+  textJoin(names, ",")

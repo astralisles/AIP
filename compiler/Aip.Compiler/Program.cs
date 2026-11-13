@@ -25,6 +25,11 @@ if (args.Length == 2 && args[0] == "tokens")
     Console.Write(Parser.Tokens(Path.GetFullPath(args[1])));
     return 0;
 }
+if (args.Length == 2 && args[0] == "ast")
+{
+    try { Console.Write(AstDump.Dump(Path.GetFullPath(args[1]))); return 0; }
+    catch (CompileException ex) { Console.Error.WriteLine(ex.Message); return 1; }
+}
 if (args is ["spec"])
 {
     Console.Write(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "spec.md")));

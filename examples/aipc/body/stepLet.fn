@@ -1,0 +1,5 @@
+fn stepLet(toks List<Text>) -> BodyStep
+  "A statement line: `let name = value` or just a value."
+  pure
+body
+  if tokAt(toks, 0) == "Ident let" then stepValue("let {tokText(tokAt(toks, 1))} ", toks, 3) else stepValue("", toks, 0)

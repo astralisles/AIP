@@ -1,0 +1,7 @@
+fn sexprQuoted(text Text) -> Text
+  "A text in double quotes, with backslash, quote, newline and tab written as escapes."
+  pure
+body
+  let escaped = textReplace(textReplace(textReplace(textReplace(text, "\\", "\\\\"), "\"", "\\\""), textFromCode(10), "\n"), textFromCode(9), "\t")
+  let quote = textFromCode(34)
+  "{quote}{escaped}{quote}"

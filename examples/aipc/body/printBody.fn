@@ -1,0 +1,5 @@
+fn printBody(lines List<Text>, i Int, pending List<Int>, openIf Bool) -> Unit
+  "Print the dump of every body line from index i, in order."
+  effects terminal.write
+body
+  if i >= listLength(lines) then noop() else if textTrim(listGet(lines, i)) == "" then printBody(lines, i + 1, pending, openIf) else printBodyLine(lines, i, stepBody(countSpaces(listGet(lines, i), 0), textTrim(listGet(lines, i)), pending, openIf))

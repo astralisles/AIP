@@ -6,10 +6,12 @@
 # Usage: scripts\check-externs.ps1
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
-$cs = Get-Content (Join-Path $root 'compiler\Aip.Compiler\CsBackend.cs') -Raw
-$interp = Get-Content (Join-Path $root 'compiler\Aip.Compiler\Interp.cs') -Raw
+$src = Join-Path $root 'compiler\Aip.Compiler'
+# The templates are split by family: CsBackend.Externs.*.cs and Interp.Externs.*.cs
+$cs = (Get-ChildItem $src -Filter 'CsBackend*.cs' | ForEach-Object { Get-Content $_.FullName -Raw }) -join "`n"
+$interp = (Get-ChildItem $src -Filter 'Interp.Externs.*.cs' | ForEach-Object { Get-Content $_.FullName -Raw }) -join "`n"
 $templates = @{}
-foreach ($m in [regex]::Matches($cs, '\["(\w+)"\] = "((?:[^"\\]|\\.)*)",')) { $templates[$m.Groups[1].Value] = $m.Groups[2].Value }
+foreach ($m in [regex]::Matches($cs, '\bd\["(\w+)"\] = "((?:[^"\\]|\\.)*)";')) { $templates[$m.Groups[1].Value] = $m.Groups[2].Value }
 $std = @{}
 foreach ($f in Get-ChildItem (Join-Path $root 'compiler\std') -Recurse -Filter *.fn) {
   $lines = Get-Content $f.FullName
@@ -18,8 +20,7 @@ foreach ($f in Get-ChildItem (Join-Path $root 'compiler\std') -Recurse -Filter *
   $std[[IO.Path]::GetFileNameWithoutExtension($f.Name)] = @{ Effects = $eff; Extern = ($lines -contains 'extern'); First = $lines[0] }
 }
 $interpNames = @{}
-$externBody = $interp.Substring($interp.IndexOf('static object? Extern('))
-foreach ($m in [regex]::Matches($externBody, 'case ((?:"\w+"(?: or )?)+):')) {
+foreach ($m in [regex]::Matches($interp, 'case ((?:"\w+"(?: or )?)+):')) {
   foreach ($n in [regex]::Matches($m.Groups[1].Value, '"(\w+)"')) { $interpNames[$n.Groups[1].Value] = $true }
 }
 $problems = @()
@@ -29,7 +30,7 @@ foreach ($n in $std.Keys | Sort-Object) {
   if (-not $templates.ContainsKey($n)) { $problems += "std/$n.fn has no template in CsBackend.cs Externs" }
 }
 foreach ($n in $templates.Keys | Sort-Object) { if (-not $std.ContainsKey($n)) { $problems += "CsBackend.cs Externs has $n but there is no std/$n.fn" } }
-$touches = 'System\.Console|System\.IO|Rt\.Args|Rt\.Write|Environment'
+$touches = 'System\.Console|System\.IO|Rt\.Args|Rt\.Write|Rt\.Tcp|Rt\.Udp|Environment'
 foreach ($n in $templates.Keys | Sort-Object) {
   if (-not $std.ContainsKey($n)) { continue }
   $impure = $templates[$n] -match $touches

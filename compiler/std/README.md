@@ -14,10 +14,13 @@ List them with `scripts\aip.ps1 std`.
 | `queue/` | `Queue<T>`, first in first out | name starts with `queue` |
 | `priorityQueue/` | `PriorityQueue<T>`, lowest priority first | name starts with `priorityQueue` |
 | `sortedSet/` | `SortedSet<T>`, items in order   | name starts with `sortedSet` |
+| `bytes/`    | `Bytes`, an immutable byte array        | name starts with `bytes`     |
 | `file/`     | read/write files                       | name starts with `file`      |
+| `terminal/` | console I/O (`printLine`, `readLine`) | effect `terminal.*`          |
+| `tcp/`      | TCP connections that stay open (bytes)  | effect `tcp.*`               |
+| `udp/`      | UDP sockets (bytes)                     | effect `udp.*`               |
 | `bit/`      | bit operations (`bitAnd`, `bitShl`)    | name starts with `bit`       |
 | `num/`      | number conversions (`numToU8`, `numToF64`) | name starts with `num`       |
-| `terminal/` | normal output (`printLine`)            | effect `terminal.*`          |
 | `log/`      | diagnostics to stderr (`logLine`)      | effect `log.*`               |
 | `process/`  | command line (`arg`, `argCount`)       | effect `process.*`           |
 | `core/`     | language helpers (`noop`)              | only for what fits no group  |
