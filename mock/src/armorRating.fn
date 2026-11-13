@@ -1,0 +1,9 @@
+fn armorRating(kind ArmorKind) -> Int 0..8
+  "Damage points a kind of armor absorbs per hit."
+  pure
+body
+  match kind
+    None -> 0
+    Leather -> 2
+    Chain -> 5
+    Plate -> 8

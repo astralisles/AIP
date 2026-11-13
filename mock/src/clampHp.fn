@@ -1,0 +1,11 @@
+fn clampHp(hp Int) -> Int 0..100
+  "Force any number into the valid hp range."
+  pure
+  ensures hp < 0 => result == 0
+  ensures hp > 100 => result == 100
+  ensures hp in 0..100 => result == hp
+  example clampHp(-5) == 0
+  example clampHp(42) == 42
+  example clampHp(250) == 100
+body
+  min(100, max(0, hp))

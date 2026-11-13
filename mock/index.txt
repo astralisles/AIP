@@ -1,0 +1,19 @@
+MOCK of the index the compiler would generate. Written by hand.
+No verifier has run, so the levels are expected values.
+name signature | effects | level
+
+alivePlayers(m Match) -> List<Player> | pure | proved
+applyDamage(p Player, dmg Int 0..) -> Player | pure | proved
+armorRating(kind ArmorKind) -> Int 0..8 | pure | proved
+clampHp(hp Int) -> Int 0..100 | pure | proved
+damageAfterArmor(a Armor, dmg Int 0..) -> Int 0.. | pure | proved
+encodePlayer(p Player) -> Text 1.. | pure | tested
+healPlayer(p Player, amount Int 0..) -> Player | pure | hole: todo Int 0..100
+isAlive(p Player) -> Bool | pure | proved
+savePlayer(p Player, path Path) -> Result<Unit, FileError> | file.write | trusted
+
+struct Armor(kind ArmorKind, durability Int 0..100)
+struct Match(players List<Player> 1..8, round Int 0..)
+struct Player(name Text 1..24, hp Int 0..100, armor Armor)
+variant ArmorKind = None | Leather | Chain | Plate
+const starterPlayer Player
