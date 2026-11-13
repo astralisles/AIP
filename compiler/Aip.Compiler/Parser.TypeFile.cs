@@ -31,6 +31,16 @@ sealed partial class Parser
                 bool isVariant = Peek.Text == "variant";
                 _pos++;
                 def = new TypeDef { File = _file, Line = _line, IsVariant = isVariant, Name = Expect(T.Ident, "a type name").Text };
+                if (IsSym("<"))
+                {
+                    _pos++;
+                    do
+                    {
+                        if (def.Params.Count > 0) _pos++; // the comma
+                        def.Params.Add(Expect(T.Ident, "a type parameter such as T").Text);
+                    } while (IsSym(","));
+                    ExpectSym(">");
+                }
                 ExpectEnd();
                 if (!isVariant) def.Cases.Add(new Case { Name = def.Name, Line = _line });
                 continue;
