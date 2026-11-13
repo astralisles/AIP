@@ -1,0 +1,7 @@
+fn main() -> Unit
+  "Calls two functions of the C runtime shared library (Windows; on Linux use library `c`, symbols `labs` and `strlen`)."
+  effects native.ucrtbase, terminal.write
+body
+  let word = "hello"
+  printLine("abs(-42) = {absolute(-42)}")
+  printLine("strlen = {cStrlen(word)}")

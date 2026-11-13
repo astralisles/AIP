@@ -1,0 +1,5 @@
+fn helper(x Int) -> T
+  "The result type uses a type parameter no parameter has."
+  pure
+body
+  x
