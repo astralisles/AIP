@@ -24,7 +24,6 @@ sealed class CsBackend : IBackend
     {
         ["logLine"] = "System.Console.Error.Write({0} + \"\\n\")",
         ["printLine"] = "System.Console.Out.Write({0} + \"\\n\")",
-        ["writeFile"] = "System.IO.File.WriteAllText({0}, {1})",
         ["textLength"] = "(long)({0}).Length",
         ["textSlice"] = "Rt.Slice({0}, {1}, {2})",
         ["textCode"] = "(long)({0})[(int)({1})]",

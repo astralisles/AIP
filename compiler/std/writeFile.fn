@@ -1,4 +1,0 @@
-fn writeFile(path Text, text Text) -> Unit
-  "Write text to a file on disk, replacing the file if it exists."
-  effects disk.write
-extern
