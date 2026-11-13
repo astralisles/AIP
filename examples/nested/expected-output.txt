@@ -1,0 +1,8 @@
+Bytes: 2, last: 255
+Grid cell [1][0]: 3
+Map of lists: 4
+List of sets: true
+Map of maps: 5
+Set of lists: true
+Hex of Hi: 4869, back: Hi
+SHA-256 length: 32

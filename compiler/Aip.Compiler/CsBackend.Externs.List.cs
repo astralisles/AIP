@@ -17,6 +17,12 @@ sealed partial class CsBackend
         d["listReverse"] = "Rt.ListReverse({0})";
         d["listIndexOf"] = "(long)({0}).IndexOf({1})";
         d["listContains"] = "({0}).Contains({1})";
+        d["hashSha256"] = "Rt.HashSha256({0})";
+        d["hashHmacSha256"] = "Rt.HashHmacSha256({0}, {1})";
+        d["bytesFromText"] = "Rt.BytesFromText({0})";
+        d["bytesToText"] = "Rt.BytesToText({0})";
+        d["bytesToHex"] = "Rt.BytesToHex({0})";
+        d["bytesFromHex"] = "Rt.BytesFromHex({0})";
         d["listRange"] = "Rt.ListRange({0}, {1})";
     }
 }

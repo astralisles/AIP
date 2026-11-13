@@ -1,4 +1,0 @@
-fn compress(data List<Int>) -> List<Int>
-  "Compress bytes with gzip; the result is deterministic."
-  pure
-extern
