@@ -14,14 +14,19 @@ foreach ($suite in @(@{ Dir = 'lint'; Cmd = 'lint' }, @{ Dir = 'contracts'; Cmd 
 }
 # every example is lint-clean, its `example` lines and contracts hold, and damaged copies never crash the compiler
 $projects = Get-ChildItem (Join-Path $root 'examples') -Directory | Where-Object { Get-ChildItem $_.FullName -Filter *.fn -File } | Sort-Object Name
+# independent runs: start them as parallel jobs (6 at a time), then report in a fixed order
+function Start-Limited($jobs, $block, $arguments) {
+  $jobs.Value += Start-Job -ScriptBlock $block -ArgumentList $arguments
+  while (@($jobs.Value | Where-Object State -eq 'Running').Count -ge 6) { $null = Wait-Job -Job $jobs.Value -Any }
+}
+$jobs = @()
+$run = { param($aip, $dir, $cmd, $label) $o = (& $aip $cmd $dir | Out-String).Trim(); [pscustomobject]@{ Label = $label; Ok = ($LASTEXITCODE -eq 0); Out = $o } }
 foreach ($p in $projects) {
-  foreach ($cmd in 'lint', 'test', 'fuzz') {
-    $out = (& $aip $cmd $p.FullName | Out-String).Trim()
-    Report "example $($p.Name): aip $cmd" ($LASTEXITCODE -eq 0) $out
-  }
+  foreach ($cmd in 'lint', 'test', 'fuzz') { Start-Limited ([ref]$jobs) $run @($aip, $p.FullName, $cmd, "example $($p.Name): aip $cmd") }
 }
 # consistency gates (each prints its own detail on failure)
+$gateRun = { param($script, $label) $o = (& $script | Out-String).Trim(); [pscustomobject]@{ Label = $label; Ok = ($LASTEXITCODE -eq 0); Out = $o } }
 foreach ($gate in 'check-error-coverage', 'check-externs', 'check-index', 'check-determinism') {
-  $out = (& (Join-Path $root "scripts\$gate.ps1") | Out-String).Trim()
-  Report "gate: $gate" ($LASTEXITCODE -eq 0) $out
+  Start-Limited ([ref]$jobs) $gateRun @((Join-Path $root "scripts\$gate.ps1"), "gate: $gate")
 }
+foreach ($r in ($jobs | Receive-Job -Wait -AutoRemoveJob)) { Report $r.Label $r.Ok $r.Out }
