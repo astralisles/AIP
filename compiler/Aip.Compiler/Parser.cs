@@ -202,7 +202,7 @@ sealed class Parser
     TypeRef ParseType()
     {
         var name = Expect(T.Ident, "a type name").Text;
-        if ((name is "List" or "Set" or "Map" or "SortedSet" or "SortedMap") && IsSym("<"))
+        if ((name is "List" or "Set" or "Map" or "SortedSet" or "SortedMap" or "Queue" or "PriorityQueue") && IsSym("<"))
         {
             _pos++;
             var args = new List<string>();
