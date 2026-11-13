@@ -1,0 +1,4 @@
+fn numF64ToF32(value F64) -> F32
+  "Narrow an F64 to F32 (rounds; too large becomes infinity)."
+  pure
+extern

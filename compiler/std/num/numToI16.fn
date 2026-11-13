@@ -1,0 +1,4 @@
+fn numToI16(value Int) -> I16
+  "Convert an Int to I16 (16-bit signed, -32768 to 32767); a value outside that range is a run-time error."
+  pure
+extern

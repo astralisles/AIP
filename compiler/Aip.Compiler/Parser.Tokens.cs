@@ -47,7 +47,14 @@ sealed partial class Parser
             {
                 int j = i;
                 while (j < s.Length && char.IsAsciiDigit(s[j])) j++;
-                toks.Add(new Tok(T.Int, s[i..j]));
+                var kind = T.Int;
+                if (j + 1 < s.Length && s[j] == '.' && char.IsAsciiDigit(s[j + 1]))
+                {
+                    kind = T.Float;
+                    j++;
+                    while (j < s.Length && char.IsAsciiDigit(s[j])) j++;
+                }
+                toks.Add(new Tok(kind, s[i..j]));
                 i = j;
             }
             else if (char.IsAsciiLetter(c) || c == '_')

@@ -1,0 +1,4 @@
+fn textReplace(text Text, old Text, new Text) -> Text
+  "Every occurrence of old replaced by new; old must not be empty."
+  pure
+extern

@@ -1,0 +1,4 @@
+fn listSet(items List<T>, index Int, item T) -> List<T>
+  "A new list with the item at an index replaced; the index must be inside the list."
+  pure
+extern

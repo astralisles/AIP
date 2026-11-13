@@ -1,0 +1,5 @@
+fn mulI32(a I32, b I32) -> I32
+  "Multiply two I32 values."
+  pure
+body
+  a * b

@@ -1,0 +1,4 @@
+fn intShiftRight(a Int, bits Int) -> Int
+  "Bits shifted right keeping the sign; bits is taken modulo 64."
+  pure
+extern

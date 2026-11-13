@@ -28,9 +28,58 @@ sealed partial class CsBackend
                 r.Add(item);
                 return r;
             }
+            public static System.Collections.Generic.List<object> ListSet(System.Collections.Generic.List<object> l, long i, object item)
+            {
+                var r = new System.Collections.Generic.List<object>(l);
+                r[(int)i] = item;
+                return r;
+            }
+            public static System.Collections.Generic.List<object> ListInsert(System.Collections.Generic.List<object> l, long i, object item)
+            {
+                var r = new System.Collections.Generic.List<object>(l);
+                r.Insert((int)i, item);
+                return r;
+            }
+            public static System.Collections.Generic.List<object> ListRemoveAt(System.Collections.Generic.List<object> l, long i)
+            {
+                var r = new System.Collections.Generic.List<object>(l);
+                r.RemoveAt((int)i);
+                return r;
+            }
+            public static System.Collections.Generic.List<object> ListConcat(System.Collections.Generic.List<object> a, System.Collections.Generic.List<object> b)
+            {
+                var r = new System.Collections.Generic.List<object>(a.Count + b.Count);
+                r.AddRange(a);
+                r.AddRange(b);
+                return r;
+            }
+            public static System.Collections.Generic.List<object> ListSlice(System.Collections.Generic.List<object> l, long start, long end)
+            {
+                int a = (int)System.Math.Clamp(start, 0, l.Count), b = (int)System.Math.Clamp(end, a, l.Count);
+                return l.GetRange(a, b - a);
+            }
+            public static System.Collections.Generic.List<object> ListReverse(System.Collections.Generic.List<object> l)
+            {
+                var r = new System.Collections.Generic.List<object>(l);
+                r.Reverse();
+                return r;
+            }
+            public static System.Collections.Generic.List<object> ListRange(long start, long end)
+            {
+                var r = new System.Collections.Generic.List<object>();
+                for (long i = start; i < end; i++) r.Add(i);
+                return r;
+            }
             public static void Nop() { }
             public static void Write(string path, string content) => System.IO.File.WriteAllText(path, content);
             public static string Text(string v) => v;
+            public static string Text(double v) => v.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+            public static string Text(float v) => v.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+            public static string Text(int v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            public static string Text(uint v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            public static int Shift(long count, int width) => count >= 0 && count < width ? (int)count : throw new System.ArgumentOutOfRangeException("count", $"shift count {count} must be 0 to {width - 1}");
+            public static long ToInt(double v) => double.IsNaN(v) || v >= 9223372036854775808.0 || v < -9223372036854775808.0 ? throw new System.OverflowException($"{v} does not fit in Int") : (long)v;
+            public static string Text(ulong v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
             public static string Text(long v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
             public static string Text(bool v) => v ? "true" : "false";
         }

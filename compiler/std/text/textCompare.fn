@@ -1,0 +1,4 @@
+fn textCompare(a Text, b Text) -> Int
+  "-1, 0 or 1 when a is before, equal to or after b (ordinal order)."
+  pure
+extern

@@ -1,0 +1,4 @@
+fn listRange(start Int, end Int) -> List<Int>
+  "The numbers from start up to (not including) end; empty when end <= start."
+  pure
+extern

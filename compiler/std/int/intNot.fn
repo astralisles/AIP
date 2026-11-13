@@ -1,0 +1,4 @@
+fn intNot(a Int) -> Int
+  "Bitwise not (every bit flipped)."
+  pure
+extern

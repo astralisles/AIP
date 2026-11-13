@@ -8,7 +8,9 @@ sealed partial class Checker
     {
         e.Type = e switch
         {
+            IntLit { Value: > long.MaxValue } => "U64", // too big for Int, so it can only be a U64
             IntLit => "Int",
+            FloatLit => "F64",
             BoolLit => "Bool",
             TextLit t => TextType(t, env, used),
             NameRef n => NameType(n, env, used),
@@ -86,8 +88,15 @@ sealed partial class Checker
             var vars = new Dictionary<string, string>();
             c.Erased = !target.IsStd && IsVar(target.Ret.Name);
             for (int i = 0; i < argTypes.Count; i++)
+            {
+                var want = target.Params[i].Type.Name;
+                if (IsVar(want) && vars.TryGetValue(want, out var bound)) want = bound; // bitAnd(x, 255): the literal follows x
+                if (IsDefaultLit(argTypes[i]) && !IsVar(want) && FitLiteral(c.Args[i], want)) { argTypes[i] = want; continue; }
                 if (!Unify(target.Params[i].Type.Name, argTypes[i], vars))
                     Error(c.Line, "type-mismatch", $"argument `{target.Params[i].Name}` of `{c.Name}` must be {Subst(target.Params[i].Type.Name, vars)}, found {argTypes[i]}", $"signature: {target.Signature}");
+            }
+            if (target.IsStd && c.Name.StartsWith("bit", StringComparison.Ordinal) && vars.TryGetValue("T", out var bt) && bt != "" && bt != "_" && !IsInt(bt))
+                Error(c.Line, "type-mismatch", $"`{c.Name}` needs a whole number (Int, I8..I32, U8..U64), found {bt}");
             return Subst(target.Ret.Name, vars);
         }
         return Subst(target.Ret.Name, new Dictionary<string, string>());
@@ -102,7 +111,7 @@ sealed partial class Checker
             Error(c.Line, "wrong-arguments", $"`{c.Name}` takes {cs.Fields.Count} argument(s), found {argTypes.Count}", $"signature: {sig}");
         else
             for (int i = 0; i < argTypes.Count; i++)
-                if (!Unify(cs.Fields[i].Type.Name, argTypes[i], vars))
+                if (!Unify(cs.Fields[i].Type.Name, argTypes[i], vars) && !FitLiteral(c.Args[i], cs.Fields[i].Type.Name))
                     Error(c.Line, "type-mismatch", $"field `{cs.Fields[i].Name}` of `{c.Name}` must be {Subst(cs.Fields[i].Type.Name, vars)}, found {argTypes[i]}", $"signature: {sig}");
         return def.Params.Count == 0 ? def.Name : Join(def.Name, def.Params.Select(p => vars.GetValueOrDefault(p, "_")));
     }
@@ -191,26 +200,38 @@ sealed partial class Checker
 
     string UnaryType(Unary u, Dictionary<string, string> env, HashSet<string> used)
     {
-        var want = u.Op == "-" ? "Int" : "Bool";
         var t = TypeOf(u.Operand, env, used);
-        if (t != "" && t != want) Error(u.Line, "type-mismatch", $"`{u.Op}` needs {want}, found {t}");
-        return want;
+        if (u.Op != "-")
+        {
+            if (t != "" && t != "Bool") Error(u.Line, "type-mismatch", $"`{u.Op}` needs Bool, found {t}");
+            return "Bool";
+        }
+        if (t != "" && (!IsNum(t) || IsUnsigned(t))) Error(u.Line, "type-mismatch", $"`-` needs a signed number (Int, I8, I16, I32, F32, F64), found {t}");
+        return IsNum(t) && !IsUnsigned(t) ? t : "Int";
     }
 
     string BinaryType(Binary b, Dictionary<string, string> env, HashSet<string> used)
     {
         var l = TypeOf(b.Left, env, used);
         var r = TypeOf(b.Right, env, used);
+        if (IsDefaultLit(l) && l != r && FitLiteral(b.Left, r)) l = r;
+        else if (IsDefaultLit(r) && l != r && FitLiteral(b.Right, l)) r = l;
+        if (IsNum(l) && IsNum(r) && l != r && b.Op is "+" or "-" or "*" or "/" or "%" or "<" or "<=" or ">" or ">=" or "==" or "!=")
+        {
+            if (Widens(l, r)) l = r; else if (Widens(r, l)) r = l; // the narrower side is widened, never the other way
+        }
         bool known = l != "" && r != "";
         switch (b.Op)
         {
             case "+" or "-" or "*" or "/" or "%":
-                if (known && (l != "Int" || r != "Int"))
-                    Error(b.Line, "type-mismatch", $"`{b.Op}` needs Int on both sides, found {l} and {r}",
-                        b.Op == "+" && (l == "Text" || r == "Text") ? "to join texts, write one text with `{...}` parts" : null);
-                return "Int";
+                if (known && (!IsNum(l) || l != r))
+                    Error(b.Line, "type-mismatch", $"`{b.Op}` needs the same number type on both sides, found {l} and {r}",
+                        b.Op == "+" && (l == "Text" || r == "Text") ? "to join texts, write one text with `{...}` parts"
+                        : IsNum(l) && IsNum(r) ? "neither type fits in the other; convert one side first, for example with numFromI32 / numToF64" : null);
+                return IsNum(l) ? l : IsNum(r) ? r : "Int";
             case "<" or "<=" or ">" or ">=":
-                if (known && (l != "Int" || r != "Int")) Error(b.Line, "type-mismatch", $"`{b.Op}` needs Int on both sides, found {l} and {r}");
+                if (known && (!IsNum(l) || l != r)) Error(b.Line, "type-mismatch", $"`{b.Op}` needs the same number type on both sides, found {l} and {r}",
+                    IsNum(l) && IsNum(r) ? "neither type fits in the other; convert one side first, for example with numFromI32 / numToF64" : null);
                 return "Bool";
             case "==" or "!=":
                 if (known && (!Compat(l, r) || l == "Unit" || IsList(l) || IsVar(l) || UserType(l) != null))

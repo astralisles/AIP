@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Numerics;
 
 namespace Aip;
 
@@ -7,7 +8,7 @@ sealed record Val(Case Case, object?[] Fields);
 
 /// <summary>
 /// Tree-walking evaluator for pure functions. It runs `example` lines and checks `requires`, `ensures` and
-/// parameter/result ranges at every call. It follows the C# back end's rules (64-bit checked Int, truncating division).
+/// parameter/result ranges at every call. It follows the C# back end's rules (checked sized integers, truncating division, IEEE floats).
 /// </summary>
 sealed partial class Interp(ProgramModel program)
 {
@@ -26,6 +27,7 @@ sealed partial class Interp(ProgramModel program)
     object? CallFn(Fn fn, List<object?> args)
     {
         if (fn.Effects.Count > 0) throw new Unsupported($"`{fn.Name}` has effects ({fn.EffectsText})");
+        for (int i = 0; i < fn.Params.Count; i++) args[i] = Coerce(args[i], fn.Params[i].Type.Name);
         for (int i = 0; i < fn.Params.Count; i++) CheckRange(fn.Params[i].Type, args[i], $"argument `{fn.Params[i].Name}` of `{fn.Name}`");
         if (fn.IsExtern) return Extern(fn.Name, args);
         if (++_depth > MaxDepth) throw new Failed("recursion-too-deep", $"`{fn.Name}` recursed more than {MaxDepth} calls deep");
@@ -42,6 +44,7 @@ sealed partial class Interp(ProgramModel program)
                 if (fn.Body[i].Let != null) env[fn.Body[i].Let!] = v;
                 else if (i == fn.Body.Count - 1) result = v;
             }
+            result = Coerce(result, fn.Ret.Name);
             CheckRange(fn.Ret, result, $"the result of `{fn.Name}`");
             var post = new Dictionary<string, object?>(env);
             if (fn.Ret.Name != "Unit") post["result"] = result;
@@ -80,9 +83,9 @@ sealed partial class Interp(ProgramModel program)
         null => "unit",
         string s => "\"" + s + "\"",
         bool b => b ? "true" : "false",
-        long l => l.ToString(CultureInfo.InvariantCulture),
         Val x => x.Case.Name + "(" + Show(x.Fields) + ")",
         List<object?> l => "[" + Show(l) + "]",
+        _ when IsNumber(v) => NumText(v),
         _ => v.ToString() ?? "",
     };
 
@@ -90,7 +93,7 @@ sealed partial class Interp(ProgramModel program)
     {
         if (t.Range == "") return;
         var parts = t.Range.Split("..");
-        long n = v switch { long l => l, string s => s.Length, List<object?> l => l.Count, _ => long.MinValue };
+        long n = v switch { string s => s.Length, List<object?> l => l.Count, not null when IsInteger(v) && Big(v) >= long.MinValue && Big(v) <= long.MaxValue => (long)Big(v), _ => long.MinValue };
         if (n == long.MinValue) return;
         if ((parts[0] != "" && n < long.Parse(parts[0], CultureInfo.InvariantCulture)) || (parts[1] != "" && n > long.Parse(parts[1], CultureInfo.InvariantCulture)))
             throw new Failed("range-violated", $"{what} is {Show(v)}, outside {t.Range}");
@@ -100,7 +103,8 @@ sealed partial class Interp(ProgramModel program)
     {
         switch (e)
         {
-            case IntLit i: return i.Value;
+            case IntLit i: return Coerce((BigInteger)i.Value, i.Type == "" ? "Int" : i.Type);
+            case FloatLit fl: return fl.Type == "F32" ? (object)(float)fl.Value : fl.Value;
             case BoolLit b: return b.Value;
             case NameRef { Const: true } k: return CallFn(program.Fns[k.Name], new List<object?>());
             case NameRef n: return env[n.Name];
@@ -126,8 +130,10 @@ sealed partial class Interp(ProgramModel program)
             case Unary u:
                 {
                     var v = Eval(u.Operand, env);
-                    try { return u.Op == "-" ? checked(-(long)v!) : !(bool)v!; }
-                    catch (OverflowException) { throw new Failed("arithmetic", "negation overflows Int"); }
+                    if (u.Op != "-") return !(bool)v!;
+                    if (v is double dv) return -dv;
+                    if (v is float fv) return -fv;
+                    return Fit(-Big(v!), u.Type == "" ? "Int" : u.Type, "negation");
                 }
             case BlockExpr k:
                 foreach (var s in k.Stmts) Eval(s, env);
@@ -141,39 +147,79 @@ sealed partial class Interp(ProgramModel program)
                     if (b.Op == "=>") return !(bool)Eval(b.Left, env)! || (bool)Eval(b.Right, env)!;
                     var l = Eval(b.Left, env);
                     var r = Eval(b.Right, env);
-                    if (b.Op == "==") return Equals(l, r);
-                    if (b.Op == "!=") return !Equals(l, r);
-                    long x = (long)l!, y = (long)r!;
-                    try
+                    bool num = l != null && r != null && IsNumber(l) && IsNumber(r);
+                    if (b.Op == "==") return num ? Compare(l!, r!) == 0 : Equals(l, r);
+                    if (b.Op == "!=") return num ? Compare(l!, r!) != 0 : !Equals(l, r);
+                    if (b.Op is "<" or "<=" or ">" or ">=")
                     {
-                        return b.Op switch
-                        {
-                            "+" => checked(x + y),
-                            "-" => checked(x - y),
-                            "*" => checked(x * y),
-                            "/" => x / y,
-                            "%" => x % y,
-                            "<" => x < y,
-                            "<=" => x <= y,
-                            ">" => x > y,
-                            ">=" => x >= y,
-                            _ => throw new Unsupported($"operator {b.Op}"),
-                        };
+                        int c = Compare(l!, r!);
+                        return b.Op switch { "<" => c < 0, "<=" => c <= 0, ">" => c > 0, _ => c >= 0 };
                     }
-                    catch (Exception ex) when (ex is DivideByZeroException or OverflowException)
+                    if (l is double or float || r is double or float)
                     {
-                        throw new Failed("arithmetic", $"`{x} {b.Op} {y}`: {ex.Message}");
+                        double p = ToDouble(l!), q = ToDouble(r!);
+                        double res = b.Op switch { "+" => p + q, "-" => p - q, "*" => p * q, "/" => p / q, "%" => p % q, _ => throw new Unsupported($"operator {b.Op}") };
+                        return b.Type == "F32" ? (object)(float)res : res;
                     }
+                    BigInteger x = Big(l!), y = Big(r!);
+                    if (b.Op is "/" or "%" && y.IsZero) throw new Failed("arithmetic", $"`{x} {b.Op} {y}`: division by zero");
+                    BigInteger z = b.Op switch { "+" => x + y, "-" => x - y, "*" => x * y, "/" => BigInteger.Divide(x, y), "%" => BigInteger.Remainder(x, y), _ => throw new Unsupported($"operator {b.Op}") };
+                    return Fit(z, b.Type == "" ? "Int" : b.Type, $"`{x} {b.Op} {y}`");
                 }
         }
         throw new Unsupported("expression " + e.GetType().Name);
     }
 
+    static bool IsInteger(object v) => v is long or int or short or sbyte or ulong or uint or ushort or byte;
+    static bool IsNumber(object v) => IsInteger(v) || v is double or float;
+    static BigInteger Big(object v) => v switch
+    {
+        long x => x, int x => x, short x => x, sbyte x => x, ulong x => x, uint x => x, ushort x => x, byte x => x, BigInteger x => x,
+        _ => throw new Unsupported("whole number expected"),
+    };
+    static double ToDouble(object v) => v switch { double d => d, float f => f, _ => (double)Big(v) };
+    static string NumText(object v) => v switch
+    {
+        double d => d.ToString("R", CultureInfo.InvariantCulture),
+        float f => f.ToString("R", CultureInfo.InvariantCulture),
+        _ => Big(v).ToString(CultureInfo.InvariantCulture),
+    };
+    static int Compare(object l, object r) => l is double or float || r is double or float ? ToDouble(l).CompareTo(ToDouble(r)) : Big(l).CompareTo(Big(r));
+
+    static readonly Dictionary<string, (BigInteger Min, BigInteger Max)> Limits = new()
+    {
+        ["Int"] = (long.MinValue, long.MaxValue), ["I8"] = (sbyte.MinValue, sbyte.MaxValue), ["I16"] = (short.MinValue, short.MaxValue),
+        ["I32"] = (int.MinValue, int.MaxValue), ["U8"] = (0, byte.MaxValue), ["U16"] = (0, ushort.MaxValue),
+        ["U32"] = (0, uint.MaxValue), ["U64"] = (0, ulong.MaxValue),
+    };
+
+    /// <summary>The value as a whole number of the named type (the interpreter holds the same CLR types as the C# back end); out of range is a run-time error.</summary>
+    static object Fit(BigInteger v, string type, string what)
+    {
+        var (min, max) = Limits[type];
+        if (v < min || v > max) throw new Failed("arithmetic", $"{what}: {v} does not fit in {type}");
+        return type switch
+        {
+            "Int" => (long)v, "I8" => (sbyte)v, "I16" => (short)v, "I32" => (int)v,
+            "U8" => (byte)v, "U16" => (ushort)v, "U32" => (uint)v, _ => (ulong)v,
+        };
+    }
+
+    /// <summary>Widens a number to the type a parameter or result declares; other values pass through.</summary>
+    static object? Coerce(object? v, string type)
+    {
+        if (v == null) return null;
+        if (v is BigInteger b) return Fit(b, type, "literal");
+        if (type == "F64" && v is float f) return (double)f;
+        if (Limits.ContainsKey(type) && IsInteger(v)) return Fit(Big(v), type, "value");
+        return v;
+    }
+
     static string Text(object? v) => v switch
     {
         string s => s,
-        long l => l.ToString(CultureInfo.InvariantCulture),
         bool b => b ? "true" : "false",
+        _ when v != null && IsNumber(v) => NumText(v),
         _ => throw new Unsupported("text of " + v),
     };
 
@@ -191,7 +237,7 @@ sealed partial class Interp(ProgramModel program)
                 if (!ReferenceEquals(r, NotHandled)) return r;
             }
         }
-        catch (Exception ex) when (ex is ArgumentOutOfRangeException or KeyNotFoundException or FormatException or OverflowException)
+        catch (Exception ex) when (ex is ArgumentException or KeyNotFoundException or FormatException or OverflowException)
         {
             throw new Failed("extern-failed", $"`{name}`: {ex.Message}");
         }

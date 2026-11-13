@@ -2,7 +2,7 @@ using System.Text;
 
 namespace Aip;
 
-enum T { Int, Text, Ident, Sym, End }
+enum T { Int, Float, Text, Ident, Sym, End }
 
 sealed record Tok(T Kind, string Text);
 

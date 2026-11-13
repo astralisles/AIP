@@ -3,7 +3,45 @@ namespace Aip;
 /// <summary>Checks names, types, effects and completeness. Contracts are type-checked only; nothing is proved yet.</summary>
 sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
 {
-    static readonly HashSet<string> KnownTypes = new() { "Int", "Text", "Bool", "Unit" };
+    /// <summary>Whole-number types with an exact size. `Int` is the 64-bit signed one.</summary>
+    static readonly Dictionary<string, (System.Numerics.BigInteger Min, System.Numerics.BigInteger Max)> SizedInts = new()
+    {
+        ["I8"] = (sbyte.MinValue, sbyte.MaxValue), ["I16"] = (short.MinValue, short.MaxValue), ["I32"] = (int.MinValue, int.MaxValue),
+        ["U8"] = (byte.MinValue, byte.MaxValue), ["U16"] = (ushort.MinValue, ushort.MaxValue), ["U32"] = (uint.MinValue, uint.MaxValue),
+        ["U64"] = (0, ulong.MaxValue),
+    };
+
+    static bool IsInt(string t) => t == "Int" || SizedInts.ContainsKey(t);
+    static bool IsFloat(string t) => t is "F32" or "F64";
+    static bool IsNum(string t) => IsInt(t) || IsFloat(t);
+    /// <summary>Types a bare literal gets when nothing else is wanted.</summary>
+    static bool IsDefaultLit(string t) => t is "Int" or "F64";
+    static bool IsUnsigned(string t) => t.StartsWith('U') && SizedInts.ContainsKey(t);
+
+    static readonly HashSet<string> KnownTypes = new(new[] { "Int", "F32", "F64", "Text", "Bool", "Unit" }.Concat(SizedInts.Keys));
+
+    /// <summary>An integer literal (maybe negated) used where a sized integer is wanted takes that type if it fits.</summary>
+    bool FitLiteral(Expr e, string want)
+    {
+        Expr lit = e is Unary { Op: "-", Operand: var inner } ? inner : e;
+        if (want == "F32")
+        {
+            if (lit is not FloatLit f) return false;
+            var d = e == lit ? f.Value : -f.Value;
+            if (float.IsInfinity((float)d)) { Error(e.Line, "out-of-range", $"{d} does not fit in F32", "use F64 or a smaller number"); return true; }
+            e.Type = want; lit.Type = want;
+            return true;
+        }
+        if (!SizedInts.TryGetValue(want, out var range) || lit is not IntLit l) return false;
+        System.Numerics.BigInteger v = e == lit ? l.Value : -(System.Numerics.BigInteger)l.Value;
+        if (v < range.Min || v > range.Max)
+        {
+            Error(e.Line, "out-of-range", $"{v} does not fit in {want} ({range.Min} to {range.Max})", "use a smaller number or a bigger type");
+            return true; // reported; do not add a type-mismatch on top
+        }
+        e.Type = want; lit.Type = want;
+        return true;
+    }
 
     /// <summary>Splits `Map<Text,List<Int>>` into its name and argument types; null for a plain type.</summary>
     static (string Name, List<string> Args)? Split(string t)
@@ -25,6 +63,19 @@ sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
     static bool IsList(string t) => Split(t) is { } s && GenericTypes.Arity.ContainsKey(s.Name); // a built-in container (List, Set, Map)
     static string Join(string name, IEnumerable<string> args) => $"{name}<{string.Join(",", args)}>";
     static bool IsVar(string t) => t.Length == 1 && char.IsAsciiLetterUpper(t[0]);
+
+    /// <summary>Lossless widening: every value of `from` is a value of `to` (never Int to a float, never U64 to a signed type).</summary>
+    static readonly Dictionary<string, string[]> WidensTo = new()
+    {
+        ["I8"] = new[] { "I16", "I32", "Int" },
+        ["I16"] = new[] { "I32", "Int" },
+        ["I32"] = new[] { "Int" },
+        ["U8"] = new[] { "U16", "U32", "U64", "I16", "I32", "Int" },
+        ["U16"] = new[] { "U32", "U64", "I32", "Int" },
+        ["U32"] = new[] { "U64", "Int" },
+        ["F32"] = new[] { "F64" },
+    };
+    static bool Widens(string from, string to) => WidensTo.TryGetValue(from, out var t) && t.Contains(to);
 
     /// <summary>Types match; `_` (an element type not known yet, e.g. in an empty list) matches anything.</summary>
     static bool Compat(string a, string b)
@@ -90,7 +141,7 @@ sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
                 if (!Unify(p.Value.Args[i], a.Value.Args[i], vars)) return false;
             return true;
         }
-        return Compat(pattern, actual);
+        return Compat(pattern, actual) || Widens(actual, pattern);
     }
 
     static string Subst(string t, Dictionary<string, string> vars)
@@ -218,7 +269,7 @@ sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
             }
             else if (last)
             {
-                if (t != "" && !Compat(t, fn.Ret.Name))
+                if (t != "" && !Compat(t, fn.Ret.Name) && !Widens(t, fn.Ret.Name) && !FitLiteral(s.Value, fn.Ret.Name))
                     Error(s.Line, "type-mismatch", fn.IsConst ? $"the value is {t} but constant `{fn.Name}` is {fn.Ret.Name}" : $"the body ends with {t} but `{fn.Name}` returns {fn.Ret.Name}");
             }
             else if (t != "" && t != "Unit")
@@ -279,7 +330,7 @@ sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
                 foreach (var f in c.Fields)
                 {
                     if (!seen.Add(f.Name)) Err(c.Line, "duplicate-name", $"field `{f.Name}` is declared twice in `{c.Name}`");
-                    if (!IsKnown(f.Type.Name)) Err(c.Line, "unknown-type", $"unknown type `{f.Type.Name}` for field `{f.Name}`", "types: Int, Text, Bool, List<T>, and your structs and variants");
+                    if (!IsKnown(f.Type.Name)) Err(c.Line, "unknown-type", $"unknown type `{f.Type.Name}` for field `{f.Name}`", "types: Int, I8, I16, I32, U8, U16, U32, U64, F32, F64, Text, Bool, List<T>, and your structs and variants");
                     else if (f.Type.Name == "Unit") Err(c.Line, "type-mismatch", $"field `{f.Name}` cannot be Unit");
                 }
             }
@@ -290,10 +341,10 @@ sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
     void CheckType(TypeRef t, bool allowUnit)
     {
         if (!IsKnown(t.Name))
-            Error(_fn.Line, "unknown-type", $"unknown type `{t.Name}`", "types supported so far: Int, Text, Bool, Unit, List<T>, Set<T>, Map<K,V>, structs and variants");
+            Error(_fn.Line, "unknown-type", $"unknown type `{t.Name}`", "types supported so far: Int (64-bit signed), I8, I16, I32, U8, U16, U32, U64, F32, F64, Text, Bool, Unit, List<T>, Set<T>, Map<K,V>, structs and variants");
         else if (t.Name == "Unit" && !allowUnit)
             Error(_fn.Line, "type-mismatch", "a parameter cannot be Unit");
-        else if (t.Range != "" && t.Name != "Int" && t.Name != "Text" && !IsList(t.Name))
+        else if (t.Range != "" && !IsInt(t.Name) && t.Name != "Text" && !IsList(t.Name))
             Error(_fn.Line, "bad-range", $"`{t.Name}` cannot have a range");
     }
 

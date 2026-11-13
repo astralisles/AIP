@@ -1,0 +1,5 @@
+fn addI8(a I8, b I8) -> I8
+  "Add two I8 values; a result outside -128..127 is a run-time error."
+  pure
+body
+  a + b

@@ -1,0 +1,11 @@
+fn main() -> Unit
+  "Smaller types widen to bigger ones on their own, because no value is lost."
+  effects terminal.write
+body
+  let small = numToI8(100)
+  let big = numToI32(1000000)
+  let byte = numToU8(200)
+  printLine("I8 + I32 is I32: {small + big}")
+  printLine("U8 into an Int parameter: {double(byte)}")
+  printLine("F32 + F64 is F64: {numToF32(1) + 2.5}")
+  printLine("U8 + I16 is I16: {byte + numToI16(-300)}")

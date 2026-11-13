@@ -119,10 +119,8 @@ sealed partial class CsBackend : IBackend
     // Lists are type-erased at run time (List<object>); reads cast back to the element type.
     static string CsType(string t) => t switch
     {
-        "Int" => "long",
-        "Text" => "string",
-        "Bool" => "bool",
-        "_" => "object",
+        "Int" => "long", "F32" => "float", "F64" => "double", "I8" => "sbyte", "I16" => "short", "I32" => "int",
+        "U8" => "byte", "U16" => "ushort", "U32" => "uint", "U64" => "ulong", "Text" => "string", "Bool" => "bool", "_" => "object",
         _ when t.Length == 1 && char.IsAsciiLetterUpper(t[0]) => "object", // a type parameter: erased
         _ when t.StartsWith("List<", StringComparison.Ordinal) || t.StartsWith("Queue<", StringComparison.Ordinal) || t.StartsWith("PriorityQueue<", StringComparison.Ordinal) => "System.Collections.Generic.List<object>",
         // Maps and sets are insertion-ordered dictionaries (a set maps each item to true); every change copies.
@@ -242,7 +240,13 @@ sealed partial class CsBackend : IBackend
 
     static string Emit(Expr e) => e switch
     {
-        IntLit i => i.Value + "L",
+        IntLit { Type: "U64" } i => i.Value + "UL",
+        IntLit { Type: "Int" or "" } i => i.Value + "L",
+        IntLit i => $"(({CsType(i.Type)}){i.Value})",
+        Unary { Op: "-", Type: not ("Int" or "" or "F32" or "F64") } u when u.Operand is IntLit n => $"(({CsType(u.Type)})(-{n.Value}))",
+        Unary { Op: "-", Type: not ("Int" or "" or "F32" or "F64") } u => $"checked(({CsType(u.Type)})(-{Emit(u.Operand)}))",
+        FloatLit { Type: "F32" } f => f.Value.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + "F",
+        FloatLit f => f.Value.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + "D",
         BoolLit b => b.Value ? "true" : "false",
         NameRef n => n.Const ? "Const.@" + n.Name : Cast(n.Erased, n.Type, "@" + n.Name),
         TextLit t => t.Parts.Count == 1 && t.Parts[0] is string only
@@ -252,7 +256,7 @@ sealed partial class CsBackend : IBackend
         Field f => Cast(f.Erased, f.Type, $"{Emit(f.Target)}.@{f.Name}"),
         MatchExpr m => $"({Emit(m.Subject)} switch {{ {string.Join(", ", m.Arms.Select(a => $"{Pattern(a)} => {Emit(a.Body)}"))}, _ => throw new System.InvalidOperationException() }})",
         Call c => Externs.TryGetValue(c.Name, out var template)
-            ? (c.Name is "listGet" or "mapGet" or "sortedMapGet" or "queueFront" or "priorityQueueFront" ? $"(({CsType(c.Type)})" : "") + string.Format(System.Globalization.CultureInfo.InvariantCulture, template, c.Args.Select(Emit).ToArray<object>()) + (c.Name is "listGet" or "mapGet" or "sortedMapGet" or "queueFront" or "priorityQueueFront" ? ")" : "")
+            ? (c.Name is "listGet" or "mapGet" or "sortedMapGet" or "queueFront" or "priorityQueueFront" ? $"(({CsType(c.Type)})" : "") + string.Format(System.Globalization.CultureInfo.InvariantCulture, template.Replace("<T>", CsType(c.Type)), c.Args.Select(Emit).ToArray<object>()) + (c.Name is "listGet" or "mapGet" or "sortedMapGet" or "queueFront" or "priorityQueueFront" ? ")" : "")
             : Cast(c.Erased, c.Type, $"Fn.@{c.Name}({string.Join(", ", c.Args.Select(Emit))})"),
         Unary u => u.Op == "-" ? $"(-{Emit(u.Operand)})" : $"(!{Emit(u.Operand)})",
         Binary b => b.Op switch
@@ -260,6 +264,9 @@ sealed partial class CsBackend : IBackend
             "and" => $"({Emit(b.Left)} && {Emit(b.Right)})",
             "or" => $"({Emit(b.Left)} || {Emit(b.Right)})",
             "=>" => $"(!{Emit(b.Left)} || {Emit(b.Right)})",
+            // Sized integers: C# widens to int, so cast back; `checked` makes overflow a run-time error, never a silent wrap.
+            "+" or "-" or "*" or "/" or "%" when b.Type is not ("Int" or "" or "F32" or "F64") =>
+                $"checked(({CsType(b.Type)})({Emit(b.Left)} {b.Op} {Emit(b.Right)}))",
             _ => $"({Emit(b.Left)} {b.Op} {Emit(b.Right)})",
         },
         IfExpr i => $"({Emit(i.Cond)} ? {Emit(i.Then)} : {Emit(i.Else)})",

@@ -1,0 +1,4 @@
+fn textStartsWith(text Text, prefix Text) -> Bool
+  "True when the text begins with prefix."
+  pure
+extern

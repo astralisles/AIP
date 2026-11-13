@@ -1,0 +1,4 @@
+fn intAnd(a Int, b Int) -> Int
+  "Bitwise and."
+  pure
+extern
