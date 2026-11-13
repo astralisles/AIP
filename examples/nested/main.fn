@@ -1,0 +1,25 @@
+fn main() -> Unit
+  "Show arrays of bytes (List<U8>) and collections of collections."
+  effects terminal.write
+body
+  let bytes = listAppend(listAppend(listEmpty(), numToU8(7)), numToU8(255))
+  printLine("Bytes: {listLength(bytes)}, last: {numFromU8(listGet(bytes, 1))}")
+  let row0 = listAppend(listAppend(listEmpty(), 1), 2)
+  let row1 = listAppend(listAppend(listEmpty(), 3), 4)
+  let grid = listAppend(listAppend(listEmpty(), row0), row1)
+  printLine("Grid cell [1][0]: {listGet(listGet(grid, 1), 0)}")
+  let byName = mapSet(mapEmpty(), "evens", row1)
+  let evens = mapGet(byName, "evens")
+  printLine("Map of lists: {listGet(evens, 1)}")
+  let sets = listAppend(listEmpty(), setAdd(setEmpty(), 9))
+  printLine("List of sets: {setHas(listGet(sets, 0), 9)}")
+  let mm = mapSet(mapEmpty(), 1, mapSet(mapEmpty(), "a", 5))
+  let inner = mapGet(mm, 1)
+  let five = mapGet(inner, "a")
+  printLine("Map of maps: {five}")
+  let ss = setAdd(setEmpty(), row0)
+  printLine("Set of lists: {setHas(ss, row0)}")
+  let raw = bytesFromText("Hi")
+  let back = bytesToText(bytesFromHex("4869"))
+  printLine("Hex of Hi: {bytesToHex(raw)}, back: {back}")
+  printLine("SHA-256 length: {listLength(hashSha256(raw))}")
