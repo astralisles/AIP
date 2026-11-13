@@ -10,6 +10,7 @@ sealed partial class CsBackend
         ("Rt.Net.cs", RtNet),
         ("Rt.Profile.cs", RtProfile),
         ("Rt.Sorted.cs", RtSorted),
+        ("Rt.Time.cs", RtTime),
     };
 
     const string RtCore = """

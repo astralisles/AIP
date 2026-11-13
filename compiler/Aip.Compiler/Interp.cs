@@ -282,6 +282,7 @@ sealed partial class Interp(ProgramModel program)
         QueueExtern,
         SortedExtern,
         NetExtern,
+        TimeExtern,
     };
 
     /// <summary>

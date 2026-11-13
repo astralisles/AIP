@@ -216,13 +216,18 @@ sealed partial class CsBackend : IBackend
         var argList = string.Join(", ", fn.Params.Select(p => $"@{p.Name}"));
         sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"        if (Rt.Calls) Rt.Call(\"{fn.Name}\", new object[] {{ {argList} }});\n");
         sb.Append("        long __t = Rt.Prof ? Rt.Enter() : 0;\n        try\n        {\n");
+        // Self-calls in tail position become a loop (docs/design/tail-calls-T-0983.md): constant stack, no new syntax.
+        var body = new StringBuilder();
         for (int i = 0; i < fn.Body.Count; i++)
         {
             var s = fn.Body[i];
-            if (s.Let != null) sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"        var @{s.Let} = {Emit(s.Value)};\n");
-            else if (i == fn.Body.Count - 1 && fn.Ret.Name != "Unit") sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"        return {Emit(s.Value)};\n");
-            else sb.Append(EmitUnit(s.Value, "        "));
+            if (s.Let != null) body.Append(System.Globalization.CultureInfo.InvariantCulture, $"        var @{s.Let} = {Emit(s.Value)};\n");
+            else if (i == fn.Body.Count - 1) body.Append(EmitTail(s.Value, fn, "        "));
+            else body.Append(EmitUnit(s.Value, "        "));
         }
+        var text = body.ToString();
+        if (text.Contains("/*tail*/")) sb.Append("        while (true)\n        {\n").Append(text).Append("        }\n");
+        else sb.Append(text);
         sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"        }}\n        finally {{ if (Rt.Prof) Rt.Leave(\"{fn.Name}\", __t); }}\n");
         sb.Append("    }\n}\n");
         return sb.ToString();
@@ -241,6 +246,32 @@ sealed partial class CsBackend : IBackend
         sb.Append("static partial class ConstCell\n{\n");
         sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"    internal static readonly System.Lazy<{t}> @{k.Name} = new(() => {Emit(k.Body[0].Value)});\n}}\n");
         return sb.ToString();
+    }
+
+    /// <summary>The last statement of a function. A call to the function itself becomes "set the parameters, continue the loop".</summary>
+    static string EmitTail(Expr e, Fn fn, string indent)
+    {
+        var ci = System.Globalization.CultureInfo.InvariantCulture;
+        switch (e)
+        {
+            case Call { Ctor: null } c when c.Name == fn.Name && !Externs.ContainsKey(c.Name) && c.Args.Count == fn.Params.Count:
+                {
+                    var sb = new StringBuilder();
+                    for (int i = 0; i < c.Args.Count; i++) sb.Append(ci, $"{indent}var __a{i} = {Emit(c.Args[i])};\n");
+                    for (int i = 0; i < c.Args.Count; i++) sb.Append(ci, $"{indent}@{fn.Params[i].Name} = __a{i};\n");
+                    return sb.Append(indent).Append("continue; /*tail*/\n").ToString();
+                }
+            case IfExpr i:
+                return $"{indent}if ({Emit(i.Cond)})\n{indent}{{\n{EmitTail(i.Then, fn, indent + "    ")}{indent}}}\n{indent}else\n{indent}{{\n{EmitTail(i.Else, fn, indent + "    ")}{indent}}}\n";
+            case BlockExpr k when k.Stmts.Count > 0:
+                return string.Concat(k.Stmts.Take(k.Stmts.Count - 1).Select(x => EmitUnit(x, indent))) + EmitTail(k.Stmts[^1], fn, indent);
+            case MatchExpr m:
+                return $"{indent}switch ({Emit(m.Subject)})\n{indent}{{\n"
+                    + string.Concat(m.Arms.Select(a => $"{indent}    case {Pattern(a)}:\n{indent}    {{\n{EmitTail(a.Body, fn, indent + "        ")}{indent}    }}\n"))
+                    + $"{indent}    default: throw new System.InvalidOperationException();\n{indent}}}\n";
+            default:
+                return fn.Ret.Name == "Unit" ? EmitUnit(e, indent) + $"{indent}return;\n" : $"{indent}return {Emit(e)};\n";
+        }
     }
 
     /// <summary>A statement. A Unit `if` becomes an if statement because C# cannot use void in `?:`.</summary>

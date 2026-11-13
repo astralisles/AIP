@@ -1,0 +1,4 @@
+fn timeNow() -> Int
+  "Wall clock time in milliseconds since 1970-01-01 UTC. Differs on every run, so a program that calls it cannot be replayed."
+  effects time.read
+extern

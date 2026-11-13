@@ -1,0 +1,8 @@
+fn main() -> Unit
+  "Show self calls in tail position running as loops, a million steps each."
+  effects terminal.write
+body
+  printLine("sum with if: {sumTo(1000000, 0)}")
+  printLine("sum with match: {sumMatch(1000000, 0, Go())}")
+  countDown(1000000)
+  printLine("deep but not a tail call is still fine: {depth(1000)}")

@@ -20,8 +20,11 @@ List them with `scripts\aip.ps1 std`.
 | `tcp/`      | TCP connections that stay open (bytes)  | effect `tcp.*`               |
 | `udp/`      | UDP sockets (bytes)                     | effect `udp.*`               |
 | `num/`      | number conversions (`numToU8`, `numToF64`) | name starts with `num`       |
+| `math/`     | float math on F64 (`mathSqrt`, `mathSin`, `mathLerp`) | name starts with `math`      |
 | `log/`      | diagnostics to stderr (`logLine`)      | effect `log.*`               |
 | `process/`  | command line (`arg`, `argCount`)       | effect `process.*`           |
+| `random/`   | seeded generator (pure) and `randomSeed` | name starts with `random`, or effect `random.*` |
+| `time/`     | clock and sleep (`timeMonotonic`, `timeSleep`) | effect `time.*`              |
 | `core/`     | language helpers (`noop`)              | only for what fits no group  |
 
 Rules, checked by the compiler on every run (error `std-layout`):

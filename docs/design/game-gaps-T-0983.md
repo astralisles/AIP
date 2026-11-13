@@ -41,3 +41,7 @@ Determinism helps games: with seeded random and a fixed time step, replays and n
 4. Native interop upgrade (handles, bytes, float, callbacks), then an SDL/raylib-backed `window`/`draw`/`audio` std family.
 5. Function-pointer list helpers, parallel jobs, asset/file helpers.
 Milestone: `examples/snake` (terminal, frame loop, random, input), then `examples/breakout` (window, sprites, audio).
+
+## Status (iteration 2)
+
+Items 1-3 (time/sleep and tail calls, float math and textToFloat, random) are implemented; see game-basics-T-0983.md.
