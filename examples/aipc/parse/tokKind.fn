@@ -1,0 +1,7 @@
+fn tokKind(t Text) -> Text
+  "The kind of a token (`Ident`, `Int`, `Text`, `Sym`, `Newline` or `End`)."
+  pure
+  example tokKind("Sym ->") == "Sym"
+  example tokKind("Newline") == "Newline"
+body
+  textSlice(t, 0, spaceAt(t, 0))

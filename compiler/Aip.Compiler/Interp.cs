@@ -81,6 +81,7 @@ sealed class Interp(ProgramModel program)
         {
             case IntLit i: return i.Value;
             case BoolLit b: return b.Value;
+            case NameRef { Const: true } k: return CallFn(program.Fns[k.Name], new List<object?>());
             case NameRef n: return env[n.Name];
             case TextLit t:
                 return string.Concat(t.Parts.Select(p => p is string s ? s : Text(Eval((Expr)p, env))));

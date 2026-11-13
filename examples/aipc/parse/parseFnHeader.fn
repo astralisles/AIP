@@ -1,0 +1,8 @@
+fn parseFnHeader(toks List<Text>) -> FnHeader
+  "Read the header of a .fn file (`fn name(params) -> Type`, purpose, effects) from its tokens."
+  pure
+body
+  let params = parseParams(toks, 3, listEmpty())
+  let ret = parseType(toks, params.next + 1)
+  let tail = parseHeaderLines(toks, lineEnd(toks, ret.next) + 1, "", listEmpty())
+  FnHeader(tokText(tokAt(toks, 1)), params.items, ret.text, tail.doc, tail.effects, false)

@@ -51,10 +51,12 @@ static class Project
             var parsed = new object?[files.Length];
             Parallel.For(0, files.Length, i =>
             {
-                if (Path.GetExtension(files[i]) != ".fn") return;
+                var fileExt = Path.GetExtension(files[i]);
+                if (fileExt is not (".fn" or ".const")) return;
                 try
                 {
-                    parsed[i] = Over(files[i]) is { } o ? Parser.ParseFile(files[i], o)
+                    parsed[i] = fileExt == ".const" ? Parser.ParseConstFile(files[i], Over(files[i]))
+                        : Over(files[i]) is { } o ? Parser.ParseFile(files[i], o)
                         : isStd || cache == null ? Parser.ParseFile(files[i])
                         : Parser.ParseText(files[i], cache.Read(infos[i]));
                 }
@@ -64,15 +66,13 @@ static class Project
             {
                 var file = files[i];
                 var ext = Path.GetExtension(file);
-                if (ext != ".fn")
+                if (ext is not (".fn" or ".const"))
                 {
                     if (ext is ".struct" or ".variant")
                     {
                         try { AddType(Parser.ParseTypeFile(file, Over(file))); }
                         catch (CompileException e) { diags.Add(e.Diagnostic); }
                     }
-                    else if (ext == ".const")
-                        diags.Add(new Diagnostic(file, 1, "unsupported-file", $"`{ext}` files are not supported by the compiler yet"));
                     continue;
                 }
                 if (parsed[i] is Diagnostic d) { diags.Add(d); continue; }

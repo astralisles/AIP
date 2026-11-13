@@ -1,5 +1,0 @@
-fn main() -> Unit
-  "Print the tokens of the .fn file named by the first command line argument."
-  effects file.read, process.args, terminal.write
-body
-  printAll(lexAll(fileRead(arg(0))), 0)

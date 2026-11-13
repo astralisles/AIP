@@ -137,7 +137,7 @@ sealed class CsBackend : IBackend
     public static SortedDictionary<string, string> EmitFiles(ProgramModel program)
     {
         var files = new SortedDictionary<string, string>(StringComparer.Ordinal);
-        foreach (var fn in program.ProjectFns) files[fn.Name + ".cs"] = EmitFn(fn);
+        foreach (var fn in program.ProjectFns) files[fn.Name + ".cs"] = fn.IsConst ? EmitConst(fn) : EmitFn(fn);
         files["Program.cs"] = ProgramCs;
         if (program.Types.Count > 0) files["Types.cs"] = EmitTypes(program);
         files[program.Name + ".csproj"] = Csproj;
@@ -207,6 +207,21 @@ sealed class CsBackend : IBackend
         return sb.ToString();
     }
 
+    /// <summary>A `.const` file: a property computed once, on first use. Lazy (not a static initializer) so the
+    /// order of constants across files does not matter; the checker rejects cycles, and the value is pure.</summary>
+    static string EmitConst(Fn k)
+    {
+        var t = CsType(k.Ret.Name);
+        var sb = new StringBuilder();
+        sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"// Generated from {k.Name}.const. Do not edit.\n");
+        sb.Append("public static partial class Const\n{\n");
+        sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"    /// <summary>{System.Security.SecurityElement.Escape(k.Doc)}</summary>\n");
+        sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"    public static {t} @{k.Name} => ConstCell.@{k.Name}.Value;\n}}\n");
+        sb.Append("static partial class ConstCell\n{\n");
+        sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"    internal static readonly System.Lazy<{t}> @{k.Name} = new(() => {Emit(k.Body[0].Value)});\n}}\n");
+        return sb.ToString();
+    }
+
     /// <summary>A statement. A Unit `if` becomes an if statement because C# cannot use void in `?:`.</summary>
     static string EmitUnit(Expr e, string indent) => e switch
     {
@@ -224,7 +239,7 @@ sealed class CsBackend : IBackend
     {
         IntLit i => i.Value + "L",
         BoolLit b => b.Value ? "true" : "false",
-        NameRef n => "@" + n.Name,
+        NameRef n => n.Const ? "Const.@" + n.Name : "@" + n.Name,
         TextLit t => t.Parts.Count == 1 && t.Parts[0] is string only
             ? Quote(only)
             : "string.Concat(" + string.Join(", ", t.Parts.Select(p => p is string s ? Quote(s) : $"Rt.Text({Emit((Expr)p)})")) + ")",

@@ -1,0 +1,7 @@
+fn startsRange(t Text) -> Bool
+  "Whether the token t starts a range after a type: a number, `-` or `..`."
+  pure
+  example startsRange("Sym ..")
+  example not startsRange("Sym ,")
+body
+  tokKind(t) == "Int" or t == "Sym -" or t == "Sym .."

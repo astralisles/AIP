@@ -1,0 +1,6 @@
+fn main() -> Unit
+  "Hide a constant behind a let."
+  effects terminal.write
+body
+  let limit = 5
+  printLine("{limit}")
