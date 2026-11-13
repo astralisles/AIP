@@ -1,0 +1,8 @@
+Int:  42
+Text: hello
+Bool: true
+Bool from a comparison (count > 40): true
+Bool from and/or/not: true
+Text equality: true
+Ann is 30. Adult: yes
+Tim is 12. Adult: no
