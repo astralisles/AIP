@@ -18,6 +18,9 @@ if (Test-Path $exe) {
   Report 'hello: prints "Hello, World!"' ($run -eq 'Hello, World!') "got: $run"
 } else { Report 'hello: prints "Hello, World!"' $false 'no program was built' }
 
+$out = (& $aip run examples\hello | Out-String).Trim()
+Report 'hello: `aip run` prints only "Hello, World!"' ($LASTEXITCODE -eq 0 -and $out -eq 'Hello, World!') "got: $out"
+
 $out = (& $aip build examples\hello --target wasm | Out-String).Trim()
 Report 'hello: wasm is refused with a clear message' ($LASTEXITCODE -ne 0 -and $out.Contains('unsupported-target')) $out
 

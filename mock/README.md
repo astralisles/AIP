@@ -1,10 +1,9 @@
 # Mock files
 
-Hand-written samples of the envisioned language. There is no compiler or verifier yet; nothing here is parsed, checked or generated.
+Hand-written samples of the envisioned language. Nothing here is parsed, checked or generated: the compiler (`compiler/`) only supports `.fn` files so far, and it rejects this folder because of the `.struct`, `.variant` and `.const` files. For a program that compiles and runs, see `examples/hello`.
 
 - `src/` — one item per file. The extension is the kind: `.struct`, `.variant`, `.const`, `.fn`. The file name is the item name, and names are unique across the project, so there are no imports.
 - `index.txt` — mock of the index the compiler would generate (one line per item).
-- `expected-cs/` — hand-written C# that a transpiler should produce for the pure core.
 
 ## Conventions used in the samples
 
@@ -14,4 +13,4 @@ Hand-written samples of the envisioned language. There is no compiler or verifie
 - `match` must cover every case; there is no default branch and no null.
 - `todo <Type>` is a typed hole the compiler would list as unfinished work (see `healPlayer.fn`).
 - Two-space indent, single spaces, no alignment, no braces or semicolons.
-- Ranges and proved contracts are erased in the C# output; they cost nothing at run time.
+- Ranges and proved contracts are erased in the compiled output; they cost nothing at run time.

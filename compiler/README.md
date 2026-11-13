@@ -4,6 +4,7 @@ Front end (`Parser.cs`, `Checker.cs`) is target independent. A back end implemen
 `IBackend` (`Model.cs`) and turns the checked program into a runnable program.
 The only back end so far is `CsBackend.cs`: it emits C# and builds it with the .NET SDK.
 
+    scripts\aip.ps1 run examples\hello
     scripts\aip.ps1 check examples\hello
     scripts\aip.ps1 index examples\hello
     scripts\aip.ps1 build examples\hello [--target linux-x64]

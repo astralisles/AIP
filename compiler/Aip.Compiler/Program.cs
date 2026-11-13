@@ -6,10 +6,11 @@ const string Usage = """
       aip check <projectDir>                          check only
       aip index <projectDir>                          print the index: one line per function
       aip build <projectDir> [--target T] [--out D]   check, then build a program
+      aip run <projectDir>                            check, build for this machine, then run it
     targets: windows-x64, windows-arm64, linux-x64, linux-arm64, macos-arm64 (default: this machine)
     """;
 
-if (args.Length < 2 || args[0] is not ("check" or "index" or "build"))
+if (args.Length < 2 || args[0] is not ("check" or "index" or "build" or "run"))
 {
     Console.WriteLine(Usage);
     return 2;
@@ -79,12 +80,24 @@ switch (command)
         return 0;
 }
 
-target ??= (OperatingSystem.IsWindows() ? "windows" : OperatingSystem.IsMacOS() ? "macos" : "linux")
+var host = (OperatingSystem.IsWindows() ? "windows" : OperatingSystem.IsMacOS() ? "macos" : "linux")
     + (RuntimeInformation.OSArchitecture == Architecture.Arm64 ? "-arm64" : "-x64");
+if (command == "run" && target != null && target != host)
+{
+    Console.WriteLine($"error cannot-run-target: `{target}` programs cannot run on this machine ({host})\n  fix: use `aip build` for other targets, or drop --target");
+    return 1;
+}
+target ??= host;
 Directory.CreateDirectory(outDir);
 File.WriteAllText(Path.Combine(outDir, "index.txt"), Index());
 IBackend backend = new CsBackend();
 var exe = backend.Build(program, outDir, target);
 if (exe == null) return 1;
+if (command == "run")
+{
+    using var proc = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exe) { UseShellExecute = false })!;
+    proc.WaitForExit();
+    return proc.ExitCode;
+}
 Console.WriteLine($"ok: built {Path.GetRelativePath(Environment.CurrentDirectory, exe).Replace('\\', '/')} ({target}, {backend.Name} back end)");
 return 0;
