@@ -24,6 +24,18 @@ Report 'hello: `aip run` prints only "Hello, World!"' ($LASTEXITCODE -eq 0 -and 
 $out = (& $aip build examples\hello --target wasm | Out-String).Trim()
 Report 'hello: wasm is refused with a clear message' ($LASTEXITCODE -ne 0 -and $out.Contains('unsupported-target')) $out
 
+$tmp = Join-Path ([IO.Path]::GetTempPath()) ('aip-writefile-' + [guid]::NewGuid())
+New-Item -ItemType Directory $tmp | Out-Null
+$out = (& $aip build examples\writefile | Out-String).Trim()
+Report 'writefile: builds' ($LASTEXITCODE -eq 0) $out
+Push-Location $tmp
+$run = (& (Join-Path $root 'examples\writefile\build\bin\windows-x64\writefile.exe') | Out-String).Trim()
+$file = Join-Path $tmp 'greeting.txt'
+$content = if (Test-Path $file) { (Get-Content $file -Raw).Trim() } else { '' }
+Pop-Location
+Remove-Item $tmp -Recurse -Force
+Report 'writefile: writes greeting.txt with "Hello from AIP!"' ($content -eq 'Hello from AIP!' -and $run -eq 'Wrote greeting.txt') "file: $content, output: $run"
+
 
 $expectedOut = @{
   adding = "2 + 3 = 5|-7 + 10 = 3|1000000 + 2345678 = 3345678|1 + 2 + 3 = 6|Total: 65"
