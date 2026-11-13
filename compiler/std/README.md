@@ -15,6 +15,8 @@ List them with `scripts\aip.ps1 std`.
 | `priorityQueue/` | `PriorityQueue<T>`, lowest priority first | name starts with `priorityQueue` |
 | `sortedSet/` | `SortedSet<T>`, items in order   | name starts with `sortedSet` |
 | `file/`     | read/write files                       | name starts with `file`      |
+| `bit/`      | bit operations (`bitAnd`, `bitShl`)    | name starts with `bit`       |
+| `num/`      | number conversions (`numToU8`, `numToF64`) | name starts with `num`       |
 | `terminal/` | normal output (`printLine`)            | effect `terminal.*`          |
 | `log/`      | diagnostics to stderr (`logLine`)      | effect `log.*`               |
 | `process/`  | command line (`arg`, `argCount`)       | effect `process.*`           |

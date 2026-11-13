@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Numerics;
 
 namespace Aip;
 
@@ -7,7 +8,7 @@ sealed record Val(Case Case, object?[] Fields);
 
 /// <summary>
 /// Tree-walking evaluator for pure functions. It runs `example` lines and checks `requires`, `ensures` and
-/// parameter/result ranges at every call. It follows the C# back end's rules (64-bit checked Int, truncating division).
+/// parameter/result ranges at every call. It follows the C# back end's rules (checked sized integers, truncating division, IEEE floats).
 /// </summary>
 sealed class Interp(ProgramModel program)
 {
@@ -26,6 +27,7 @@ sealed class Interp(ProgramModel program)
     object? CallFn(Fn fn, List<object?> args)
     {
         if (fn.Effects.Count > 0) throw new Unsupported($"`{fn.Name}` has effects ({fn.EffectsText})");
+        for (int i = 0; i < fn.Params.Count; i++) args[i] = Coerce(args[i], fn.Params[i].Type.Name);
         for (int i = 0; i < fn.Params.Count; i++) CheckRange(fn.Params[i].Type, args[i], $"argument `{fn.Params[i].Name}` of `{fn.Name}`");
         if (fn.IsExtern) return Extern(fn.Name, args);
         if (++_depth > MaxDepth) throw new Failed("recursion-too-deep", $"`{fn.Name}` recursed more than {MaxDepth} calls deep");
@@ -42,6 +44,7 @@ sealed class Interp(ProgramModel program)
                 if (fn.Body[i].Let != null) env[fn.Body[i].Let!] = v;
                 else if (i == fn.Body.Count - 1) result = v;
             }
+            result = Coerce(result, fn.Ret.Name);
             CheckRange(fn.Ret, result, $"the result of `{fn.Name}`");
             var post = new Dictionary<string, object?>(env);
             if (fn.Ret.Name != "Unit") post["result"] = result;
@@ -80,9 +83,9 @@ sealed class Interp(ProgramModel program)
         null => "unit",
         string s => "\"" + s + "\"",
         bool b => b ? "true" : "false",
-        long l => l.ToString(CultureInfo.InvariantCulture),
         Val x => x.Case.Name + "(" + Show(x.Fields) + ")",
         List<object?> l => "[" + Show(l) + "]",
+        _ when IsNumber(v) => NumText(v),
         _ => v.ToString() ?? "",
     };
 
@@ -90,7 +93,7 @@ sealed class Interp(ProgramModel program)
     {
         if (t.Range == "") return;
         var parts = t.Range.Split("..");
-        long n = v switch { long l => l, string s => s.Length, List<object?> l => l.Count, _ => long.MinValue };
+        long n = v switch { string s => s.Length, List<object?> l => l.Count, not null when IsInteger(v) && Big(v) >= long.MinValue && Big(v) <= long.MaxValue => (long)Big(v), _ => long.MinValue };
         if (n == long.MinValue) return;
         if ((parts[0] != "" && n < long.Parse(parts[0], CultureInfo.InvariantCulture)) || (parts[1] != "" && n > long.Parse(parts[1], CultureInfo.InvariantCulture)))
             throw new Failed("range-violated", $"{what} is {Show(v)}, outside {t.Range}");
@@ -100,7 +103,8 @@ sealed class Interp(ProgramModel program)
     {
         switch (e)
         {
-            case IntLit i: return i.Value;
+            case IntLit i: return Coerce((BigInteger)i.Value, i.Type == "" ? "Int" : i.Type);
+            case FloatLit fl: return fl.Type == "F32" ? (object)(float)fl.Value : fl.Value;
             case BoolLit b: return b.Value;
             case NameRef { Const: true } k: return CallFn(program.Fns[k.Name], new List<object?>());
             case NameRef n: return env[n.Name];
@@ -126,8 +130,10 @@ sealed class Interp(ProgramModel program)
             case Unary u:
                 {
                     var v = Eval(u.Operand, env);
-                    try { return u.Op == "-" ? checked(-(long)v!) : !(bool)v!; }
-                    catch (OverflowException) { throw new Failed("arithmetic", "negation overflows Int"); }
+                    if (u.Op != "-") return !(bool)v!;
+                    if (v is double dv) return -dv;
+                    if (v is float fv) return -fv;
+                    return Fit(-Big(v!), u.Type == "" ? "Int" : u.Type, "negation");
                 }
             case BlockExpr k:
                 foreach (var s in k.Stmts) Eval(s, env);
@@ -141,39 +147,79 @@ sealed class Interp(ProgramModel program)
                     if (b.Op == "=>") return !(bool)Eval(b.Left, env)! || (bool)Eval(b.Right, env)!;
                     var l = Eval(b.Left, env);
                     var r = Eval(b.Right, env);
-                    if (b.Op == "==") return Equals(l, r);
-                    if (b.Op == "!=") return !Equals(l, r);
-                    long x = (long)l!, y = (long)r!;
-                    try
+                    bool num = l != null && r != null && IsNumber(l) && IsNumber(r);
+                    if (b.Op == "==") return num ? Compare(l!, r!) == 0 : Equals(l, r);
+                    if (b.Op == "!=") return num ? Compare(l!, r!) != 0 : !Equals(l, r);
+                    if (b.Op is "<" or "<=" or ">" or ">=")
                     {
-                        return b.Op switch
-                        {
-                            "+" => checked(x + y),
-                            "-" => checked(x - y),
-                            "*" => checked(x * y),
-                            "/" => x / y,
-                            "%" => x % y,
-                            "<" => x < y,
-                            "<=" => x <= y,
-                            ">" => x > y,
-                            ">=" => x >= y,
-                            _ => throw new Unsupported($"operator {b.Op}"),
-                        };
+                        int c = Compare(l!, r!);
+                        return b.Op switch { "<" => c < 0, "<=" => c <= 0, ">" => c > 0, _ => c >= 0 };
                     }
-                    catch (Exception ex) when (ex is DivideByZeroException or OverflowException)
+                    if (l is double or float || r is double or float)
                     {
-                        throw new Failed("arithmetic", $"`{x} {b.Op} {y}`: {ex.Message}");
+                        double p = ToDouble(l!), q = ToDouble(r!);
+                        double res = b.Op switch { "+" => p + q, "-" => p - q, "*" => p * q, "/" => p / q, "%" => p % q, _ => throw new Unsupported($"operator {b.Op}") };
+                        return b.Type == "F32" ? (object)(float)res : res;
                     }
+                    BigInteger x = Big(l!), y = Big(r!);
+                    if (b.Op is "/" or "%" && y.IsZero) throw new Failed("arithmetic", $"`{x} {b.Op} {y}`: division by zero");
+                    BigInteger z = b.Op switch { "+" => x + y, "-" => x - y, "*" => x * y, "/" => BigInteger.Divide(x, y), "%" => BigInteger.Remainder(x, y), _ => throw new Unsupported($"operator {b.Op}") };
+                    return Fit(z, b.Type == "" ? "Int" : b.Type, $"`{x} {b.Op} {y}`");
                 }
         }
         throw new Unsupported("expression " + e.GetType().Name);
     }
 
+    static bool IsInteger(object v) => v is long or int or short or sbyte or ulong or uint or ushort or byte;
+    static bool IsNumber(object v) => IsInteger(v) || v is double or float;
+    static BigInteger Big(object v) => v switch
+    {
+        long x => x, int x => x, short x => x, sbyte x => x, ulong x => x, uint x => x, ushort x => x, byte x => x, BigInteger x => x,
+        _ => throw new Unsupported("whole number expected"),
+    };
+    static double ToDouble(object v) => v switch { double d => d, float f => f, _ => (double)Big(v) };
+    static string NumText(object v) => v switch
+    {
+        double d => d.ToString("R", CultureInfo.InvariantCulture),
+        float f => f.ToString("R", CultureInfo.InvariantCulture),
+        _ => Big(v).ToString(CultureInfo.InvariantCulture),
+    };
+    static int Compare(object l, object r) => l is double or float || r is double or float ? ToDouble(l).CompareTo(ToDouble(r)) : Big(l).CompareTo(Big(r));
+
+    static readonly Dictionary<string, (BigInteger Min, BigInteger Max)> Limits = new()
+    {
+        ["Int"] = (long.MinValue, long.MaxValue), ["I8"] = (sbyte.MinValue, sbyte.MaxValue), ["I16"] = (short.MinValue, short.MaxValue),
+        ["I32"] = (int.MinValue, int.MaxValue), ["U8"] = (0, byte.MaxValue), ["U16"] = (0, ushort.MaxValue),
+        ["U32"] = (0, uint.MaxValue), ["U64"] = (0, ulong.MaxValue),
+    };
+
+    /// <summary>The value as a whole number of the named type (the interpreter holds the same CLR types as the C# back end); out of range is a run-time error.</summary>
+    static object Fit(BigInteger v, string type, string what)
+    {
+        var (min, max) = Limits[type];
+        if (v < min || v > max) throw new Failed("arithmetic", $"{what}: {v} does not fit in {type}");
+        return type switch
+        {
+            "Int" => (long)v, "I8" => (sbyte)v, "I16" => (short)v, "I32" => (int)v,
+            "U8" => (byte)v, "U16" => (ushort)v, "U32" => (uint)v, _ => (ulong)v,
+        };
+    }
+
+    /// <summary>Widens a number to the type a parameter or result declares; other values pass through.</summary>
+    static object? Coerce(object? v, string type)
+    {
+        if (v == null) return null;
+        if (v is BigInteger b) return Fit(b, type, "literal");
+        if (type == "F64" && v is float f) return (double)f;
+        if (Limits.ContainsKey(type) && IsInteger(v)) return Fit(Big(v), type, "value");
+        return v;
+    }
+
     static string Text(object? v) => v switch
     {
         string s => s,
-        long l => l.ToString(CultureInfo.InvariantCulture),
         bool b => b ? "true" : "false",
+        _ when v != null && IsNumber(v) => NumText(v),
         _ => throw new Unsupported("text of " + v),
     };
 
@@ -205,6 +251,42 @@ sealed class Interp(ProgramModel program)
                 case "textCode": return (long)((string)a[0]!)[(int)(long)a[1]!];
                 case "textFromCode": return ((char)(long)a[0]!).ToString();
                 case "textToInt": return long.Parse((string)a[0]!, CultureInfo.InvariantCulture);
+                case "numToI8" or "numToI16" or "numToI32" or "numToU8" or "numToU16" or "numToU32" or "numToU64":
+                    return Fit(Big(a[0]!), name[5..], $"`{name}`");
+                case "numFromI8" or "numFromI16" or "numFromI32" or "numFromU8" or "numFromU16" or "numFromU32" or "numFromU64":
+                    return Fit(Big(a[0]!), "Int", $"`{name}`");
+                case "numToF32": return (float)(long)a[0]!;
+                case "numToF64": return (double)(long)a[0]!;
+                case "numFromF32" or "numFromF64":
+                    {
+                        double d = ToDouble(a[0]!);
+                        if (double.IsNaN(d) || d >= 9223372036854775808.0 || d < -9223372036854775808.0) throw new OverflowException($"{d} does not fit in Int");
+                        return (long)d;
+                    }
+                case "numF32ToF64": return (double)(float)a[0]!;
+                case "numF64ToF32": return (float)(double)a[0]!;
+                case "bitAnd" or "bitOr" or "bitXor" or "bitNot" or "bitShl" or "bitShr":
+                    {
+                        string ty = a[0] switch { long => "Int", sbyte => "I8", short => "I16", int => "I32", byte => "U8", ushort => "U16", uint => "U32", _ => "U64" };
+                        var (_, max) = Limits[ty];
+                        int width = ty switch { "Int" or "U64" => 64, "I32" or "U32" => 32, "I16" or "U16" => 16, _ => 8 };
+                        BigInteger mod = BigInteger.One << width, x = Big(a[0]!);
+                        BigInteger Wrap(BigInteger v) { v = ((v % mod) + mod) % mod; return v > max ? v - mod : v; }
+                        BigInteger res;
+                        if (name is "bitShl" or "bitShr")
+                        {
+                            long n = (long)Big(a[1]!);
+                            if (n < 0 || n >= width) throw new InvalidOperationException($"shift count {n} must be 0 to {width - 1}");
+                            res = name == "bitShl" ? Wrap(x << (int)n) : x >> (int)n;
+                        }
+                        else if (name == "bitNot") res = Wrap(-x - 1);
+                        else
+                        {
+                            BigInteger y = Big(a[1]!), ux = (x + mod) % mod, uy = (y + mod) % mod;
+                            res = Wrap(name == "bitAnd" ? ux & uy : name == "bitOr" ? ux | uy : ux ^ uy);
+                        }
+                        return Fit(res, ty, name);
+                    }
                 case "listEmpty": return new List<object?>();
                 case "listLength": return (long)L(0).Count;
                 case "listGet": return L(0)[(int)(long)a[1]!];

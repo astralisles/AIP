@@ -1,0 +1,4 @@
+fn numFromF64(value F64) -> Int
+  "Convert an F64 to Int by dropping the fraction; NaN, infinity or a value out of range is a run-time error."
+  pure
+extern

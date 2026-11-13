@@ -1,0 +1,6 @@
+fn main() -> Unit
+  "m"
+  effects terminal.write
+body
+  let n = 5
+  printLine("{take(n)}")

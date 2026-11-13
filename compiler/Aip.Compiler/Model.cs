@@ -13,7 +13,8 @@ abstract class Expr
     public string Type = "";
 }
 
-sealed class IntLit : Expr { public long Value; }
+sealed class IntLit : Expr { public ulong Value; }
+sealed class FloatLit : Expr { public double Value; }
 sealed class BoolLit : Expr { public bool Value; }
 /// <summary>Parts are either string (literal text) or Expr (interpolated).</summary>
 sealed class TextLit : Expr { public List<object> Parts = new(); }

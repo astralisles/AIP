@@ -1,0 +1,5 @@
+fn addBytes(a U8, b U8) -> U8
+  "Add two unsigned bytes; a result above 255 is a run-time error."
+  pure
+body
+  a + b
