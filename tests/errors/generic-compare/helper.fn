@@ -1,0 +1,5 @@
+fn helper(a T, b T) -> Bool
+  "Compare two values of an unconstrained type parameter."
+  pure
+body
+  a == b

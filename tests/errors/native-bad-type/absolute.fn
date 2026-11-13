@@ -1,0 +1,5 @@
+fn absolute(n List<Int>) -> Int
+  "Absolute value."
+  effects native.ucrtbase
+  native "ucrtbase" "_abs64"
+extern

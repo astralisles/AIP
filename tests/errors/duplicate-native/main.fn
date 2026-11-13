@@ -1,0 +1,5 @@
+fn main() -> Unit
+  "Extern without a library."
+  effects terminal.write
+body
+  printLine("{absolute(-1)}")

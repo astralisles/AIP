@@ -1,0 +1,5 @@
+fn swap(p Pair<A,B>) -> Pair<B,A>
+  "A pair with the two values in the opposite order."
+  pure
+body
+  Pair(p.second, p.first)

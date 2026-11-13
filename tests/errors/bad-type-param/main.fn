@@ -1,0 +1,5 @@
+fn main() -> Unit
+  "Use a function whose result type parameter is unbound."
+  effects terminal.write
+body
+  printLine("{helper(1)}")
