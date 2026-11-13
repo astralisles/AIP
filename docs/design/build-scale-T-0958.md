@@ -59,6 +59,24 @@ Folders that are very large would be split by the compiler, and tiny ones merged
 grouping (better balance, harder to predict). Folders must not call each other in a cycle (A calls B calls A);
 see Risks.
 
+## Do separate DLLs make the program slower? (answered)
+Practically no, and we can remove even that.
+- A call from one .NET assembly to another is a normal direct call, the same kind as a call inside one assembly.
+  There is no interface, virtual call or message passing. The only extra cost is a one-time lookup the first time
+  the call runs.
+- The JIT inlines small functions across assemblies just like within one (our functions are static and non-virtual,
+  so they are good inlining candidates). Exception: ahead-of-time (ReadyToRun) images do not inline across assemblies
+  unless they are compiled together as one version bubble; we would use that for release if we ship precompiled code.
+- Rule of thumb: put hot, tightly coupled code (per-frame physics loop, tight inner loops) in the same folder, so it
+  is always one unit. Cuts between folders should follow module boundaries, which are called far less often.
+- Two build modes remove the question: **dev/debug** = many DLLs (fast rebuilds); **release** = merge all units into
+  one assembly (or a composite ReadyToRun / native link-time-optimised build) so the optimiser sees the whole program.
+  Release is slower to build but is built rarely and on a build farm or from the cache.
+- Check, do not assume: step 8's benchmark gets a "run speed" case (the same program built as one unit and as many
+  units; fail if many-unit is more than a few percent slower in dev, and require identical results in both).
+- The native back end (step 5) has the same shape: one object file per unit, then link; link-time optimisation in
+  release inlines across units.
+
 ## Targets to hold ourselves to
 | Case | Goal at 1M functions |
 |---|---|
