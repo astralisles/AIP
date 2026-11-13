@@ -53,6 +53,8 @@ sealed class Parser
         int state = 0;
         bool sawEffects = false;
         MatchExpr? pending = null;
+        IfExpr? openIf = null; // a multi-line `if` whose branch lines are still being read
+        bool inElse = false;
         for (int i = 0; i < lines.Length; i++)
         {
             _line = i + 1;
@@ -88,7 +90,22 @@ sealed class Parser
                 ParseArm(pending, text);
                 continue;
             }
+            if (indent == 4 && state == 2 && openIf != null)
+            {
+                Lex(text);
+                _matchAllowed = false;
+                var line = ParseExpr();
+                ExpectEnd();
+                ((BlockExpr)(inElse ? openIf.Else : openIf.Then)).Stmts.Add(line);
+                continue;
+            }
             if (indent != 2) throw Err("bad-indent", $"expected an indent of 2 spaces, found {indent}");
+            if (state == 2 && openIf != null)
+            {
+                if (text == "else" && !inElse) { inElse = true; continue; }
+                CloseIf(openIf, inElse);
+                openIf = null;
+            }
             if (state == 3) throw Err("unexpected-line", "an extern function has no body");
 
             if (state == 1)
@@ -115,6 +132,14 @@ sealed class Parser
             }
 
             // state 2: a statement
+            if (text.StartsWith("if ", StringComparison.Ordinal) && text.EndsWith(" then", StringComparison.Ordinal))
+            {
+                openIf = new IfExpr { Line = _line, Cond = ParseExprText(text["if ".Length..^" then".Length]), Then = new BlockExpr { Line = _line }, Else = new BlockExpr { Line = _line } };
+                inElse = false;
+                fn.Body.Add(new Stmt { Line = _line, Value = openIf });
+                pending = null;
+                continue;
+            }
             Lex(text);
             var stmt = new Stmt { Line = _line };
             if (Peek.Kind == T.Ident && Peek.Text == "let")
@@ -130,11 +155,21 @@ sealed class Parser
             pending = stmt.Value as MatchExpr;
         }
 
+        if (openIf != null) CloseIf(openIf, inElse);
         _line = Math.Max(1, lines.Length);
         if (state == 0) throw Err("missing-signature", "the file is empty", "start the file with `fn name(params) -> Type`");
         if (state == 1) throw Err("missing-body", "the function has no `body` line", "add a line `body` followed by the indented body");
         if (state == 2 && fn.Body.Count == 0) throw Err("empty-body", "the body is empty");
         return fn;
+    }
+
+    /// <summary>Ends a multi-line `if`: it needs an `else` line and at least one statement in each branch.</summary>
+    void CloseIf(IfExpr i, bool inElse)
+    {
+        _line = i.Line;
+        if (!inElse) throw Err("missing-else", "this `if` block has no `else`", "add a line `else` (indented 2 spaces) and the statements for the other case indented 4");
+        if (((BlockExpr)i.Then).Stmts.Count == 0 || ((BlockExpr)i.Else).Stmts.Count == 0)
+            throw Err("empty-branch", "a branch of this `if` block has no statements", "indent at least one statement (4 spaces) under `then` and under `else`");
     }
 
     void ParseSignature(Fn fn)

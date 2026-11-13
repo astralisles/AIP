@@ -231,6 +231,7 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
             Unary u => UnaryType(u, env, used),
             Binary b => BinaryType(b, env, used),
             IfExpr i => IfType(i, env, used),
+            BlockExpr k => BlockType(k, env, used),
             _ => "",
         };
         return e.Type;
@@ -408,6 +409,16 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
                 if (known && (l != "Bool" || r != "Bool")) Error(b.Line, "type-mismatch", $"`{b.Op}` needs Bool on both sides, found {l} and {r}");
                 return "Bool";
         }
+    }
+
+    string BlockType(BlockExpr k, Dictionary<string, string> env, HashSet<string> used)
+    {
+        foreach (var s in k.Stmts)
+        {
+            var t = TypeOf(s, env, used);
+            if (t != "" && t != "Unit") Error(s.Line, "unused-value", $"this {t} value is not used", "a branch of an `if` block holds Unit statements; remove the line");
+        }
+        return "Unit";
     }
 
     string IfType(IfExpr i, Dictionary<string, string> env, HashSet<string> used)

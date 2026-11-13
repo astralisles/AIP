@@ -44,7 +44,7 @@ Test cases: `tests\errors` (`aip check` must reject), `tests\lint` (`aip lint` m
 `tests\contracts` (`aip test` must fail); each has an `expected.txt` with the message.
 
 Control flow: conditionals are `if c then a else b` (chainable with `else if`, one line, an expression; with Unit
-branches it is a statement) and `match`. Loops are recursion (no `while`/`for`); see `docs/design/control-flow-T-0943.md`
+branches it is a statement), a multi-line `if c then` / `else` block of Unit statements, and `match`. Loops are recursion (no `while`/`for`); see `docs/design/control-flow-T-0943.md`
 and `examples/control`.
 
 ## Design decisions, features and roadmap
