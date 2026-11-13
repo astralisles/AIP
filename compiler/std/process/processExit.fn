@@ -1,0 +1,4 @@
+fn processExit(code Int) -> Unit
+  "Stop the program at once with this exit code (0 means success)."
+  effects process.exit
+extern

@@ -1,0 +1,5 @@
+fn fileAppend(path Text, content Text) -> Unit
+  "Add text to the end of a file, creating it if needed."
+  effects file.write
+  fails
+extern
