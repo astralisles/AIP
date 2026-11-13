@@ -10,6 +10,12 @@ The only back end so far is `CsBackend.cs`: it emits C# and builds it with the .
     scripts\aip.ps1 build examples\hello [--target linux-x64]
     scripts\test.ps1
 
+## Logging and debugging
+
+- `--verbose` / `-v` (or env `AIP_VERBOSE=1`) on any `aip` command logs steps with timings to stderr: files loaded, check result, whether `dotnet publish` ran or was skipped, program exit code. stdout stays unchanged.
+- `logLine(text)` (std, effect `log.write`) writes a diagnostic line to stderr, so it never mixes with program output. See `examples/logging`.
+- A crashing program prints `runtime error: <type>: <message>` to stderr and exits with code 1. Set `AIP_TRACE=1` to also print the stack (generated C# frames `Fn.<function>`). See `examples/crash`.
+
 Entry point: a function named `main`, no parameters, returns Unit. Its `effects`
 line lists everything the program can do. Every function must be reachable from `main`.
 
@@ -82,7 +88,7 @@ construction, and keep the rest small, visible and checkable. Today's state, by 
   throws instead of wrapping. `textSlice` clamps.
 - Eval/RCE from data: there is no `eval`, no reflection, no dynamic code loading, no string-to-code path.
   Programs cannot start processes or open sockets: the only effects are `terminal.write`, `file.read`, `file.write`.
-- Shared-state bugs (races, hidden mutation): immutable values, no globals (T-0925), no threads in the language.
+- Shared-state bugs (races, hidden mutation): immutable values, no globals (T-0925), no threads today; planned parallelism (T-0935) shares nothing and keeps results deterministic.
 - Injection into the generated C#: identifiers are ASCII letters/digits/`_` only (lexer) and emitted with `@`;
   text literals are escaped by `Quote` (every non-printable becomes `\uXXXX`); doc text is XML-escaped and
   cannot contain a line break (a lone CR was tried: it splits the line, and the file is rejected as `missing-doc`).
@@ -106,8 +112,35 @@ construction, and keep the rest small, visible and checkable. Today's state, by 
 
 **Rule for new features** (including `Fn` pointers and `state` handles): a feature that can reach outside the program
 (files, processes, network, time, randomness) must be an effect named in the signature, scoped by the host, and shown in the index.
-Never add `unsafe`, FFI, reflection, `eval`, or a text-to-code path. Mutation stays out.
+Never add `unsafe`, FFI, reflection, `eval`, or a text-to-code path. Mutation stays out. Tasks (T-0935) must keep the same limits per task (stack size, path scope, memory).
 
 **Not covered by the language**: bugs in the .NET runtime, the OS, or a back end. A future native back end (no .NET)
 must re-prove each bullet above (bounds checks, overflow checks) in its own runtime; the checks belong in the shared
 spec of `std`, not only in `CsBackend.cs`.
+
+## Design decision: parallelism (T-0935)
+
+Yes, but only as deterministic, effect-visible parallelism, and not yet. Because values are
+immutable and there is no global state (T-0925), pure functions cannot race, so parallelism
+needs no locks, atomics or shared memory in the language.
+
+Shape (builds on `Fn` from T-0928):
+- Data parallelism first: std `listMapPar(list, &f)`, `listFoldPar(list, &f, &combine)`.
+  `f` must be pure (no effects in its `Fn` type); `combine` must be associative. The result
+  is identical to the sequential `listMap` / `listFold`, always in input order, so
+  `example`/`ensures` checking and "stage 2 output == stage 1 output" still hold.
+  The back end chooses the thread count; it is never visible to the program.
+- Parallel effects (e.g. compile many files, each reading and writing files): `taskRun(&f, arg)`
+  returns a `Task<R>`; `taskAwait(t)` returns the result. The effects of `f` must appear in the
+  caller's `effects` line plus a `parallel` effect, so the index shows which functions fork.
+  Tasks share nothing: arguments are copied/immutable and the only way back is `taskAwait`.
+  Results are consumed in a program-chosen order, so output order stays deterministic.
+- No shared mutable state, no locks, no channels, no `async`/`await` coloring. Any
+  cross-task communication needs the explicit state handle from T-0925, not planned now.
+- Errors: a failing task surfaces at its `taskAwait`; unawaited tasks are a compile error.
+- Back end: C# `Parallel`/`Task` (the main thread already runs on a 512 MB stack thread;
+  task threads need the same stack size for deep recursion); other back ends may run sequentially,
+  which must give the same result.
+
+Not implemented. Needs `Fn` first. Immediate use: compiling the files of a project in the
+bootstrapped compiler (parse each `.fn` in parallel, check and emit in order).

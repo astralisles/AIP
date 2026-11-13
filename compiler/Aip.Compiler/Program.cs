@@ -7,6 +7,8 @@ const string Usage = """
       aip index <projectDir>                          print the index: one line per function
       aip build <projectDir> [--target T] [--out D]   check, then build a program
       aip run <projectDir>                            check, build for this machine, then run it
+    options: --verbose (or -v, or env AIP_VERBOSE=1) logs compiler steps and timings to stderr
+    run-time: AIP_TRACE=1 makes a crashing program print its full stack trace; `logLine` writes to stderr
     targets: windows-x64, windows-arm64, linux-x64, linux-arm64, macos-arm64 (default: this machine)
     """;
 
@@ -24,14 +26,19 @@ if (args.Length < 2 || args[0] is not ("check" or "index" or "build" or "run"))
 var command = args[0];
 var dir = Path.GetFullPath(args[1]);
 string? target = null, outDir = null;
+bool verbose = Environment.GetEnvironmentVariable("AIP_VERBOSE") is "1" or "true";
 for (int i = 2; i < args.Length; i++)
 {
-    if (args[i] == "--target" && i + 1 < args.Length) target = args[++i];
+    if (args[i] is "--verbose" or "-v") verbose = true;
+    else if (args[i] == "--target" && i + 1 < args.Length) target = args[++i];
     else if (args[i] == "--out" && i + 1 < args.Length) outDir = Path.GetFullPath(args[++i]);
     else { Console.WriteLine($"unknown option `{args[i]}`\n{Usage}"); return 2; }
 }
 if (!Directory.Exists(dir)) { Console.WriteLine($"error no-project: `{args[1]}` is not a folder"); return 1; }
 outDir ??= Path.Combine(dir, "build");
+var clock = System.Diagnostics.Stopwatch.StartNew();
+void Log(string msg) { if (verbose) Console.Error.WriteLine($"[aip {clock.ElapsedMilliseconds,5} ms] {msg}"); }
+Log($"{command} {dir}");
 
 var diags = new List<Diagnostic>();
 var program = new ProgramModel { Name = Path.GetFileName(dir.TrimEnd('\\', '/')), Dir = dir };
@@ -81,11 +88,14 @@ void Load(string root, bool isStd)
 }
 
 Load(Path.Combine(AppContext.BaseDirectory, "std"), true);
+Log($"loaded standard library: {program.Fns.Count} function(s)");
 Load(dir, false);
+Log($"loaded project: {program.ProjectFns.Count()} function(s), {program.Types.Count} type(s)");
 foreach (var (name, ctor) in program.Ctors.Where(c => program.Fns.ContainsKey(c.Key)))
     diags.Add(new Diagnostic(ctor.Def.File, ctor.Case.Line, "duplicate-name", $"`{name}` is also a function ({Path.GetFileName(program.Fns[name].File)})", "names are unique across the project; rename one"));
 if (diags.Count == 0) new Checker(program, diags).Check();
 
+Log($"checked: {diags.Count} error(s)");
 if (diags.Count > 0)
 {
     foreach (var d in diags.OrderBy(d => d.File, StringComparer.Ordinal).ThenBy(d => d.Line)) Console.WriteLine(d);
@@ -115,13 +125,17 @@ if (command == "run" && target != null && target != host)
 target ??= host;
 Directory.CreateDirectory(outDir);
 File.WriteAllText(Path.Combine(outDir, "index.txt"), Index());
-IBackend backend = new CsBackend();
+IBackend backend = new CsBackend { Log = Log };
+Log($"building for {target} into {outDir}");
 var exe = backend.Build(program, outDir, target);
-if (exe == null) return 1;
+if (exe == null) { Log("build failed"); return 1; }
+Log($"built {exe}");
 if (command == "run")
 {
+    Log($"running {exe}");
     using var proc = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exe) { UseShellExecute = false })!;
     proc.WaitForExit();
+    Log($"program exited with code {proc.ExitCode}");
     return proc.ExitCode;
 }
 Console.WriteLine($"ok: built {Path.GetRelativePath(Environment.CurrentDirectory, exe).Replace('\\', '/')} ({target}, {backend.Name} back end)");

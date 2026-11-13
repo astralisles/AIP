@@ -53,6 +53,20 @@ foreach ($case in Get-ChildItem (Join-Path $root 'tests\errors') -Directory | So
   $out = (& $aip check $case.FullName | Out-String).Trim()
   Report "error: $($case.Name)" ($LASTEXITCODE -ne 0 -and $out.Contains($expected)) "expected: $expected`n      got: $out"
 }
+# run aip in its own process so its stderr is plain text, not PowerShell error records
+function AipBoth { (cmd /c "powershell -NoProfile -File `"$aip`" $($args -join ' ') 2>&1" | Out-String) }
+function AipOut { (cmd /c "powershell -NoProfile -File `"$aip`" $($args -join ' ') 2>nul" | Out-String).Trim() }
+# logging and debugging: logLine goes to stderr only; --verbose logs compiler steps; crashes are reported cleanly
+$stdout = AipOut run examples\logging
+Report 'logging: stdout has only the normal output' ($stdout -eq 'Hello from the logging example') "got: $stdout"
+$all = AipBoth run examples\logging --verbose
+Report 'logging: logLine and --verbose go to stderr' ($all.Contains('debug: starting') -and $all.Contains('[aip') -and $all.Contains('checked: 0 error(s)')) $all
+$crash = AipBoth run examples\crash
+Report 'crash: run-time error is reported with exit code 1' ($LASTEXITCODE -eq 1 -and $crash.Contains('runtime error: KeyNotFoundException') -and -not $crash.Contains(' at Fn.')) $crash
+$env:AIP_TRACE = '1'
+$crash = AipBoth run examples\crash
+Remove-Item Env:\AIP_TRACE
+Report 'crash: AIP_TRACE=1 prints the stack trace' ($crash.Contains('at Fn.main')) $crash
 $out = (& (Join-Path $PSScriptRoot "compare-lexers.ps1") | Out-String).Trim()
 Report "bootstrap: AIP lexer matches the C# lexer" ($LASTEXITCODE -eq 0) $out
 if ($failed -eq 0) { 'ALL PASSED' } else { "$failed FAILED" }

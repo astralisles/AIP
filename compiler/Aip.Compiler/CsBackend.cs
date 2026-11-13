@@ -6,6 +6,7 @@ namespace Aip;
 /// <summary>Back end that emits C# and builds it with the .NET SDK.</summary>
 sealed class CsBackend : IBackend
 {
+    public Action<string> Log { get; init; } = _ => { };
     public string Name => "cs";
 
     /// <summary>Language target name -> .NET runtime identifier.</summary>
@@ -21,6 +22,7 @@ sealed class CsBackend : IBackend
     /// <summary>How each std extern function is written in C#. {0}, {1}... are the arguments.</summary>
     static readonly Dictionary<string, string> Externs = new()
     {
+        ["logLine"] = "System.Console.Error.Write({0} + \"\\n\")",
         ["printLine"] = "System.Console.Out.Write({0} + \"\\n\")",
         ["writeFile"] = "System.IO.File.WriteAllText({0}, {1})",
         ["textLength"] = "(long)({0}).Length",
@@ -81,7 +83,12 @@ sealed class CsBackend : IBackend
         var hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
             Encoding.UTF8.GetBytes(rid + "\0" + string.Join("\0", files.Select(p => p.Key + "\0" + p.Value)))));
         var stamp = Path.Combine(binDir, ".aip-build-hash");
-        if (File.Exists(exePath) && File.Exists(stamp) && File.ReadAllText(stamp) == hash) return exePath;
+        if (File.Exists(exePath) && File.Exists(stamp) && File.ReadAllText(stamp) == hash)
+        {
+            Log("generated C# unchanged since last build; skipping dotnet publish");
+            return exePath;
+        }
+        Log($"generated {files.Count} C# file(s) in {srcDir}; running dotnet publish");
 
         Directory.CreateDirectory(srcDir);
         foreach (var old in Directory.EnumerateFiles(srcDir, "*.cs").Where(p => !files.ContainsKey(Path.GetFileName(p))))
@@ -108,6 +115,7 @@ sealed class CsBackend : IBackend
         proc.WaitForExit();
         if (proc.ExitCode != 0)
         {
+            Log($"dotnet publish exit code {proc.ExitCode}");
             Console.WriteLine("error backend-failed: the generated C# did not build (this is a compiler bug or a missing .NET component)");
             foreach (var line in (output + errTask.Result).Split('\n').Where(l => l.Contains("error")).Distinct().Take(10))
                 Console.WriteLine("  " + line.Trim());
@@ -232,9 +240,23 @@ sealed class CsBackend : IBackend
                 Rt.Args = args;
                 System.Console.OutputEncoding = new System.Text.UTF8Encoding(false);
                 // Deep recursion is how loops are written, so run on a big stack.
-                var t = new System.Threading.Thread(() => Fn.@main(), 512 * 1024 * 1024);
+                int code = 0;
+                var t = new System.Threading.Thread(() =>
+                {
+                    try { Fn.@main(); }
+                    catch (System.Exception e)
+                    {
+                        // Debugging aid: a clean one-line error; AIP_TRACE=1 adds the C# stack (function names are Fn.<name>).
+                        var trace = System.Environment.GetEnvironmentVariable("AIP_TRACE");
+                        System.Console.Error.WriteLine("runtime error: " + e.GetType().Name + ": " + e.Message);
+                        if (trace == "1" || trace == "true") System.Console.Error.WriteLine(e.StackTrace);
+                        else System.Console.Error.WriteLine("  (set AIP_TRACE=1 to see which functions were running)");
+                        code = 1;
+                    }
+                }, 512 * 1024 * 1024);
                 t.Start();
                 t.Join();
+                System.Environment.Exit(code);
             }
         }
 
