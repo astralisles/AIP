@@ -60,3 +60,37 @@ list (effects already are a checked contract), and any contract that changes run
 
 Adopt steps 1 and 2 as the next tickets (about 300-500 lines in `Lint.cs`/a new `Prove.cs`, tests in
 `tests/lint` and `tests/contracts`). Defer 3 and 4. Nothing in the language syntax needs to change for 1 and 2.
+
+## What it looks like
+
+Contract syntax does not change. A function with all three kinds of contract:
+
+    fn safeDiv(a Int, b Int 1..) -> Int
+      "Divide a by b; b must be at least 1."
+      pure
+      requires a >= 0
+      ensures result <= a
+      example safeDiv(10, 2) == 5
+    body
+      a / b
+
+**Today (real output)** for a caller `safeDiv(10, 0)`: `aip check` says `ok`, `aip lint` warns
+`main.fn:5: warning literal-out-of-range: argument `b` of `safeDiv` is 0, outside 1..`, `aip test` runs the one example.
+Anything not a literal only fails when the program runs.
+
+**After step 1 (proposed wording, not implemented)**
+
+    main.fn:5: warning requires-always-false: call safeDiv(-3, 2) breaks `requires a >= 0`
+
+**After step 2 (proposed wording, not implemented)**
+
+    main.fn:9: warning requires-unproved: safeDiv(x, y) needs `y >= 1`; known: y >= 0
+                hint: call it inside `if y >= 1 then ...`
+    main.fn:5: error requires-disproved: safeDiv(10, n) with n = 0 here (inside `if n == 0`)
+
+The index line gains a status instead of "checked, not proved":
+
+    safeDiv(a Int, b Int 1..) -> Int | pure | requires a >= 0 | ensures result <= a | proved
+    average(a Int, b Int) -> Int     | pure | example x2                              | tested
+
+Unproved never blocks `build`; only a disproved contract (a call that must fail) is an error.
