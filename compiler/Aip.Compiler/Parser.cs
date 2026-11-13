@@ -23,10 +23,10 @@ sealed class Parser
     CompileException Err(string code, string message, string? fix = null) =>
         new(new Diagnostic(_file, _line, code, message, fix));
 
-    public static Fn ParseFile(string file)
+    public static Fn ParseFile(string file, string[]? lines = null)
     {
         var p = new Parser(file);
-        return p.ParseLines(File.ReadAllLines(file));
+        return p.ParseLines(lines ?? File.ReadAllLines(file));
     }
 
     /// <summary>One line per token (`Kind text`), and `Newline` after each non-blank line. Used to compare with the lexer written in AIP.</summary>
@@ -40,7 +40,7 @@ sealed class Parser
             var text = raw.Trim();
             if (text.Length == 0) continue;
             p.Lex(text);
-            foreach (var t in p._toks.Where(t => t.Kind != T.End)) sb.Append($"{t.Kind} {t.Text}\n");
+            foreach (var t in p._toks.Where(t => t.Kind != T.End)) sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"{t.Kind} {t.Text}\n");
             sb.Append("Newline\n");
         }
         return sb.ToString();
@@ -53,6 +53,8 @@ sealed class Parser
         int state = 0;
         bool sawEffects = false;
         MatchExpr? pending = null;
+        IfExpr? openIf = null; // a multi-line `if` whose branch lines are still being read
+        bool inElse = false;
         for (int i = 0; i < lines.Length; i++)
         {
             _line = i + 1;
@@ -64,7 +66,7 @@ sealed class Parser
 
             if (state == 0)
             {
-                if (indent != 0 || !text.StartsWith("fn "))
+                if (indent != 0 || !text.StartsWith("fn ", StringComparison.Ordinal))
                     throw Err("missing-signature", "the first line must declare the function", "start the file with `fn name(params) -> Type`");
                 Lex(text);
                 ParseSignature(fn);
@@ -88,7 +90,22 @@ sealed class Parser
                 ParseArm(pending, text);
                 continue;
             }
+            if (indent == 4 && state == 2 && openIf != null)
+            {
+                Lex(text);
+                _matchAllowed = false;
+                var line = ParseExpr();
+                ExpectEnd();
+                ((BlockExpr)(inElse ? openIf.Else : openIf.Then)).Stmts.Add(line);
+                continue;
+            }
             if (indent != 2) throw Err("bad-indent", $"expected an indent of 2 spaces, found {indent}");
+            if (state == 2 && openIf != null)
+            {
+                if (text == "else" && !inElse) { inElse = true; continue; }
+                CloseIf(openIf, inElse);
+                openIf = null;
+            }
             if (state == 3) throw Err("unexpected-line", "an extern function has no body");
 
             if (state == 1)
@@ -99,7 +116,7 @@ sealed class Parser
                         throw Err("missing-doc", "line 2 must be the purpose of the function", "add a one-line description in double quotes as line 2");
                     fn.Doc = text[1..^1];
                 }
-                else if (text == "pure" || text.StartsWith("effects "))
+                else if (text == "pure" || text.StartsWith("effects ", StringComparison.Ordinal))
                 {
                     if (sawEffects) throw Err("duplicate-effects", "effects are declared twice");
                     sawEffects = true;
@@ -107,14 +124,22 @@ sealed class Parser
                     if (text != "pure")
                         fn.Effects = text["effects ".Length..].Split(',').Select(e => e.Trim()).Where(e => e != "").ToList();
                 }
-                else if (text.StartsWith("requires ")) fn.Requires.Add(ParseExprText(text["requires ".Length..]));
-                else if (text.StartsWith("ensures ")) fn.Ensures.Add(ParseExprText(text["ensures ".Length..]));
-                else if (text.StartsWith("example ")) fn.Examples.Add(ParseExprText(text["example ".Length..]));
+                else if (text.StartsWith("requires ", StringComparison.Ordinal)) fn.Requires.Add(ParseExprText(text["requires ".Length..]));
+                else if (text.StartsWith("ensures ", StringComparison.Ordinal)) fn.Ensures.Add(ParseExprText(text["ensures ".Length..]));
+                else if (text.StartsWith("example ", StringComparison.Ordinal)) fn.Examples.Add(ParseExprText(text["example ".Length..]));
                 else throw Err("unexpected-line", $"unknown header line `{text}`", "header lines are: purpose, `pure` or `effects`, `requires`, `ensures`, `example`; then `body`");
                 continue;
             }
 
             // state 2: a statement
+            if (text.StartsWith("if ", StringComparison.Ordinal) && text.EndsWith(" then", StringComparison.Ordinal))
+            {
+                openIf = new IfExpr { Line = _line, Cond = ParseExprText(text["if ".Length..^" then".Length]), Then = new BlockExpr { Line = _line }, Else = new BlockExpr { Line = _line } };
+                inElse = false;
+                fn.Body.Add(new Stmt { Line = _line, Value = openIf });
+                pending = null;
+                continue;
+            }
             Lex(text);
             var stmt = new Stmt { Line = _line };
             if (Peek.Kind == T.Ident && Peek.Text == "let")
@@ -130,11 +155,21 @@ sealed class Parser
             pending = stmt.Value as MatchExpr;
         }
 
+        if (openIf != null) CloseIf(openIf, inElse);
         _line = Math.Max(1, lines.Length);
         if (state == 0) throw Err("missing-signature", "the file is empty", "start the file with `fn name(params) -> Type`");
         if (state == 1) throw Err("missing-body", "the function has no `body` line", "add a line `body` followed by the indented body");
         if (state == 2 && fn.Body.Count == 0) throw Err("empty-body", "the body is empty");
         return fn;
+    }
+
+    /// <summary>Ends a multi-line `if`: it needs an `else` line and at least one statement in each branch.</summary>
+    void CloseIf(IfExpr i, bool inElse)
+    {
+        _line = i.Line;
+        if (!inElse) throw Err("missing-else", "this `if` block has no `else`", "add a line `else` (indented 2 spaces) and the statements for the other case indented 4");
+        if (((BlockExpr)i.Then).Stmts.Count == 0 || ((BlockExpr)i.Else).Stmts.Count == 0)
+            throw Err("empty-branch", "a branch of this `if` block has no statements", "indent at least one statement (4 spaces) under `then` and under `else`");
     }
 
     void ParseSignature(Fn fn)
@@ -187,7 +222,9 @@ sealed class Parser
     {
         var sign = "";
         if (IsSym("-")) { _pos++; sign = "-"; }
-        return sign + Expect(T.Int, "a number").Text;
+        var digits = Expect(T.Int, "a number").Text;
+        if (!long.TryParse(sign + digits, out _)) throw Err("bad-number", $"`{sign}{digits}` is too large for Int");
+        return sign + digits;
     }
 
     void ParseArm(MatchExpr m, string text)
@@ -211,10 +248,10 @@ sealed class Parser
         m.Arms.Add(arm);
     }
 
-    public static TypeDef ParseTypeFile(string file)
+    public static TypeDef ParseTypeFile(string file, string[]? lines = null)
     {
         var p = new Parser(file);
-        return p.ParseTypeLines(File.ReadAllLines(file));
+        return p.ParseTypeLines(lines ?? File.ReadAllLines(file));
     }
 
     /// <summary>`struct Name` or `variant Name`, a purpose line, then fields (`name Type`) or cases (`Case(name Type, ...)`), all indented by two spaces.</summary>
@@ -231,7 +268,7 @@ sealed class Parser
             var text = raw.Trim();
             if (def == null)
             {
-                if (indent != 0 || !(text.StartsWith("struct ") || text.StartsWith("variant ")))
+                if (indent != 0 || !(text.StartsWith("struct ", StringComparison.Ordinal) || text.StartsWith("variant ", StringComparison.Ordinal)))
                     throw Err("missing-signature", "the first line must declare the type", "start the file with `struct Name` or `variant Name`");
                 Lex(text);
                 bool isVariant = Peek.Text == "variant";

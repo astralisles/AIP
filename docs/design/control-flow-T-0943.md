@@ -1,8 +1,11 @@
 # Control flow: conditionals and loops (T-0943)
 
 - Conditionals: `if c then a else b` is an expression on one line, chainable with `else if`; with Unit branches
-  it is a statement. `and`, `or`, `not` and `match` also work. A multi-line `if` block does not parse yet, so a
-  branch that needs two statements calls a helper function (`examples/control/countdownStep.fn`).
+  it is a statement. `and`, `or`, `not` and `match` also work.
+- Multi-line `if` block (T-0947): when a branch needs several statements, write `if c then` alone on its line,
+  the then-statements indented 4, `else` indented 2, then the else-statements indented 4
+  (`examples/control/countdown.fn`). Both branches are Unit statements, `else` is required, and blocks do not nest or
+  appear after `let`; use the one-line form for values. Errors: `missing-else`, `empty-branch`.
 - Loops: yes, loops are done with recursion. There is no `while`/`for`, because values are immutable: a loop is a
   function that calls itself with the next state in its parameters, e.g. `sumTo(n - 1, total + n)`.
   One million iterations run fine on the 512 MB stack (`examples/control`, checked by `scripts\test.ps1`).

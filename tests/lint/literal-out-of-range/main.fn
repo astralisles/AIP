@@ -1,0 +1,5 @@
+fn main() -> Unit
+  "Call the function under test."
+  effects terminal.write
+body
+  printLine("{f(50)}")

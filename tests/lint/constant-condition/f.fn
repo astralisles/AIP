@@ -1,0 +1,6 @@
+fn f(a Int) -> Int
+  "A condition that never changes."
+  pure
+  example f(1) == 1
+body
+  if true then a else 0

@@ -1,0 +1,6 @@
+fn f(n Int) -> Int
+  "Double a number."
+  pure
+  example f(2) == 5
+body
+  n * 2

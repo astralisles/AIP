@@ -1,0 +1,4 @@
+fn main() -> Unit
+  "No effects line."
+body
+  printLine("hi")

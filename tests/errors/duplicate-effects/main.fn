@@ -1,0 +1,6 @@
+fn main() -> Unit
+  "Declare effects twice."
+  effects terminal.write
+  effects terminal.write
+body
+  printLine("hi")

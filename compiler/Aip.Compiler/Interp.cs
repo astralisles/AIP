@@ -1,0 +1,313 @@
+using System.Globalization;
+using System.Numerics;
+
+namespace Aip;
+
+/// <summary>A struct or variant value: which case, and its field values in declaration order.</summary>
+sealed record Val(Case Case, object?[] Fields);
+
+/// <summary>
+/// Tree-walking evaluator for pure functions. It runs `example` lines and checks `requires`, `ensures` and
+/// parameter/result ranges at every call. It follows the C# back end's rules (checked sized integers, truncating division, IEEE floats).
+/// </summary>
+sealed class Interp(ProgramModel program)
+{
+    /// <summary>The function needs something the interpreter does not have (an effect, an unsupported extern).</summary>
+    public sealed class Unsupported(string message) : Exception(message);
+
+    /// <summary>A contract, range or arithmetic rule did not hold.</summary>
+    public sealed class Failed(string code, string message) : Exception(message)
+    {
+        public string Code = code;
+    }
+
+    int _depth;
+    const int MaxDepth = 100_000;
+
+    object? CallFn(Fn fn, List<object?> args)
+    {
+        if (fn.Effects.Count > 0) throw new Unsupported($"`{fn.Name}` has effects ({fn.EffectsText})");
+        for (int i = 0; i < fn.Params.Count; i++) args[i] = Coerce(args[i], fn.Params[i].Type.Name);
+        for (int i = 0; i < fn.Params.Count; i++) CheckRange(fn.Params[i].Type, args[i], $"argument `{fn.Params[i].Name}` of `{fn.Name}`");
+        if (fn.IsExtern) return Extern(fn.Name, args);
+        if (++_depth > MaxDepth) throw new Failed("recursion-too-deep", $"`{fn.Name}` recursed more than {MaxDepth} calls deep");
+        try
+        {
+            var env = new Dictionary<string, object?>();
+            for (int i = 0; i < fn.Params.Count; i++) env[fn.Params[i].Name] = args[i];
+            foreach (var r in fn.Requires)
+                if (Eval(r, env) is false) throw new Failed("requires-violated", $"`requires` of `{fn.Name}` ({Path.GetFileName(fn.File)}:{r.Line}) does not hold for ({Show(args)})");
+            object? result = null;
+            for (int i = 0; i < fn.Body.Count; i++)
+            {
+                var v = Eval(fn.Body[i].Value, env);
+                if (fn.Body[i].Let != null) env[fn.Body[i].Let!] = v;
+                else if (i == fn.Body.Count - 1) result = v;
+            }
+            result = Coerce(result, fn.Ret.Name);
+            CheckRange(fn.Ret, result, $"the result of `{fn.Name}`");
+            var post = new Dictionary<string, object?>(env);
+            if (fn.Ret.Name != "Unit") post["result"] = result;
+            foreach (var en in fn.Ensures)
+                if (Eval(en, post) is false) throw new Failed("ensures-violated", $"`ensures` of `{fn.Name}` ({Path.GetFileName(fn.File)}:{en.Line}) does not hold for ({Show(args)}) -> {Show(result)}");
+            return result;
+        }
+        finally { _depth--; }
+    }
+
+    static string Show(IEnumerable<object?> vs) => string.Join(", ", vs.Select(Show));
+
+    static string Show(object? v) => v switch
+    {
+        null => "unit",
+        string s => "\"" + s + "\"",
+        bool b => b ? "true" : "false",
+        Val x => x.Case.Name + "(" + Show(x.Fields) + ")",
+        List<object?> l => "[" + Show(l) + "]",
+        _ when IsNumber(v) => NumText(v),
+        _ => v.ToString() ?? "",
+    };
+
+    static void CheckRange(TypeRef t, object? v, string what)
+    {
+        if (t.Range == "") return;
+        var parts = t.Range.Split("..");
+        long n = v switch { string s => s.Length, List<object?> l => l.Count, not null when IsInteger(v) && Big(v) >= long.MinValue && Big(v) <= long.MaxValue => (long)Big(v), _ => long.MinValue };
+        if (n == long.MinValue) return;
+        if ((parts[0] != "" && n < long.Parse(parts[0], CultureInfo.InvariantCulture)) || (parts[1] != "" && n > long.Parse(parts[1], CultureInfo.InvariantCulture)))
+            throw new Failed("range-violated", $"{what} is {Show(v)}, outside {t.Range}");
+    }
+
+    object? Eval(Expr e, Dictionary<string, object?> env)
+    {
+        switch (e)
+        {
+            case IntLit i: return Coerce((BigInteger)i.Value, i.Type == "" ? "Int" : i.Type);
+            case FloatLit fl: return fl.Type == "F32" ? (object)(float)fl.Value : fl.Value;
+            case BoolLit b: return b.Value;
+            case NameRef n: return env[n.Name];
+            case TextLit t:
+                return string.Concat(t.Parts.Select(p => p is string s ? s : Text(Eval((Expr)p, env))));
+            case Call { Ctor: not null } c:
+                return new Val(program.Ctors[c.Name].Case, c.Args.Select(a => Eval(a, env)).ToArray());
+            case Call c:
+                return CallFn(program.Fns[c.Name], c.Args.Select(a => Eval(a, env)).ToList());
+            case Field f:
+                {
+                    var v = (Val)Eval(f.Target, env)!;
+                    return v.Fields[v.Case.Fields.FindIndex(p => p.Name == f.Name)];
+                }
+            case MatchExpr m:
+                {
+                    var v = (Val)Eval(m.Subject, env)!;
+                    var arm = m.Arms.First(a => a.Case == v.Case.Name);
+                    var inner = new Dictionary<string, object?>(env);
+                    for (int i = 0; i < arm.Binds.Count; i++) inner[arm.Binds[i]] = v.Fields[i];
+                    return Eval(arm.Body, inner);
+                }
+            case Unary u:
+                {
+                    var v = Eval(u.Operand, env);
+                    if (u.Op != "-") return !(bool)v!;
+                    if (v is double dv) return -dv;
+                    if (v is float fv) return -fv;
+                    return Fit(-Big(v!), u.Type == "" ? "Int" : u.Type, "negation");
+                }
+            case BlockExpr k:
+                foreach (var s in k.Stmts) Eval(s, env);
+                return null;
+            case IfExpr i:
+                return (bool)Eval(i.Cond, env)! ? Eval(i.Then, env) : Eval(i.Else, env);
+            case Binary b:
+                {
+                    if (b.Op == "and") return (bool)Eval(b.Left, env)! && (bool)Eval(b.Right, env)!;
+                    if (b.Op == "or") return (bool)Eval(b.Left, env)! || (bool)Eval(b.Right, env)!;
+                    if (b.Op == "=>") return !(bool)Eval(b.Left, env)! || (bool)Eval(b.Right, env)!;
+                    var l = Eval(b.Left, env);
+                    var r = Eval(b.Right, env);
+                    bool num = l != null && r != null && IsNumber(l) && IsNumber(r);
+                    if (b.Op == "==") return num ? Compare(l!, r!) == 0 : Equals(l, r);
+                    if (b.Op == "!=") return num ? Compare(l!, r!) != 0 : !Equals(l, r);
+                    if (b.Op is "<" or "<=" or ">" or ">=")
+                    {
+                        int c = Compare(l!, r!);
+                        return b.Op switch { "<" => c < 0, "<=" => c <= 0, ">" => c > 0, _ => c >= 0 };
+                    }
+                    if (l is double or float || r is double or float)
+                    {
+                        double p = ToDouble(l!), q = ToDouble(r!);
+                        double res = b.Op switch { "+" => p + q, "-" => p - q, "*" => p * q, "/" => p / q, "%" => p % q, _ => throw new Unsupported($"operator {b.Op}") };
+                        return b.Type == "F32" ? (object)(float)res : res;
+                    }
+                    BigInteger x = Big(l!), y = Big(r!);
+                    if (b.Op is "/" or "%" && y.IsZero) throw new Failed("arithmetic", $"`{x} {b.Op} {y}`: division by zero");
+                    BigInteger z = b.Op switch { "+" => x + y, "-" => x - y, "*" => x * y, "/" => BigInteger.Divide(x, y), "%" => BigInteger.Remainder(x, y), _ => throw new Unsupported($"operator {b.Op}") };
+                    return Fit(z, b.Type == "" ? "Int" : b.Type, $"`{x} {b.Op} {y}`");
+                }
+        }
+        throw new Unsupported("expression " + e.GetType().Name);
+    }
+
+    static bool IsInteger(object v) => v is long or int or short or sbyte or ulong or uint or ushort or byte;
+    static bool IsNumber(object v) => IsInteger(v) || v is double or float;
+    static BigInteger Big(object v) => v switch
+    {
+        long x => x, int x => x, short x => x, sbyte x => x, ulong x => x, uint x => x, ushort x => x, byte x => x, BigInteger x => x,
+        _ => throw new Unsupported("whole number expected"),
+    };
+    static double ToDouble(object v) => v switch { double d => d, float f => f, _ => (double)Big(v) };
+    static string NumText(object v) => v switch
+    {
+        double d => d.ToString("R", CultureInfo.InvariantCulture),
+        float f => f.ToString("R", CultureInfo.InvariantCulture),
+        _ => Big(v).ToString(CultureInfo.InvariantCulture),
+    };
+    static int Compare(object l, object r) => l is double or float || r is double or float ? ToDouble(l).CompareTo(ToDouble(r)) : Big(l).CompareTo(Big(r));
+
+    static readonly Dictionary<string, (BigInteger Min, BigInteger Max)> Limits = new()
+    {
+        ["Int"] = (long.MinValue, long.MaxValue), ["I8"] = (sbyte.MinValue, sbyte.MaxValue), ["I16"] = (short.MinValue, short.MaxValue),
+        ["I32"] = (int.MinValue, int.MaxValue), ["U8"] = (0, byte.MaxValue), ["U16"] = (0, ushort.MaxValue),
+        ["U32"] = (0, uint.MaxValue), ["U64"] = (0, ulong.MaxValue),
+    };
+
+    /// <summary>The value as a whole number of the named type (the interpreter holds the same CLR types as the C# back end); out of range is a run-time error.</summary>
+    static object Fit(BigInteger v, string type, string what)
+    {
+        var (min, max) = Limits[type];
+        if (v < min || v > max) throw new Failed("arithmetic", $"{what}: {v} does not fit in {type}");
+        return type switch
+        {
+            "Int" => (long)v, "I8" => (sbyte)v, "I16" => (short)v, "I32" => (int)v,
+            "U8" => (byte)v, "U16" => (ushort)v, "U32" => (uint)v, _ => (ulong)v,
+        };
+    }
+
+    /// <summary>Widens a number to the type a parameter or result declares; other values pass through.</summary>
+    static object? Coerce(object? v, string type)
+    {
+        if (v == null) return null;
+        if (v is BigInteger b) return Fit(b, type, "literal");
+        if (type == "F64" && v is float f) return (double)f;
+        if (Limits.ContainsKey(type) && IsInteger(v)) return Fit(Big(v), type, "value");
+        return v;
+    }
+
+    static string Text(object? v) => v switch
+    {
+        string s => s,
+        bool b => b ? "true" : "false",
+        _ when v != null && IsNumber(v) => NumText(v),
+        _ => throw new Unsupported("text of " + v),
+    };
+
+    // Same behaviour as the C# back end's Externs; effectful ones are refused before we get here.
+    static object? Extern(string name, List<object?> a)
+    {
+        List<object?> L(int i) => (List<object?>)a[i]!;
+        Dictionary<object, object?> M(int i) => (Dictionary<object, object?>)a[i]!;
+        try
+        {
+            switch (name)
+            {
+                case "noop": return null;
+                case "textLength": return (long)((string)a[0]!).Length;
+                case "textSlice":
+                    {
+                        var s = (string)a[0]!;
+                        int st = (int)Math.Clamp((long)a[1]!, 0, s.Length), en = (int)Math.Clamp((long)a[2]!, st, s.Length);
+                        return s.Substring(st, en - st);
+                    }
+                case "textCode": return (long)((string)a[0]!)[(int)(long)a[1]!];
+                case "textFromCode": return ((char)(long)a[0]!).ToString();
+                case "textToInt": return long.Parse((string)a[0]!, CultureInfo.InvariantCulture);
+                case "numToI8" or "numToI16" or "numToI32" or "numToU8" or "numToU16" or "numToU32" or "numToU64":
+                    return Fit(Big(a[0]!), name[5..], $"`{name}`");
+                case "numFromI8" or "numFromI16" or "numFromI32" or "numFromU8" or "numFromU16" or "numFromU32" or "numFromU64":
+                    return Fit(Big(a[0]!), "Int", $"`{name}`");
+                case "numToF32": return (float)(long)a[0]!;
+                case "numToF64": return (double)(long)a[0]!;
+                case "numFromF32" or "numFromF64":
+                    {
+                        double d = ToDouble(a[0]!);
+                        if (double.IsNaN(d) || d >= 9223372036854775808.0 || d < -9223372036854775808.0) throw new OverflowException($"{d} does not fit in Int");
+                        return (long)d;
+                    }
+                case "numF32ToF64": return (double)(float)a[0]!;
+                case "numF64ToF32": return (float)(double)a[0]!;
+                case "bitAnd" or "bitOr" or "bitXor" or "bitNot" or "bitShl" or "bitShr":
+                    {
+                        string ty = a[0] switch { long => "Int", sbyte => "I8", short => "I16", int => "I32", byte => "U8", ushort => "U16", uint => "U32", _ => "U64" };
+                        var (_, max) = Limits[ty];
+                        int width = ty switch { "Int" or "U64" => 64, "I32" or "U32" => 32, "I16" or "U16" => 16, _ => 8 };
+                        BigInteger mod = BigInteger.One << width, x = Big(a[0]!);
+                        BigInteger Wrap(BigInteger v) { v = ((v % mod) + mod) % mod; return v > max ? v - mod : v; }
+                        BigInteger res;
+                        if (name is "bitShl" or "bitShr")
+                        {
+                            long n = (long)Big(a[1]!);
+                            if (n < 0 || n >= width) throw new InvalidOperationException($"shift count {n} must be 0 to {width - 1}");
+                            res = name == "bitShl" ? Wrap(x << (int)n) : x >> (int)n;
+                        }
+                        else if (name == "bitNot") res = Wrap(-x - 1);
+                        else
+                        {
+                            BigInteger y = Big(a[1]!), ux = (x + mod) % mod, uy = (y + mod) % mod;
+                            res = Wrap(name == "bitAnd" ? ux & uy : name == "bitOr" ? ux | uy : ux ^ uy);
+                        }
+                        return Fit(res, ty, name);
+                    }
+                case "listEmpty": return new List<object?>();
+                case "listLength": return (long)L(0).Count;
+                case "listGet": return L(0)[(int)(long)a[1]!];
+                case "listAppend": return new List<object?>(L(0)) { a[1] };
+                case "mapEmpty" or "setEmpty": return new Dictionary<object, object?>();
+                case "mapSize" or "setSize": return (long)M(0).Count;
+                case "mapHas" or "setHas": return M(0).ContainsKey(a[1]!);
+                case "mapGet": return M(0).TryGetValue(a[1]!, out var v) ? v : throw new KeyNotFoundException("mapGet: key not in the map");
+                case "mapSet": return new Dictionary<object, object?>(M(0)) { [a[1]!] = a[2] };
+                case "setAdd": return new Dictionary<object, object?>(M(0)) { [a[1]!] = true };
+                case "mapRemove" or "setRemove": return M(0).Where(p => !p.Key.Equals(a[1])).ToDictionary(p => p.Key, p => p.Value);
+                case "mapKeys" or "setItems": return M(0).Keys.Select(k => (object?)k).ToList();
+            }
+        }
+        catch (Exception ex) when (ex is ArgumentOutOfRangeException or KeyNotFoundException or FormatException or OverflowException)
+        {
+            throw new Failed("extern-failed", $"`{name}`: {ex.Message}");
+        }
+        throw new Unsupported($"the standard function `{name}` is not available in `aip test`");
+    }
+
+    /// <summary>
+    /// Runs every `example` of every project function (on a big stack, like the compiled program).
+    /// Returns how many passed, how many were skipped (they need an effect), the failures, and pure functions without any example.
+    /// </summary>
+    public static (int Passed, int Skipped, List<Diagnostic> Failures, List<string> NoExample) RunExamples(ProgramModel program)
+    {
+        int passed = 0, skipped = 0;
+        var failures = new List<Diagnostic>();
+        var none = new List<string>();
+        var t = new Thread(() =>
+        {
+            var interp = new Interp(program);
+            foreach (var fn in program.ProjectFns)
+            {
+                if (fn.Examples.Count == 0 && fn.Effects.Count == 0 && fn.Name != "main") none.Add(fn.Name);
+                foreach (var ex in fn.Examples)
+                {
+                    try
+                    {
+                        interp._depth = 0;
+                        if (interp.Eval(ex, new Dictionary<string, object?>()) is true) passed++;
+                        else failures.Add(new Diagnostic(fn.File, ex.Line, "example-failed", $"an example of `{fn.Name}` is false"));
+                    }
+                    catch (Unsupported) { skipped++; }
+                    catch (Failed f) { failures.Add(new Diagnostic(fn.File, ex.Line, f.Code, f.Message)); }
+                }
+            }
+        }, 256 * 1024 * 1024);
+        t.Start();
+        t.Join();
+        return (passed, skipped, failures, none);
+    }
+}

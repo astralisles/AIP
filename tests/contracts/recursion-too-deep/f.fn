@@ -1,0 +1,6 @@
+fn f(n Int) -> Int
+  "Never reaches its end."
+  pure
+  example f(1) == 0
+body
+  if n == 0 then 0 else f(n + 1)

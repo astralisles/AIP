@@ -284,6 +284,7 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
             Unary u => UnaryType(u, env, used),
             Binary b => BinaryType(b, env, used),
             IfExpr i => IfType(i, env, used),
+            BlockExpr k => BlockType(k, env, used),
             _ => "",
         };
         return e.Type;
@@ -344,7 +345,7 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
                 if (!Unify(target.Params[i].Type.Name, argTypes[i], vars))
                     Error(c.Line, "type-mismatch", $"argument `{target.Params[i].Name}` of `{c.Name}` must be {Subst(target.Params[i].Type.Name, vars)}, found {argTypes[i]}", $"signature: {target.Signature}");
             }
-            if (target.IsStd && c.Name.StartsWith("bit") && vars.TryGetValue("T", out var bt) && bt != "" && bt != "_" && !IsInt(bt))
+            if (target.IsStd && c.Name.StartsWith("bit", StringComparison.Ordinal) && vars.TryGetValue("T", out var bt) && bt != "" && bt != "_" && !IsInt(bt))
                 Error(c.Line, "type-mismatch", $"`{c.Name}` needs a whole number (Int, I8..I32, U8..U64), found {bt}");
             return Subst(target.Ret.Name, vars);
         }
@@ -480,6 +481,16 @@ sealed class Checker(ProgramModel program, List<Diagnostic> diags)
                 if (known && (l != "Bool" || r != "Bool")) Error(b.Line, "type-mismatch", $"`{b.Op}` needs Bool on both sides, found {l} and {r}");
                 return "Bool";
         }
+    }
+
+    string BlockType(BlockExpr k, Dictionary<string, string> env, HashSet<string> used)
+    {
+        foreach (var s in k.Stmts)
+        {
+            var t = TypeOf(s, env, used);
+            if (t != "" && t != "Unit") Error(s.Line, "unused-value", $"this {t} value is not used", "a branch of an `if` block holds Unit statements; remove the line");
+        }
+        return "Unit";
     }
 
     string IfType(IfExpr i, Dictionary<string, string> env, HashSet<string> used)

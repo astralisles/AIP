@@ -1,0 +1,5 @@
+fn f(a Int) -> Int
+  "Calls itself with no way out."
+  pure
+body
+  f(a + 1)
