@@ -1,0 +1,4 @@
+fn tcpStop(listener TcpListener) -> Unit
+  "Stop listening."
+  effects tcp.close
+extern

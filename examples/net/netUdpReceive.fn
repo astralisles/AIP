@@ -1,0 +1,8 @@
+fn netUdpReceive(port Int) -> Unit
+  "Wait up to 10 seconds for one datagram and print its text."
+  effects udp.open, udp.receive, udp.close, terminal.write
+body
+  let socket = udpOpen(port)
+  let data = udpReceive(socket, 10000)
+  udpClose(socket)
+  printLine("udp got: {bytesDecode(data)}")

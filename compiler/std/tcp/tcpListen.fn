@@ -1,0 +1,4 @@
+fn tcpListen(port Int) -> TcpListener
+  "Start listening for TCP connections on a port."
+  effects tcp.listen
+extern

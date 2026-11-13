@@ -1,0 +1,7 @@
+fn main() -> Unit
+  "Console and network demo: `net echo`, `net serve PORT`, `net client PORT`, `net udp-receive PORT`, `net udp-send PORT`."
+  effects process.args, terminal.read, terminal.write, tcp.connect, tcp.listen, tcp.accept, tcp.send, tcp.receive, tcp.close, udp.open, udp.send, udp.receive, udp.close
+body
+  let mode = if argCount() > 0 then arg(0) else "help"
+  let port = if argCount() > 1 then textToInt(arg(1)) else 9000
+  if mode == "echo" then printLine("you typed: {readLine()}") else if mode == "serve" then netServe(port) else if mode == "client" then netClient(port) else if mode == "udp-receive" then netUdpReceive(port) else if mode == "udp-send" then netUdpSend(port) else printLine("usage: net echo | serve PORT | client PORT | udp-receive PORT | udp-send PORT")
