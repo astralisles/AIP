@@ -1,6 +1,7 @@
 fn parseEffects(toks List<Text>, pos Int, current Text, acc List<Text>) -> List<Text>
   "Read the rest of an `effects` line from pos: names such as `file.read`, separated by commas."
   pure
+  fails
 body
   let t = tokAt(toks, pos)
   let lineDone = t == "Newline" or t == "End"

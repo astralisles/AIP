@@ -1,5 +1,6 @@
 fn lexToken(src Text, start Int, end Int, kind Text, acc List<Text>) -> List<Text>
   "Add the token src[start..end] of the given kind, then lex on from end."
   pure
+  fails
 body
   lexFrom(src, end, listAppend(acc, "{kind} {textSlice(src, start, end)}"))

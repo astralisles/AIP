@@ -1,4 +1,5 @@
 fn textRepeat(text Text, count Int) -> Text
   "The text repeated count times; count must not be negative."
   pure
+  fails
 extern

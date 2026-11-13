@@ -1,6 +1,7 @@
 fn main() -> Unit
   "A shift count at or above the width is a run-time error."
   effects terminal.write
+  fails
 body
   printLine("before")
   printLine("{bitShl(numToU8(1), 8)}")

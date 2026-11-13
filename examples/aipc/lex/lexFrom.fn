@@ -1,5 +1,6 @@
 fn lexFrom(src Text, pos Int, acc List<Text>) -> List<Text>
   "Lex src from position pos, adding tokens to acc."
   pure
+  fails
 body
   if pos >= textLength(src) then addNewline(acc) else lexStep(src, pos, acc)

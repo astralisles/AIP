@@ -1,6 +1,7 @@
 fn main() -> Unit
   "Show bit operations on sized whole numbers."
   effects terminal.write
+  fails
 body
   let flags = numToU8(12)
   printLine("and: {bitAnd(flags, 10)}")

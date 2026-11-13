@@ -1,6 +1,7 @@
 fn main() -> Unit
   "Show the text, Int and List helpers added in T-0957."
   effects terminal.write
+  fails
 body
   let t = "  Hello, World  "
   let c = textTrim(t)

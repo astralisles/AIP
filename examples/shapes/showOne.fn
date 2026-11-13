@@ -1,6 +1,7 @@
 fn showOne(shapes List<Shape>, i Int) -> Unit
   "Print shape i, then the rest."
   effects terminal.write
+  fails
 body
   let shape = listGet(shapes, i)
   match shape

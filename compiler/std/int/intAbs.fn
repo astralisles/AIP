@@ -1,4 +1,5 @@
 fn intAbs(value Int) -> Int
   "The number without its sign; fails for the smallest Int."
   pure
+  fails
 extern

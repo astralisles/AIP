@@ -3,5 +3,6 @@ fn tokKind(t Text) -> Text
   pure
   example tokKind("Sym ->") == "Sym"
   example tokKind("Newline") == "Newline"
+  fails
 body
   textSlice(t, 0, spaceAt(t, 0))

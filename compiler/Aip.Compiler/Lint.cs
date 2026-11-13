@@ -6,7 +6,7 @@ namespace Aip;
 /// Warnings for code that type-checks but is probably wrong. Runs only on a program that has no errors.
 /// Every warning is a bug-shaped thing the checker does not reject: `aip lint` fails when there is one.
 /// </summary>
-static class Lint
+static partial class Lint
 {
     public static IEnumerable<Expr> Children(Expr e) => e switch
     {
@@ -75,6 +75,8 @@ static class Lint
                     }
                 }
             }
+
+            Restraints(program, fn, Warn);
 
             // always-true/false-example is impossible to see statically; `aip test` runs examples instead.
         }

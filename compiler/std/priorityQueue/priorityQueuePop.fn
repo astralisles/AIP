@@ -1,4 +1,5 @@
 fn priorityQueuePop(q PriorityQueue<T>) -> PriorityQueue<T>
   "A new queue without the front item; the queue must not be empty."
   pure
+  fails
 extern

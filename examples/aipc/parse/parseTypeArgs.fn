@@ -1,6 +1,7 @@
 fn parseTypeArgs(toks List<Text>, pos Int, acc Text) -> Parsed
   "Read the type arguments at pos up to and including `>`; acc is the type text read so far."
   pure
+  fails
 body
   let inner = parseType(toks, pos)
   if tokAt(toks, inner.next) == "Sym ," then parseTypeArgs(toks, inner.next + 1, "{acc}{inner.text},") else Parsed("{acc}{inner.text}>", inner.next + 1)

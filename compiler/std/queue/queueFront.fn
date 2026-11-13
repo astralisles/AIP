@@ -1,4 +1,5 @@
 fn queueFront(q Queue<T>) -> T
   "The item at the front (the oldest); the queue must not be empty (check queueSize)."
   pure
+  fails
 extern

@@ -1,4 +1,5 @@
 fn fileWrite(path Text, content Text) -> Unit
   "Write a whole text file, replacing it."
   effects file.write
+  fails
 extern

@@ -1,0 +1,7 @@
+fn second(items List<Int>) -> Int
+  "The second item; the list must have at least two items."
+  pure
+  fails
+  example second(listRange(1, 3)) == 2
+body
+  listGet(items, 1)

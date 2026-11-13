@@ -1,6 +1,7 @@
 fn main() -> Unit
   "Show structs, variants and match."
   effects terminal.write
+  fails
 body
   let origin = Point(0, 0)
   let shapes = listAppend(listAppend(listAppend(listAppend(listEmpty(), Circle(origin, 2)), Rect(Point(1, 2), 4, 5)), Nothing()), Dot(Point(7, 8)))

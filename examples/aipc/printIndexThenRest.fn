@@ -1,6 +1,7 @@
 fn printIndexThenRest(i Int) -> Unit
   "Print the index line of the file named by argument i, then the rest."
   effects file.read, process.args, terminal.write
+  fails
 body
   printLine(indexLine(parseHeader(lexAll(fileRead(arg(i))))))
   printIndex(i + 1)

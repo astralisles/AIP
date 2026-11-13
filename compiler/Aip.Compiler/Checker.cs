@@ -305,6 +305,7 @@ sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
             Error(fn.EffectsLine, "effect-unused", $"`{fn.Name}` declares {string.Join(", ", unused)} but nothing in its body needs it",
                 rest.Count == 0 ? "declare `pure`" : $"declare `effects {string.Join(", ", rest)}`");
         }
+        CheckRestraints(fn);
     }
 
     void CheckTypes()

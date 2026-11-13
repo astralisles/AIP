@@ -32,7 +32,7 @@ if ($untested) { "error codes without a tests\errors case: $($untested -join ', 
 if ($stale) { "tests\errors names codes the compiler does not have: $($stale -join ', ')" }
 # lint warnings: each `Warn(..., "code", ...)` in Lint.cs needs a tests\lint\<code> case, and the reverse
 $warn = @{}
-foreach ($m in [regex]::Matches((Get-Content (Join-Path $root 'compiler\Aip.Compiler\Lint.cs') -Raw), 'Warn\(\w+,\s*[^,]+,\s*"([a-z]+(?:-[a-z]+)*)"')) { $warn[$m.Groups[1].Value] = $true }
+foreach ($m in [regex]::Matches(((Get-ChildItem (Join-Path $root 'compiler\Aip.Compiler') -Filter Lint*.cs | ForEach-Object { Get-Content $_.FullName -Raw }) -join "`n"), 'Warn\(\w+,\s*[^,]+,\s*"([a-z]+(?:-[a-z]+)*)"')) { $warn[$m.Groups[1].Value] = $true }
 $haveLint = @(Get-ChildItem (Join-Path $root 'tests\lint') -Directory | ForEach-Object Name)
 $noLint = @($warn.Keys | Where-Object { $haveLint -notcontains $_ } | Sort-Object)
 $staleLint = @($haveLint | Where-Object { -not $warn.ContainsKey($_) } | Sort-Object)

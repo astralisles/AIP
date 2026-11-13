@@ -1,0 +1,7 @@
+fn f(n Int) -> Int
+  "Calls listGet, which can fail."
+  pure
+  cannot-fail
+  example f(1) == 1
+body
+  listGet(listRange(0, 5), n)

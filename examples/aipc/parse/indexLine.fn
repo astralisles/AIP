@@ -1,6 +1,7 @@
 fn indexLine(h FnHeader) -> Text
   "The index line of a header without the proof status, as `aip index` prints it: `signature | effects`."
   pure
+  fails
 body
   let effects = if listLength(h.effects) == 0 then "pure" else joinTexts(h.effects, ", ", 0, "")
   let params = joinTexts(paramTexts(h.params, 0, listEmpty()), ", ", 0, "")

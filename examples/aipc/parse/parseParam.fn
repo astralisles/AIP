@@ -1,6 +1,7 @@
 fn parseParam(toks List<Text>, pos Int, acc List<ParamDecl>) -> ParamsParsed
   "Read one parameter `name Type` at pos, add it to acc, then read the rest of the parameters."
   pure
+  fails
 body
   let type = parseType(toks, pos + 1)
   parseParams(toks, type.next, listAppend(acc, ParamDecl(tokText(tokAt(toks, pos)), type.text)))

@@ -1,6 +1,7 @@
 fn parseParams(toks List<Text>, pos Int, acc List<ParamDecl>) -> ParamsParsed
   "Read the parameters `name Type, ...` at pos up to and including `)`, adding them to acc."
   pure
+  fails
 body
   let start = if tokAt(toks, pos) == "Sym ," then pos + 1 else pos
   if tokAt(toks, pos) == "Sym )" or tokAt(toks, pos) == "End" then ParamsParsed(acc, pos + 1) else parseParam(toks, start, acc)

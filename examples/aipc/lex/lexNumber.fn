@@ -1,6 +1,7 @@
 fn lexNumber(src Text, pos Int, acc List<Text>) -> List<Text>
   "Lex an Int or a Float (digits, point, digits) that starts at pos, then the rest."
   pure
+  fails
 body
   let end = scanDigits(src, pos)
   if hasFraction(src, end) then lexToken(src, pos, scanDigits(src, end + 1), "Float", acc) else lexToken(src, pos, end, "Int", acc)

@@ -1,5 +1,6 @@
 fn lineEnd(toks List<Text>, pos Int) -> Int
   "The position of the Newline token that ends the line holding pos (or the end of the tokens)."
   pure
+  fails
 body
   if pos >= listLength(toks) or tokAt(toks, pos) == "Newline" then pos else lineEnd(toks, pos + 1)
