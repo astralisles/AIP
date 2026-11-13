@@ -1,4 +1,5 @@
 fn fileRead(path Text) -> Text
   "Read a whole text file."
   effects file.read
+  fails
 extern

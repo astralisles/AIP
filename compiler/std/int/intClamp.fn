@@ -1,4 +1,5 @@
 fn intClamp(value Int, low Int, high Int) -> Int
   "The value limited to low..high; low must not be above high."
   pure
+  fails
 extern

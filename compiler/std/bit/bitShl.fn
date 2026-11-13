@@ -1,4 +1,5 @@
 fn bitShl(a T, count Int) -> T
   "Shift bits left, filling with zeros; bits shifted out are lost. count must be 0 to width-1, else a run-time error."
   pure
+  fails
 extern

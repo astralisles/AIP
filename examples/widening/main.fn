@@ -1,6 +1,7 @@
 fn main() -> Unit
   "Smaller types widen to bigger ones on their own, because no value is lost."
   effects terminal.write
+  fails
 body
   let small = numToI8(100)
   let big = numToI32(1000000)

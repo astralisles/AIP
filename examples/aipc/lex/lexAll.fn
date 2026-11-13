@@ -1,5 +1,6 @@
 fn lexAll(src Text) -> List<Text>
   "Split a source text into tokens, one text per token: `Kind text`, or `Newline`."
   pure
+  fails
 body
   lexFrom(src, 0, listEmpty())

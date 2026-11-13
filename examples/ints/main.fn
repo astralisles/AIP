@@ -1,6 +1,7 @@
 fn main() -> Unit
   "Show the exact-size whole numbers: I8 I16 I32 (signed), U8 U16 U32 U64 (unsigned), and Int (64-bit signed)."
   effects terminal.write
+  fails
 body
   let small = numToI8(100)
   let byte = numToU8(200)

@@ -1,6 +1,7 @@
 fn main() -> Unit
   "Overflow of a sized integer is a run-time error: 100 + 100 does not fit in I8."
   effects terminal.write
+  fails
 body
   printLine("before")
   printLine("{numFromI8(addI8(numToI8(100), numToI8(100)))}")

@@ -1,4 +1,5 @@
 fn priorityQueueFront(q PriorityQueue<T>) -> T
   "The item with the lowest priority number; the queue must not be empty."
   pure
+  fails
 extern

@@ -3,6 +3,7 @@ fn eval(e Expr) -> Int
   pure
   example eval(Add(Num(2), Neg(Num(5)))) == -3
   example eval(Sum(listAppend(listAppend(listEmpty(), Num(4)), Num(6)))) == 10
+  fails
 body
   match e
     Num(value) => value

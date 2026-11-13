@@ -1,6 +1,7 @@
 fn lexString(src Text, pos Int, acc List<Text>) -> List<Text>
   "Lex a double-quoted text that starts at pos; the token keeps the raw characters between the quotes."
   pure
+  fails
 body
   let close = scanString(src, pos + 1)
   lexFrom(src, close + 1, listAppend(acc, "Text {textSlice(src, pos + 1, close)}"))

@@ -1,0 +1,6 @@
+fn f(n Int) -> Int
+  "Calls listGet but is not marked fails."
+  pure
+  example f(1) == 1
+body
+  listGet(listRange(0, 5), n)

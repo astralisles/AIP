@@ -1,6 +1,7 @@
 fn main() -> Unit
   "Build an expression, simplify it and print it with its value."
   effects terminal.write
+  fails
 body
   let tree = Add(Neg(Neg(Num(7))), Neg(Num(3)))
   let small = simplify(tree)

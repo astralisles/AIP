@@ -1,6 +1,7 @@
 fn main() -> Unit
   "Show SortedMap and SortedSet: keys always come back in order."
   effects terminal.write
+  fails
 body
   let ages = sortedMapSet(sortedMapSet(sortedMapSet(sortedMapEmpty(), "Tim", 12), "Ann", 30), "Cy", 7)
   let keys = sortedMapKeys(ages)

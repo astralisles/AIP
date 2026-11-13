@@ -1,0 +1,8 @@
+fn sumTo(n Int 0..) -> Int
+  "Add 1 + 2 + ... + n."
+  pure
+  cannot-fail
+  decreases n
+  example sumTo(4) == 10
+body
+  if n == 0 then 0 else n + sumTo(n - 1)

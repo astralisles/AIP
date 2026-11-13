@@ -1,4 +1,5 @@
 fn intPow(base Int, exponent Int) -> Int
   "base to the power exponent; exponent must not be negative and the result must fit in Int."
   pure
+  fails
 extern

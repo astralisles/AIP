@@ -1,6 +1,7 @@
 fn main() -> Unit
   "Show Queue (first in, first out) and PriorityQueue (lowest priority number first)."
   effects terminal.write
+  fails
 body
   let q = queuePush(queuePush(queuePush(queueEmpty(), "a"), "b"), "c")
   let rest = queuePop(q)

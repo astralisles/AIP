@@ -1,6 +1,7 @@
 fn main() -> Unit
   "Show the data structures: List, Map and Set."
   effects terminal.write
+  fails
 body
   let items = listAppend(listAppend(listEmpty(), "pear"), "apple")
   printLine("List size: {listLength(items)}, first: {listGet(items, 0)}")

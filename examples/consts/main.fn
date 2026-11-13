@@ -1,6 +1,7 @@
 fn main() -> Unit
   "Show .const files: named, typed, pure values with no effect needed."
   effects terminal.write
+  fails
 body
   printLine(banner)
   printLine("retries: {maxRetries}, attempt 4 allowed: {canRetry(4)}, attempt 2 allowed: {canRetry(2)}")

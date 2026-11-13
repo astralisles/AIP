@@ -78,3 +78,14 @@ Notes:
 - Mutual recursion (`a` calls `b` calls `a`) needs a `decreases` on each function, comparable across the cycle.
 - Without `decreases` nothing changes: the function still works, the heuristic `unbounded-recursion` lint still applies, and it just cannot be marked `cannot-fail`.
 - It is a proof of termination only, not of the answer being right; that is what `ensures` is for.
+
+## Implemented (iteration 5: items 1, 2 and 4)
+
+Header lines, after `pure`/`effects`: `cannot-fail`, `fails`, `decreases <param>`. Example: `examples/restraints`.
+
+- `decreases p`: `p` must be an Int parameter with a lower bound (`n Int 0..`), and every self-call must pass `p - k`, k at least 1. Errors: `bad-decreases`, `decreases-unbounded`, `decreases-not-shrinking`.
+- `cannot-fail`: must not call a `fails` function (`cannot-fail-calls-fails`); recursion must be direct and have `decreases` (`cannot-fail-recursion`). Everything the checker cannot show (division by a non-literal, a callee not marked `cannot-fail`, arguments it cannot show meet `requires`/ranges) is the lint warning `cannot-fail-unproved`, never an error.
+- `fails`: 27 std functions that can crash are marked (`listGet`, `fileWrite`, `numToI8`, ...). Calling one from a function without `fails` or `cannot-fail` gives the lint `hidden-failure`. The 29 example functions that did so are now marked `fails`.
+- Duplicate or conflicting restraint lines: `duplicate-restraint`.
+
+Limits: `decreases` is Int parameters only (not `len(items)` yet); mutual recursion is rejected under `cannot-fail`; Int overflow is not covered; the one-line index does not show `cannot-fail`/`fails` yet.

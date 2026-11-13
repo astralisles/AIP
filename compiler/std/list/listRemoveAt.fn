@@ -1,4 +1,5 @@
 fn listRemoveAt(items List<T>, index Int) -> List<T>
   "A new list without the item at an index; the index must be inside the list."
   pure
+  fails
 extern

@@ -1,0 +1,7 @@
+fn f(n Int 0..) -> Int
+  "Calls itself with the same n."
+  pure
+  decreases n
+  example f(0) == 0
+body
+  if n == 0 then 0 else f(n)

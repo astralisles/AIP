@@ -1,5 +1,6 @@
 fn hasFraction(src Text, pos Int) -> Bool
   "Whether a point followed by a digit starts at pos."
   pure
+  fails
 body
   pos + 1 < textLength(src) and textCode(src, pos) == 46 and isDigit(textCode(src, pos + 1))

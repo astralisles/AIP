@@ -1,0 +1,7 @@
+fn f(n Int) -> Int
+  "No lower bound on n."
+  pure
+  decreases n
+  example f(0) == 0
+body
+  if n == 0 then 0 else f(n - 1)

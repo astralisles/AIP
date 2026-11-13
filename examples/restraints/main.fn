@@ -1,0 +1,7 @@
+fn main() -> Unit
+  "Show the cannot-fail, fails and decreases restraints."
+  effects terminal.write
+  fails
+body
+  printLine("sum {sumTo(10)}")
+  printLine("item {second(listRange(5, 8))}")

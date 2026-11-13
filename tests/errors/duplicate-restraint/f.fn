@@ -1,0 +1,8 @@
+fn f(n Int) -> Int
+  "Two restraint lines."
+  pure
+  fails
+  fails
+  example f(1) == 1
+body
+  n

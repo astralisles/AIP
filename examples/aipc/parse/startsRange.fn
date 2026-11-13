@@ -3,5 +3,6 @@ fn startsRange(t Text) -> Bool
   pure
   example startsRange("Sym ..")
   example not startsRange("Sym ,")
+  fails
 body
   tokKind(t) == "Int" or t == "Sym -" or t == "Sym .."

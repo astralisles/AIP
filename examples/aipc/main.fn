@@ -1,6 +1,7 @@
 fn main() -> Unit
   "The AIP compiler written in AIP. `tokens <file>` prints the tokens of a file; `index <file>...` prints each file's index line."
   effects file.read, process.args, terminal.write
+  fails
 body
   let mode = if argCount() < 2 then "" else arg(0)
   if mode == "tokens" then printAll(lexAll(fileRead(arg(1))), 0) else if mode == "index" then printIndex(1) else printLine("usage: aipc tokens <file> | aipc index <file>...")

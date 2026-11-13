@@ -1,6 +1,7 @@
 fn main() -> Unit
   "Show generic types (Option, Pair) and generic functions (firstOf, orElse, swap)."
   effects terminal.write
+  fails
 body
   let numbers = listAppend(listAppend(listEmpty(), 4), 5)
   let words = listAppend(listEmpty(), "hello")

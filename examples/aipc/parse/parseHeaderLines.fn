@@ -1,6 +1,7 @@
 fn parseHeaderLines(toks List<Text>, pos Int, doc Text, effects List<Text>) -> HeaderTail
   "Read the header lines from pos until `body` or `extern`: the purpose line and the effects; skip requires, ensures and example."
   pure
+  fails
 body
   let first = tokAt(toks, pos)
   let next = lineEnd(toks, pos) + 1

@@ -1,6 +1,7 @@
 fn parseType(toks List<Text>, pos Int) -> Parsed
   "Read a type at pos: a name, optionally with type arguments such as `List<..>`, `Map<..,..>` or `Option<..>`, then an optional range such as `0..150`."
   pure
+  fails
 body
   let name = tokText(tokAt(toks, pos))
   let generic = tokAt(toks, pos + 1) == "Sym <"

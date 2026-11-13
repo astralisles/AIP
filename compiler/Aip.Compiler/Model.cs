@@ -78,6 +78,14 @@ sealed class Fn
     public List<Expr> Requires = new();
     public List<Expr> Ensures = new();
     public List<Expr> Examples = new();
+    /// <summary>`decreases param` header line: the parameter that shrinks on every recursive call (T-0966). Null when absent.</summary>
+    public Expr? Decreases;
+    public int DecreasesLine;
+    /// <summary>`cannot-fail` header line: the function promises never to crash and always to finish (T-0966).</summary>
+    public bool CannotFail;
+    /// <summary>`fails` header line: the function can crash at run time (T-0966).</summary>
+    public bool Fails;
+    public int RestraintLine;
     public List<Stmt> Body = new();
     public HashSet<string> Calls = new();
 

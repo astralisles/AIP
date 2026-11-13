@@ -1,5 +1,6 @@
 fn lexSymbol(src Text, pos Int, acc List<Text>) -> List<Text>
   "Lex a one or two character symbol at pos."
   pure
+  fails
 body
   if isTwoSymbol(textSlice(src, pos, pos + 2)) then lexToken(src, pos, pos + 2, "Sym", acc) else lexToken(src, pos, pos + 1, "Sym", acc)

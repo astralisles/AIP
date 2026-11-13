@@ -1,6 +1,7 @@
 fn main() -> Unit
   "Show arrays of bytes (List<U8>) and collections of collections."
   effects terminal.write
+  fails
 body
   let bytes = listAppend(listAppend(listEmpty(), numToU8(7)), numToU8(255))
   printLine("Bytes: {listLength(bytes)}, last: {numFromU8(listGet(bytes, 1))}")

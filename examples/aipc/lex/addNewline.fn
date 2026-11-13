@@ -1,5 +1,6 @@
 fn addNewline(acc List<Text>) -> List<Text>
   "Add a Newline token unless the list is empty or already ends with one."
   pure
+  fails
 body
   if listLength(acc) == 0 or listGet(acc, listLength(acc) - 1) == "Newline" then acc else listAppend(acc, "Newline")

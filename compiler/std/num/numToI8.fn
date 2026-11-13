@@ -1,4 +1,5 @@
 fn numToI8(value Int) -> I8
   "Convert an Int to I8 (8-bit signed, -128 to 127); a value outside that range is a run-time error."
   pure
+  fails
 extern

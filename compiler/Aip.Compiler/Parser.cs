@@ -148,10 +148,22 @@ sealed partial class Parser
                     fn.NativeSymbol = q[3];
                     fn.NativeLine = _line;
                 }
+                else if (text is "fails" or "cannot-fail")
+                {
+                    if (fn.Fails || fn.CannotFail) throw Err("duplicate-restraint", "`fails` and `cannot-fail` may be declared once, and not both", "keep one of them");
+                    if (text == "fails") fn.Fails = true; else fn.CannotFail = true;
+                    fn.RestraintLine = _line;
+                }
+                else if (text.StartsWith("decreases ", StringComparison.Ordinal))
+                {
+                    if (fn.Decreases != null) throw Err("duplicate-restraint", "`decreases` is declared twice");
+                    fn.Decreases = ParseExprText(text["decreases ".Length..]);
+                    fn.DecreasesLine = _line;
+                }
                 else if (text.StartsWith("requires ", StringComparison.Ordinal)) fn.Requires.Add(ParseExprText(text["requires ".Length..]));
                 else if (text.StartsWith("ensures ", StringComparison.Ordinal)) fn.Ensures.Add(ParseExprText(text["ensures ".Length..]));
                 else if (text.StartsWith("example ", StringComparison.Ordinal)) fn.Examples.Add(ParseExprText(text["example ".Length..]));
-                else throw Err("unexpected-line", $"unknown header line `{text}`", "header lines are: purpose, `pure` or `effects`, `native`, `requires`, `ensures`, `example`; then `body`");
+                else throw Err("unexpected-line", $"unknown header line `{text}`", "header lines are: purpose, `pure` or `effects`, `native`, `fails` or `cannot-fail`, `decreases`, `requires`, `ensures`, `example`; then `body`");
                 continue;
             }
 
