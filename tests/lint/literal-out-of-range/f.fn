@@ -1,0 +1,6 @@
+fn f(a Int 0..10) -> Int
+  "Take a small number."
+  pure
+  example f(5) == 5
+body
+  a

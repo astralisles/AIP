@@ -1,0 +1,5 @@
+fn main() -> Unit
+  "Missing closing parenthesis."
+  effects terminal.write
+body
+  printLine("hi"

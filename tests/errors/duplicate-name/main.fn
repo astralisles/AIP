@@ -1,0 +1,7 @@
+fn main() -> Unit
+  "Define a name twice."
+  effects terminal.write
+body
+  let a = 1
+  let a = 2
+  printLine("{a}")

@@ -1,0 +1,6 @@
+fn f(n Int 0..150) -> Int
+  "Take an age."
+  pure
+  example f(200) == 200
+body
+  n

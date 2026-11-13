@@ -1,0 +1,6 @@
+fn f(n Int) -> Int 0..10
+  "Result outside its range."
+  pure
+  example f(20) == 20
+body
+  n

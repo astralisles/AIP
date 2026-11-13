@@ -1,0 +1,10 @@
+fn main() -> Unit
+  "Handle a case twice."
+  effects terminal.write
+body
+  let light = Red()
+  let n = match light
+    Red() => 1
+    Red() => 2
+    Green() => 3
+  printLine("{n}")

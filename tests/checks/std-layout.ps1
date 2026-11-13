@@ -13,4 +13,4 @@ Move-Item (Join-Path $copy 'std\list\listGet.fn') (Join-Path $copy 'std\map\list
 $out = (& (Join-Path $copy 'aip.exe') check examples\hello | Out-String).Trim()
 $code = $LASTEXITCODE
 Remove-Item -Recurse -Force $copy
-Report 'std: misplaced std files are rejected (std-layout)' ($code -ne 0 -and $out.Contains('`textLength` must be in a group folder') -and $out.Contains('`listGet` in std/map/ must start with `map`')) $out
+Report 'std: misplaced std files are rejected (std-layout)' ($code -ne 0 -and $out.Contains('std-layout') -and $out.Contains('`textLength` must be in a group folder') -and $out.Contains('`listGet` in std/map/ must start with `map`')) $out

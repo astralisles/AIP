@@ -1,0 +1,5 @@
+fn main() -> Unit
+  "Use an unknown type."
+  effects terminal.write
+body
+  printLine("{helper(1)}")

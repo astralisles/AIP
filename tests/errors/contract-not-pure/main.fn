@@ -1,0 +1,6 @@
+fn main() -> Unit
+  "Use an effect in a contract."
+  effects terminal.write
+  example fileRead("x") == "y"
+body
+  printLine("hi")
