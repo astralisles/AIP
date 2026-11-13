@@ -53,3 +53,29 @@ optional unless said otherwise, and a violation is an error only when it is deci
 Do in this order: (7) size lints now (small, no syntax), then T-0950 steps 2 and 3, then (1) `cannot-fail` on top, then (5) and (4).
 Defer (3) and (6) until path-scoped effects and parallelism tickets land; skip (8)-(10) for now.
 No code was changed by this ticket.
+
+## What `decreases` means (worked example)
+
+AIP has no loops, so repetition is recursion. A recursive function can run forever (`fn f(n Int) -> Int` calling `f(n)`).
+`decreases` is a header line naming a number that gets smaller on every recursive call and cannot go below a floor,
+which proves the recursion must stop.
+
+    fn sumTo(n Int 0..) -> Int
+      "Add 1 + 2 + ... + n."
+      pure
+      decreases n
+    body
+      if n == 0 then 0 else n + sumTo(n - 1)
+
+The checker looks at each recursive call and asks two things:
+1. Is the `decreases` value strictly smaller in the call? Here `n - 1 < n`, true whenever the call is reached.
+2. Is it bounded below? Here `n` has range `0..`, and the call is only reached when `n != 0`, so `n - 1 >= 0`.
+
+If both hold, every chain of calls is finite, so the function terminates. If the call were `sumTo(n + 1)` or `sumTo(n)`,
+the checker would report that `decreases n` does not shrink.
+
+Notes:
+- Usually the value is an Int parameter, or the length of a List/Text (`decreases len(items)` for a function that recurses on the tail).
+- Mutual recursion (`a` calls `b` calls `a`) needs a `decreases` on each function, comparable across the cycle.
+- Without `decreases` nothing changes: the function still works, the heuristic `unbounded-recursion` lint still applies, and it just cannot be marked `cannot-fail`.
+- It is a proof of termination only, not of the answer being right; that is what `ensures` is for.
