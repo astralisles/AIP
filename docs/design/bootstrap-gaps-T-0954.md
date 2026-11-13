@@ -112,3 +112,39 @@ set of *intrinsics* (raw memory load/store, OS call) that only the runtime folde
 3. Body parser with its compare script (C1).
 4. A2 (function pointers) and A3 (`Result` / `Option`) before the checker (C3), since the checker is where they pay off.
 5. `Bytes` and bit operations, IR, runtime, code generator, linker, driver, stage check (C4-C7).
+
+## F. Are we ready? Gates before the C# compiler is removed (feedback on iteration 2)
+
+Answer: ready to *start* building the AIP compiler, not ready to *remove* the C# one. Removing it is the one step that is hard to
+undo, so it comes last and only after the gates below pass. Until then nothing is lost by building the AIP compiler beside it.
+
+Why reversing is painful, and how to avoid it:
+- After self-hosting, a new language feature must be written in AIP, in a compiler that cannot yet use that feature. The usual
+  fix is two steps: add the feature to the compiler without using it, rebuild (stage N+1), then use it. This is normal and cheap
+  when the compiler build is fast (the cache in section E), but it needs a trusted *seed* to start from.
+- A language mistake found late (for example `match` rules, the IR format) costs more once two compilers and the IR exist.
+
+Mitigations (all cheap, do them at the start):
+1. **Keep the C# compiler** in the repo, frozen (bug fixes only), until the gates pass. Tag the last commit that has it (`seed-csharp`).
+2. **Check in a seed exe** of each released AIP compiler (or keep it as a build artifact with its hash in the repo), so the compiler can
+   be rebuilt from the previous one. Never depend on a compiler that cannot be rebuilt from the repo plus the seed.
+3. **Freeze the IR with a version number** and a test that old cached units are rejected, not misread.
+
+Gates (all must hold; each is a test in `tests/checks/`):
+1. Section A items 1-4 done: `match` anywhere, function pointers, `Result`/`Option`, a proven recursive variant. These change how the
+   compiler itself is written, so they must exist before it is written, not after.
+2. Section B std functions done, including `Bytes` and bit operations.
+3. Every `examples/*/expected-output.txt` and every `tests/errors`, `tests/lint`, `tests/contracts` case passes with the AIP compiler.
+4. Stage 2 output is byte-equal to stage 1 (`tests/checks/bootstrap-stages.ps1`).
+5. Warm rebuild after a one-function edit regenerates exactly one unit, and a full self-build finishes in a time we accept
+   (measure first; suggestion: under 60 seconds cold).
+6. Everything the C# compiler does and users rely on exists in AIP or is explicitly dropped by a decision file: `lint`, `test`, `query`,
+   `find`, `fuzz`, `spec`, `profile`, `--target`. Missing ones are listed, not forgotten.
+7. One feature is added to the language *using only the AIP compiler* as a rehearsal (for example `textTrim`), proving the two-step
+   workflow before the C# compiler goes.
+
+Open design choices to settle first, because they are expensive to change after: the IR format (A1/E), how effects and ranges are encoded
+in a unit, the `Bytes` and number decisions (open question 9: overflow, `Float`), and the function-pointer representation in native code.
+
+Recommended: start with section A and the body parser now (the C# compiler still checks everything), write the IR spec as its own
+design file and review it before any code generator, and decide the removal date only when gates 1-7 are green.
