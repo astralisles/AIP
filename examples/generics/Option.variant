@@ -1,0 +1,4 @@
+variant Option<T>
+  "A value of type T that may be missing."
+  Some(value T)
+  None

@@ -141,10 +141,12 @@ sealed class CsBackend : IBackend
         "Text" => "string",
         "Bool" => "bool",
         "_" => "object",
+        _ when t.Length == 1 && char.IsAsciiLetterUpper(t[0]) => "object", // a type parameter: erased
         _ when t.StartsWith("List<", StringComparison.Ordinal) => "System.Collections.Generic.List<object>",
         // Maps and sets are insertion-ordered dictionaries (a set maps each item to true); every change copies.
         _ when t.StartsWith("Map<", StringComparison.Ordinal) || t.StartsWith("Set<", StringComparison.Ordinal) => "System.Collections.Generic.Dictionary<object, object>",
         "Unit" => "void",
+        _ when t.IndexOf('<') is var lt and > 0 => t[..lt], // a generic struct or variant: one erased record
         _ => t, // a struct or variant: a C# record of the same name (see EmitTypes)
     };
 
@@ -210,16 +212,16 @@ sealed class CsBackend : IBackend
     {
         IntLit i => i.Value + "L",
         BoolLit b => b.Value ? "true" : "false",
-        NameRef n => "@" + n.Name,
+        NameRef n => Cast(n.Erased, n.Type, "@" + n.Name),
         TextLit t => t.Parts.Count == 1 && t.Parts[0] is string only
             ? Quote(only)
             : "string.Concat(" + string.Join(", ", t.Parts.Select(p => p is string s ? Quote(s) : $"Rt.Text({Emit((Expr)p)})")) + ")",
         Call { Ctor: not null } c => $"new {c.Ctor}({string.Join(", ", c.Args.Select(Emit))})",
-        Field f => $"{Emit(f.Target)}.@{f.Name}",
+        Field f => Cast(f.Erased, f.Type, $"{Emit(f.Target)}.@{f.Name}"),
         MatchExpr m => $"({Emit(m.Subject)} switch {{ {string.Join(", ", m.Arms.Select(a => $"{Pattern(a)} => {Emit(a.Body)}"))}, _ => throw new System.InvalidOperationException() }})",
         Call c => Externs.TryGetValue(c.Name, out var template)
             ? (c.Name is "listGet" or "mapGet" ? $"(({CsType(c.Type)})" : "") + string.Format(System.Globalization.CultureInfo.InvariantCulture, template, c.Args.Select(Emit).ToArray<object>()) + (c.Name is "listGet" or "mapGet" ? ")" : "")
-            : $"Fn.@{c.Name}({string.Join(", ", c.Args.Select(Emit))})",
+            : Cast(c.Erased, c.Type, $"Fn.@{c.Name}({string.Join(", ", c.Args.Select(Emit))})"),
         Unary u => u.Op == "-" ? $"(-{Emit(u.Operand)})" : $"(!{Emit(u.Operand)})",
         Binary b => b.Op switch
         {
@@ -231,6 +233,9 @@ sealed class CsBackend : IBackend
         IfExpr i => $"({Emit(i.Cond)} ? {Emit(i.Then)} : {Emit(i.Else)})",
         _ => throw new InvalidOperationException("unknown expression"),
     };
+
+    /// <summary>A value that is `object` in C# because its declared type is a type parameter is cast back to its real type.</summary>
+    static string Cast(bool erased, string type, string code) => erased && type != "" && CsType(type) != "object" ? $"(({CsType(type)}){code})" : code;
 
     static string Quote(string s)
     {

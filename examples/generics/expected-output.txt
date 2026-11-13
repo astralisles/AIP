@@ -1,0 +1,4 @@
+first number: 4
+first word: hello
+first of nothing: -1
+swapped: one 1

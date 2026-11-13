@@ -1,0 +1,5 @@
+fn helper(b Box) -> Int
+  "A generic type used without its type arguments."
+  pure
+body
+  1
