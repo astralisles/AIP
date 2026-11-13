@@ -1,0 +1,5 @@
+fn main() -> Unit
+  "Print a number the wrong way."
+  effects terminal.write
+body
+  printLine(42)

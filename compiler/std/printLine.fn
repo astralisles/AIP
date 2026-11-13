@@ -1,0 +1,4 @@
+fn printLine(text Text) -> Unit
+  "Write one line of text to the terminal."
+  effects terminal.write
+extern
