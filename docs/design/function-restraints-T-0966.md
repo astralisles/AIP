@@ -21,8 +21,7 @@ optional unless said otherwise, and a violation is an error only when it is deci
    proof obligations. Index shows `cannot-fail`. Highest value; build after T-0950 steps 2-3.
 2. **`decreases expr` (termination).** Already planned (T-0950 step 3). Prerequisite for `cannot-fail`. Replaces the
    `unbounded-recursion` heuristic.
-3. **Parameter-level effect and capability limits.** `effects file.read` becomes path/host scoped (`file.read(root)`,
-   see `security-T-0936.md`). Static analysis can then show *which* files a function can touch, not only that it can.
+3. ~~Scoped effects (`file.read(root)`)~~ **Dropped at the user's request (T-0966 #4).** Path scoping stays a security topic (`security-T-0936.md`), not a function restraint.
 4. **Nullability and failure in the type, not a flag.** Already `Option`/`Result`. Restraint: a function that can fail
    must say so with `fails` in the header or return `Result`; `requires` is then the only crash source. Lint
    `hidden-failure` for std calls that can crash (`listGet`) used in a function not marked `fails`.
@@ -51,7 +50,7 @@ optional unless said otherwise, and a violation is an error only when it is deci
 ## Recommendation
 
 Do in this order: (7) size lints now (small, no syntax), then T-0950 steps 2 and 3, then (1) `cannot-fail` on top, then (5) and (4).
-Defer (3) and (6) until path-scoped effects and parallelism tickets land; skip (8)-(10) for now.
+Defer (6) until the parallelism ticket lands; skip (8)-(10) for now.
 No code was changed by this ticket.
 
 ## What `decreases` means (worked example)
