@@ -3,4 +3,4 @@ fn parseParams(toks List<Text>, pos Int, acc List<ParamDecl>) -> ParamsParsed
   pure
 body
   let start = if tokAt(toks, pos) == "Sym ," then pos + 1 else pos
-  if tokAt(toks, pos) == "Sym )" then ParamsParsed(acc, pos + 1) else parseParam(toks, start, acc)
+  if tokAt(toks, pos) == "Sym )" or tokAt(toks, pos) == "End" then ParamsParsed(acc, pos + 1) else parseParam(toks, start, acc)
