@@ -1,0 +1,209 @@
+PASS  example adding: output is as expected
+PASS  example bits: output is as expected
+PASS  example collections: output is as expected
+PASS  example consts: output is as expected
+PASS  example control: output is as expected
+PASS  example expr: output is as expected
+PASS  example floats: output is as expected
+PASS  example generics: output is as expected
+PASS  example ints: output is as expected
+PASS  example math: output is as expected
+PASS  example native: output is as expected
+PASS  example nested: output is as expected
+PASS  example queues: output is as expected
+PASS  example shapes: output is as expected
+PASS  example sorted: output is as expected
+PASS  example stdmore: output is as expected
+PASS  example types: output is as expected
+PASS  example widening: output is as expected
+PASS  hello: query callers greeting -> main
+PASS  hello: query of an unknown function fails clearly
+PASS  cache: first query creates build/sources.cache
+PASS  cache: an edited file is re-read
+PASS  cache: a new file is seen (rejected as unused by main)
+PASS  cache: a deleted file is gone
+PASS  cache: a damaged cache is ignored
+PASS  error: bad-indent
+PASS  error: bad-main
+PASS  error: bad-native
+PASS  error: bad-number
+PASS  error: bad-number-range
+PASS  error: bad-range
+PASS  error: bad-type-name
+PASS  error: bad-type-param
+PASS  error: bit-needs-whole-number
+PASS  error: const-cycle
+PASS  error: const-not-pure
+PASS  error: const-shadowed
+PASS  error: const-type-mismatch
+PASS  error: contract-not-pure
+PASS  error: duplicate-case
+PASS  error: duplicate-effects
+PASS  error: duplicate-name
+PASS  error: duplicate-native
+PASS  error: effect-unused
+PASS  error: empty-body
+PASS  error: empty-branch
+PASS  error: empty-type
+PASS  error: extern-no-native
+PASS  error: float-width-mismatch
+PASS  error: generic-compare
+PASS  error: generic-missing-args
+PASS  error: int-out-of-range
+PASS  error: int-width-argument
+PASS  error: int-width-mismatch
+PASS  error: list-type-mismatch
+PASS  error: map-type-mismatch
+PASS  error: match-empty
+PASS  error: match-incomplete
+PASS  error: match-incomplete-nested
+PASS  error: missing-body
+PASS  error: missing-doc
+PASS  error: missing-effects
+PASS  error: missing-else
+PASS  error: missing-result
+PASS  error: missing-signature
+PASS  error: missing-value
+PASS  error: name-mismatch
+PASS  error: native-bad-type
+PASS  error: native-body
+PASS  error: native-name
+PASS  error: native-no-effect
+PASS  error: no-main
+PASS  error: pure-calls-effect
+PASS  error: syntax
+PASS  error: tab
+PASS  error: type-mismatch
+PASS  error: unexpected-line
+PASS  error: unknown-case
+PASS  error: unknown-field
+PASS  error: unknown-name
+PASS  error: unknown-type
+PASS  error: unused-const
+PASS  error: unused-function
+PASS  error: unused-let
+PASS  error: unused-value
+PASS  error: variant-field-read
+PASS  error: wrong-arguments
+PASS  bootstrap: AIP lexer matches the C# lexer
+PASS  bootstrap: AIP parser reads headers like the C# parser
+PASS  bootstrap: aipc index ends on a malformed header (dangling-param)
+PASS  bootstrap: aipc index ends on a malformed header (unclosed-params)
+PASS  bootstrap: aipc index ends on every std header
+PASS  hello: builds
+PASS  hello: prints "Hello, World!"
+PASS  hello: `aip run` prints only "Hello, World!"
+PASS  hello: wasm is refused with a clear message
+PASS  ints: I8 overflow is a run-time error
+PASS  bits: shift count 8 on U8 is a run-time error
+PASS  logging: stdout has only the normal output
+PASS  logging: logLine and --verbose go to stderr
+PASS  crash: run-time error is reported with exit code 1
+PASS  crash: AIP_TRACE=1 prints the stack trace
+PASS  native: check passes
+PASS  native: index shows the native effect
+PASS  profile: AIP_PROFILE and AIP_CALLS write valid JSON
+PASS  spec: `aip spec` prints a one-page spec
+PASS  find: `aip find` ranks the matching project function first
+PASS  find: std functions are found by effect or doc
+PASS  hello: running a foreign target is refused
+PASS  check: a missing project folder is refused
+PASS  lint: constant-condition
+PASS  lint: division-by-zero
+PASS  lint: literal-out-of-range
+PASS  lint: requires-always-false
+PASS  lint: self-comparison
+PASS  lint: unbounded-recursion
+PASS  lint: unused-param
+PASS  contracts: arithmetic
+PASS  contracts: ensures-violated
+PASS  contracts: example-failed
+PASS  contracts: extern-failed
+PASS  contracts: range-violated
+PASS  contracts: recursion-too-deep
+PASS  contracts: requires-violated
+PASS  contracts: result-range-violated
+PASS  example adding: aip lint
+PASS  example adding: aip test
+PASS  example adding: aip fuzz
+PASS  example aipc: aip lint
+PASS  example aipc: aip test
+PASS  example bitoverflow: aip lint
+PASS  example bitoverflow: aip test
+PASS  example bitoverflow: aip fuzz
+PASS  example bits: aip lint
+PASS  example bits: aip test
+PASS  example bits: aip fuzz
+PASS  example collections: aip lint
+PASS  example collections: aip test
+PASS  example collections: aip fuzz
+PASS  example consts: aip lint
+PASS  example consts: aip test
+PASS  example consts: aip fuzz
+PASS  example control: aip lint
+PASS  example control: aip test
+PASS  example control: aip fuzz
+PASS  example crash: aip lint
+PASS  example crash: aip test
+PASS  example crash: aip fuzz
+PASS  example expr: aip lint
+PASS  example expr: aip test
+PASS  example expr: aip fuzz
+PASS  example floats: aip lint
+PASS  example floats: aip test
+PASS  example floats: aip fuzz
+PASS  example generics: aip lint
+PASS  example generics: aip test
+PASS  example generics: aip fuzz
+PASS  example hello: aip lint
+PASS  example hello: aip test
+PASS  example hello: aip fuzz
+PASS  example intoverflow: aip lint
+PASS  example intoverflow: aip test
+PASS  example intoverflow: aip fuzz
+PASS  example ints: aip lint
+PASS  example ints: aip test
+PASS  example ints: aip fuzz
+PASS  example logging: aip lint
+PASS  example logging: aip test
+PASS  example logging: aip fuzz
+PASS  example math: aip lint
+PASS  example math: aip test
+PASS  example math: aip fuzz
+PASS  example native: aip lint
+PASS  example native: aip test
+PASS  example native: aip fuzz
+PASS  example nested: aip lint
+PASS  example nested: aip test
+PASS  example nested: aip fuzz
+PASS  example queues: aip lint
+PASS  example queues: aip test
+PASS  example queues: aip fuzz
+PASS  example shapes: aip lint
+PASS  example shapes: aip test
+PASS  example shapes: aip fuzz
+PASS  example sorted: aip lint
+PASS  example sorted: aip test
+PASS  example sorted: aip fuzz
+PASS  example stdmore: aip lint
+PASS  example stdmore: aip test
+PASS  example stdmore: aip fuzz
+PASS  example types: aip lint
+PASS  example types: aip test
+PASS  example widening: aip lint
+PASS  example widening: aip test
+PASS  example widening: aip fuzz
+PASS  example writefile: aip lint
+PASS  example writefile: aip test
+PASS  gate: check-error-coverage
+PASS  gate: check-externs
+PASS  example writefile: aip fuzz
+PASS  example types: aip fuzz
+PASS  gate: check-index
+PASS  gate: check-determinism
+PASS  example aipc: aip fuzz
+PASS  std: `aip std` lists every std file under its group
+PASS  std: misplaced std files are rejected (std-layout)
+PASS  writefile: builds
+PASS  writefile: writes greeting.txt with "Hello from AIP!"
+ALL PASSED

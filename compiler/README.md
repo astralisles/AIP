@@ -17,7 +17,7 @@ line lists everything the program can do. Every function must be reachable from 
 
 Standard library: `std/<group>/*.fn` are header-only `extern` functions, grouped by type or effect
 (`text`, `list`, `map`, `set`, `file`, `terminal`, `log`, `process`, `core`; see `std/README.md`).
-`scripts\aip.ps1 std` lists them. Each back end supplies the implementation (see `Externs` in `CsBackend.cs`).
+`scripts\aip.ps1 std` lists them. Each back end supplies the implementation (see `CsBackend.Externs.*.cs`).
 
 Supported so far: `.fn` files; Int (64-bit signed), I8 I16 I32 U8 U16 U32 U64, F32 F64 (floats), bit operations `bitAnd`.. (exact size, see `docs/design/data-types-T-0945.md` and `examples/ints`, `examples/floats`, `examples/bits`), Text, Bool, Unit; `List<T>`, `Set<T>`, `Map<K,V>` (immutable: every change returns a new value; see `examples/collections`); `let`, calls, operators,
 `if/then/else`, text with `{expr}` parts; `.struct` and `.variant` files (constructors `Point(1, 2)`,
@@ -47,7 +47,9 @@ Test cases: `tests\errors` (`aip check` must reject), `tests\lint` (`aip lint` m
 
 `aip query <project> <verb> [arg]` answers from the checked program: `list`, `fn NAME`
 (signature, purpose, header, file:line, calls, called by), `find WORDS` (names and purposes),
-`callers NAME`, `calls NAME`, `effect NAME` (`terminal`, `terminal.write`, `pure`).
+`callers NAME`, `calls NAME`, `effect NAME` (`terminal`, `terminal.write`, `pure`),
+`type NAME` (fields or cases, and who uses it), `users TYPE` (functions that take, return, construct, match or
+read a field of a struct/variant, and types with a field of it).
 Output is plain lines, one function per line, errors as `error code: message`.
 
 When is the index updated? On every query, so it is never stale: each run re-parses and re-checks
