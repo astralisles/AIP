@@ -43,7 +43,7 @@ static class Lint
 
             // unused-param: a parameter nothing refers to, in the body or in a contract.
             var names = all.OfType<NameRef>().Select(n => n.Name).ToHashSet();
-            foreach (var p in fn.Params.Where(p => !names.Contains(p.Name)))
+            foreach (var p in fn.Params.Where(p => !fn.IsExtern && !names.Contains(p.Name)))
                 Warn(fn, fn.Line, "unused-param", $"parameter `{p.Name}` of `{fn.Name}` is never used", "remove it, or use it");
 
             foreach (var e in all)
@@ -59,6 +59,10 @@ static class Lint
                     Warn(fn, d.Line, "division-by-zero", $"`{d.Op} 0` always fails at run time");
                 // literal-out-of-range: a literal argument outside the range its parameter declares.
                 if (e is Call { Ctor: null } c && program.Fns.TryGetValue(c.Name, out var target))
+                {
+                    // requires-always-false: every argument is a constant and a `requires` of the callee is false for them (T-0950).
+                    if (Interp.FirstBrokenRequires(program, target, c.Args) is { } broken)
+                        Warn(fn, c.Line, "requires-always-false", $"call `{c.Name}({broken.Args})` breaks `requires` of `{c.Name}` ({Path.GetFileName(target.File)}:{broken.Requires.Line}) and always fails at run time", "change the arguments, or the `requires`");
                     for (int k = 0; k < c.Args.Count && k < target.Params.Count; k++)
                     {
                         var range = target.Params[k].Type.Range;
@@ -69,6 +73,7 @@ static class Lint
                         if ((parts[0] != "" && n < long.Parse(parts[0], CultureInfo.InvariantCulture)) || (parts[1] != "" && n > long.Parse(parts[1], CultureInfo.InvariantCulture)))
                             Warn(fn, c.Line, "literal-out-of-range", $"argument `{target.Params[k].Name}` of `{c.Name}` is {(c.Args[k] is IntLit ? n : "a text of length " + n)}, outside {range}");
                     }
+                }
             }
 
             // always-true/false-example is impossible to see statically; `aip test` runs examples instead.

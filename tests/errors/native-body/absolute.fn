@@ -1,0 +1,6 @@
+fn absolute(n Int) -> Int
+  "Absolute value."
+  effects native.ucrtbase
+  native "ucrtbase" "_abs64"
+body
+  n

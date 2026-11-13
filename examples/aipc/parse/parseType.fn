@@ -1,8 +1,8 @@
 fn parseType(toks List<Text>, pos Int) -> Parsed
-  "Read a type at pos: a name, `List<..>`, `Set<..>` or `Map<..,..>`, then an optional range such as `0..150`."
+  "Read a type at pos: a name, optionally with type arguments such as `List<..>`, `Map<..,..>` or `Option<..>`, then an optional range such as `0..150`."
   pure
 body
   let name = tokText(tokAt(toks, pos))
-  let generic = (name == "List" or name == "Set" or name == "Map") and tokAt(toks, pos + 1) == "Sym <"
+  let generic = tokAt(toks, pos + 1) == "Sym <"
   let base = if generic then parseTypeArgs(toks, pos + 2, "{name}<") else Parsed(name, pos + 1)
   if startsRange(tokAt(toks, base.next)) then parseRange(toks, base) else base

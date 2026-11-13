@@ -52,6 +52,27 @@ sealed partial class Interp(ProgramModel program)
         finally { _depth--; }
     }
 
+    /// <summary>
+    /// For lint: when every argument is a constant (no names), returns the first `requires` of `fn` that is false for them,
+    /// or null when they all hold or the answer cannot be computed here (an effect, an unsupported extern, a failing call).
+    /// </summary>
+    public static (Expr Requires, string Args)? FirstBrokenRequires(ProgramModel program, Fn fn, List<Expr> args)
+    {
+        if (fn.Requires.Count == 0 || args.Count != fn.Params.Count) return null;
+        if (args.Any(a => Lint.All(a).Any(x => x is NameRef))) return null;
+        var interp = new Interp(program);
+        try
+        {
+            var values = args.Select(a => interp.Eval(a, new Dictionary<string, object?>())).ToList();
+            var env = new Dictionary<string, object?>();
+            for (int i = 0; i < fn.Params.Count; i++) env[fn.Params[i].Name] = values[i];
+            foreach (var r in fn.Requires)
+                if (interp.Eval(r, env) is false) return (r, Show(values));
+        }
+        catch (Exception ex) when (ex is Unsupported or Failed or InvalidCastException or KeyNotFoundException) { }
+        return null;
+    }
+
     static string Show(IEnumerable<object?> vs) => string.Join(", ", vs.Select(Show));
 
     static string Show(object? v) => v switch

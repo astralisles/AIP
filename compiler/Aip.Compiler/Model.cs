@@ -18,11 +18,11 @@ sealed class BoolLit : Expr { public bool Value; }
 /// <summary>Parts are either string (literal text) or Expr (interpolated).</summary>
 sealed class TextLit : Expr { public List<object> Parts = new(); }
 /// <summary>A local name, or (when Const is set by the checker) a `.const` file.</summary>
-sealed class NameRef : Expr { public string Name = ""; public bool Const; }
+sealed class NameRef : Expr { public string Name = ""; public bool Erased; public bool Const; }
 /// <summary>A function call, or (when Ctor is set by the checker) the construction of a struct or variant case.</summary>
-sealed class Call : Expr { public string Name = ""; public List<Expr> Args = new(); public string? Ctor; }
+sealed class Call : Expr { public string Name = ""; public List<Expr> Args = new(); public string? Ctor; public bool Erased; }
 /// <summary>`target.name`: reads a field of a struct.</summary>
-sealed class Field : Expr { public Expr Target = null!; public string Name = ""; }
+sealed class Field : Expr { public Expr Target = null!; public string Name = ""; public bool Erased; }
 /// <summary>One line of a match: `Case(a, b) => body`. Path is the case's type path for the back end.</summary>
 sealed class Arm { public int Line; public string Case = ""; public List<string> Binds = new(); public Expr Body = null!; public string Path = ""; }
 /// <summary>`match subject` followed by one indented arm per case of a variant.</summary>
@@ -44,6 +44,8 @@ sealed class TypeDef
     public int Line = 1;
     public string Doc = "";
     public bool IsVariant;
+    /// <summary>Type parameters of a generic type, e.g. `T` in `variant Option<T>`.</summary>
+    public List<string> Params = new();
     public List<Case> Cases = new();
 }
 
@@ -61,6 +63,10 @@ sealed class Fn
     public int Line = 1;
     public bool IsStd;
     public bool IsExtern;
+    /// <summary>`native "lib" "symbol"` header line: the function is a symbol in a shared library (dll, so, dylib). Null otherwise.</summary>
+    public string? NativeLib;
+    public string NativeSymbol = "";
+    public int NativeLine;
     /// <summary>A `.const` file: no parameters, Ret is its type, Body is one statement (its value), always pure.</summary>
     public bool IsConst;
     public List<Param> Params = new();

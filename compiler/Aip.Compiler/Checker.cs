@@ -22,7 +22,7 @@ sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
         return (t[..lt], args);
     }
 
-    static bool IsList(string t) => Split(t) != null; // any generic container (List, Set, Map)
+    static bool IsList(string t) => Split(t) is { } s && GenericTypes.Arity.ContainsKey(s.Name); // a built-in container (List, Set, Map)
     static string Join(string name, IEnumerable<string> args) => $"{name}<{string.Join(",", args)}>";
     static bool IsVar(string t) => t.Length == 1 && char.IsAsciiLetterUpper(t[0]);
 
@@ -43,6 +43,31 @@ sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
         if (x != null && y != null && x.Value.Args.Count == y.Value.Args.Count)
             return Join(x.Value.Name, x.Value.Args.Zip(y.Value.Args).Select(p => Merge(p.First, p.Second)));
         return a;
+    }
+
+    static readonly System.Text.RegularExpressions.Regex NativeLibName = new(@"^[A-Za-z0-9_][A-Za-z0-9_.\-]*$");
+    static readonly System.Text.RegularExpressions.Regex NativeSymName = new(@"^[A-Za-z_][A-Za-z0-9_]*$");
+
+    /// <summary>Rules for `native "lib" "symbol"` (docs/design/native-libraries-T-0956.md).</summary>
+    void CheckNative(Fn fn)
+    {
+        if (fn.IsStd) { if (fn.NativeLib != null) Error(fn.NativeLine, "native-name", "the standard library cannot use `native`"); return; }
+        if (fn.IsConst) return;
+        if (fn.IsExtern && fn.NativeLib == null)
+        {
+            Error(fn.Line, "extern-no-native", $"`{fn.Name}` is extern but names no library", "add `native \"library\" \"symbol\"` to the header");
+            return;
+        }
+        if (fn.NativeLib == null) return;
+        if (!fn.IsExtern) Error(fn.NativeLine, "native-body", $"`{fn.Name}` has `native` but also a body", "end the file with `extern` instead of `body`");
+        if (!NativeLibName.IsMatch(fn.NativeLib) || !NativeSymName.IsMatch(fn.NativeSymbol))
+            Error(fn.NativeLine, "native-name", "the library name may use letters, digits, `_`, `.`, `-` (no path, no extension needed); the symbol is a C identifier",
+                "for example `native \"sqlite3\" \"sqlite3_libversion\"`");
+        if (!fn.Effects.Any(e => e.StartsWith("native.", StringComparison.Ordinal)))
+            Error(fn.EffectsLine, "native-effect", $"`{fn.Name}` calls native code but declares no `native.*` effect", $"declare `effects native.{System.Text.RegularExpressions.Regex.Replace(fn.NativeLib, "[^A-Za-z0-9_]", "_")}`");
+        foreach (var t in fn.Params.Select(p => p.Type.Name).Append(fn.Ret.Name))
+            if (t is not ("Int" or "Bool" or "Text" or "Unit"))
+                Error(fn.Line, "native-type", $"native functions only take and return Int, Bool, Text (and Unit as result); `{t}` is not allowed", "convert in an AIP function around the native one");
     }
 
     static bool Unify(string pattern, string actual, Dictionary<string, string> vars)
@@ -75,11 +100,36 @@ sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
         return s == null ? t : Join(s.Value.Name, s.Value.Args.Select(a => Subst(a, vars)));
     }
 
+    HashSet<string> _typeVars = new(); // type parameters in scope while a type definition is checked
+    HashSet<string> _erased = new();   // match-bound names whose declared field type is a type parameter (the back end casts them)
+
     bool IsKnown(string t)
     {
-        if (KnownTypes.Contains(t) || program.Types.ContainsKey(t) || (_fn?.IsStd == true && (t == "_" || IsVar(t)))) return true;
+        if (KnownTypes.Contains(t)) return true;
+        if (t == "_") return _fn?.IsStd == true;
+        if (IsVar(t)) return _fn != null || _typeVars.Contains(t);
         var s = Split(t);
-        return s != null && GenericTypes.Arity.TryGetValue(s.Value.Name, out var n) && n == s.Value.Args.Count && s.Value.Args.All(IsKnown);
+        if (s == null) return program.Types.TryGetValue(t, out var plain) && plain.Params.Count == 0;
+        if (!s.Value.Args.All(IsKnown)) return false;
+        if (GenericTypes.Arity.TryGetValue(s.Value.Name, out var n)) return n == s.Value.Args.Count;
+        return program.Types.TryGetValue(s.Value.Name, out var g) && g.Params.Count == s.Value.Args.Count;
+    }
+
+    /// <summary>The struct or variant a type names (`Point` or `Pair<Int,Text>`), with its type parameters bound to the arguments.</summary>
+    (TypeDef Def, Dictionary<string, string> Vars)? UserType(string t)
+    {
+        var s = Split(t);
+        if (!program.Types.TryGetValue(s?.Name ?? t, out var def)) return null;
+        var vars = new Dictionary<string, string>();
+        if (s != null)
+            for (int i = 0; i < def.Params.Count && i < s.Value.Args.Count; i++) vars[def.Params[i]] = s.Value.Args[i];
+        return (def, vars);
+    }
+
+    static void TypeVars(string t, HashSet<string> into)
+    {
+        if (IsVar(t)) { into.Add(t); return; }
+        if (Split(t) is { } s) foreach (var a in s.Args) TypeVars(a, into);
     }
 
     static readonly HashSet<string> ReservedTypeNames = new() { "Fn", "Rt", "Program", "Const", "ConstCell" };
@@ -128,6 +178,14 @@ sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
         }
         if (fn.IsConst && fn.Ret.Name == "Unit") Error(fn.Line, "type-mismatch", "a constant cannot be Unit", "give it a value type such as Int, Text, Bool or a struct");
         else CheckType(fn.Ret, allowUnit: true);
+        if (!fn.IsStd)
+        {
+            var inParams = new HashSet<string>(); var inRet = new HashSet<string>();
+            foreach (var p in fn.Params) TypeVars(p.Type.Name, inParams);
+            TypeVars(fn.Ret.Name, inRet);
+            foreach (var v in inRet.Except(inParams).OrderBy(v => v, StringComparer.Ordinal))
+                Error(fn.Line, "bad-type-param", $"the result type uses `{v}`, but no parameter does, so `{v}` can never be known", $"use `{v}` in a parameter type, or give the result a concrete type");
+        }
 
         _inContract = true;
         foreach (var e in fn.Requires) ExpectType(e, env, "Bool", "a `requires` condition");
@@ -137,6 +195,7 @@ sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
         foreach (var e in fn.Examples) ExpectType(e, new Dictionary<string, string>(), "Bool", "an `example`");
         _inContract = false;
 
+        CheckNative(fn);
         if (fn.IsExtern) return;
 
         _effects = new HashSet<string>();
@@ -205,6 +264,13 @@ sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
             var fileName = Path.GetFileNameWithoutExtension(def.File);
             if (fileName != def.Name)
                 Err(def.Line, "name-mismatch", $"file `{Path.GetFileName(def.File)}` declares `{def.Name}`", $"rename the type to `{fileName}` or the file to `{def.Name}{Path.GetExtension(def.File)}`");
+            _typeVars = new HashSet<string>(def.Params);
+            var declared = new HashSet<string>();
+            foreach (var tp in def.Params)
+                if (!IsVar(tp)) Err(def.Line, "bad-type-param", $"`{tp}` is not a valid type parameter", "use a single capital letter such as T");
+                else if (!declared.Add(tp)) Err(def.Line, "bad-type-param", $"type parameter `{tp}` is declared twice");
+            if (def.IsVariant && (def.Name.Length < 2 || KnownTypes.Contains(def.Name) || ReservedTypeNames.Contains(def.Name)))
+                Err(def.Line, "bad-type-name", $"`{def.Name}` is not a valid type or case name", "use two or more letters starting with a capital, not Fn, Rt, Program or a built-in type");
             foreach (var c in def.Cases)
             {
                 if (c.Name.Length < 2 || !char.IsAsciiLetterUpper(c.Name[0]) || ReservedTypeNames.Contains(c.Name) || KnownTypes.Contains(c.Name))
@@ -217,6 +283,7 @@ sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
                     else if (f.Type.Name == "Unit") Err(c.Line, "type-mismatch", $"field `{f.Name}` cannot be Unit");
                 }
             }
+            _typeVars = new HashSet<string>();
         }
     }
 

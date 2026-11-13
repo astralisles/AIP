@@ -31,14 +31,15 @@ sealed partial class Checker
             var pt = TypeOf(part, env, used);
             if (pt == "Unit") Error(t.Line, "type-mismatch", "a Unit value cannot be put into a text");
             else if (IsList(pt)) Error(t.Line, "type-mismatch", "a List, Set or Map cannot be put into a text", "build the text from the items");
-            else if (program.Types.ContainsKey(pt)) Error(t.Line, "type-mismatch", $"a {pt} cannot be put into a text", "put its fields into the text instead");
+            else if (IsVar(pt)) Error(t.Line, "type-mismatch", $"a value of type parameter `{pt}` cannot be put into a text", "a generic function can only store, pass and return such values");
+            else if (UserType(pt) != null) Error(t.Line, "type-mismatch", $"a {pt} cannot be put into a text", "put its fields into the text instead");
         }
         return "Text";
     }
 
     string NameType(NameRef n, Dictionary<string, string> env, HashSet<string> used)
     {
-        if (env.TryGetValue(n.Name, out var t)) { used.Add(n.Name); return t; }
+        if (env.TryGetValue(n.Name, out var t)) { used.Add(n.Name); n.Erased = _erased.Contains(n.Name); return t; }
         if (program.Fns.TryGetValue(n.Name, out var k) && k.IsConst)
         {
             // A constant reads like a value; it counts as a call so reachability and cycle checks see it.
@@ -83,6 +84,7 @@ sealed partial class Checker
         else
         {
             var vars = new Dictionary<string, string>();
+            c.Erased = !target.IsStd && IsVar(target.Ret.Name);
             for (int i = 0; i < argTypes.Count; i++)
                 if (!Unify(target.Params[i].Type.Name, argTypes[i], vars))
                     Error(c.Line, "type-mismatch", $"argument `{target.Params[i].Name}` of `{c.Name}` must be {Subst(target.Params[i].Type.Name, vars)}, found {argTypes[i]}", $"signature: {target.Signature}");
@@ -93,26 +95,28 @@ sealed partial class Checker
 
     string CtorType(Call c, TypeDef def, Case cs, List<string> argTypes)
     {
+        var vars = new Dictionary<string, string>();
         c.Ctor = def.IsVariant ? $"{def.Name}.{cs.Name}" : def.Name;
         var sig = $"{cs.Name}({string.Join(", ", cs.Fields.Select(f => $"{f.Name} {f.Type.Name}"))})";
         if (argTypes.Count != cs.Fields.Count)
             Error(c.Line, "wrong-arguments", $"`{c.Name}` takes {cs.Fields.Count} argument(s), found {argTypes.Count}", $"signature: {sig}");
         else
             for (int i = 0; i < argTypes.Count; i++)
-                if (argTypes[i] != "" && !Compat(cs.Fields[i].Type.Name, argTypes[i]))
-                    Error(c.Line, "type-mismatch", $"field `{cs.Fields[i].Name}` of `{c.Name}` must be {cs.Fields[i].Type.Name}, found {argTypes[i]}", $"signature: {sig}");
-        return def.Name;
+                if (!Unify(cs.Fields[i].Type.Name, argTypes[i], vars))
+                    Error(c.Line, "type-mismatch", $"field `{cs.Fields[i].Name}` of `{c.Name}` must be {Subst(cs.Fields[i].Type.Name, vars)}, found {argTypes[i]}", $"signature: {sig}");
+        return def.Params.Count == 0 ? def.Name : Join(def.Name, def.Params.Select(p => vars.GetValueOrDefault(p, "_")));
     }
 
     string FieldType(Field f, Dictionary<string, string> env, HashSet<string> used)
     {
         var t = TypeOf(f.Target, env, used);
         if (t == "") return "";
-        if (!program.Types.TryGetValue(t, out var def))
+        if (UserType(t) is not { } user)
         {
             Error(f.Line, "type-mismatch", $"{t} has no fields");
             return "";
         }
+        var def = user.Def;
         if (def.IsVariant)
         {
             Error(f.Line, "type-mismatch", $"`{def.Name}` is a variant, so `.{f.Name}` cannot read it", "use `match` to look inside a variant");
@@ -124,17 +128,21 @@ sealed partial class Checker
             Error(f.Line, "unknown-field", $"`{def.Name}` has no field `{f.Name}`", Suggest(f.Name, def.Cases[0].Fields.Select(p => p.Name)) ?? $"fields: {string.Join(", ", def.Cases[0].Fields.Select(p => p.Name))}");
             return "";
         }
-        return field.Type.Name;
+        f.Erased = IsVar(field.Type.Name);
+        return Subst(field.Type.Name, user.Vars);
     }
 
     string MatchType(MatchExpr m, Dictionary<string, string> env, HashSet<string> used)
     {
         var st = TypeOf(m.Subject, env, used);
         TypeDef? def = null;
-        if (st != "" && (!program.Types.TryGetValue(st, out def) || !def.IsVariant))
+        var tv = new Dictionary<string, string>();
+        if (st != "")
         {
-            Error(m.Line, "type-mismatch", $"`match` needs a variant, found {st}", def != null ? "read the fields of a struct with `.name`" : null);
-            def = null;
+            var u = UserType(st);
+            if (u == null || !u.Value.Def.IsVariant)
+                Error(m.Line, "type-mismatch", $"`match` needs a variant, found {st}", u != null ? "read the fields of a struct with `.name`" : null);
+            else { def = u.Value.Def; tv = u.Value.Vars; }
         }
         if (m.Arms.Count == 0) Error(m.Line, "match-empty", "this match has no cases", "add one line per case, indented by four spaces: `Case(a, b) => result`");
         string? result = null;
@@ -155,14 +163,18 @@ sealed partial class Checker
                         Error(arm.Line, "wrong-arguments", $"`{cs.Name}` has {cs.Fields.Count} field(s) but this line names {arm.Binds.Count}", $"write `{cs.Name}({string.Join(", ", cs.Fields.Select(f => f.Name))})`");
                 }
             }
+            var restore = new List<(string Name, bool Was)>();
             for (int i = 0; i < arm.Binds.Count; i++)
             {
-                var type = cs != null && i < cs.Fields.Count ? cs.Fields[i].Type.Name : "";
+                var type = cs != null && i < cs.Fields.Count ? Subst(cs.Fields[i].Type.Name, tv) : "";
+                restore.Add((arm.Binds[i], _erased.Contains(arm.Binds[i])));
+                if (cs != null && i < cs.Fields.Count && IsVar(cs.Fields[i].Type.Name)) _erased.Add(arm.Binds[i]); else _erased.Remove(arm.Binds[i]);
                 if (IsConstName(arm.Binds[i])) Error(arm.Line, "duplicate-name", $"`{arm.Binds[i]}` is a constant ({Path.GetFileName(program.Fns[arm.Binds[i]].File)})", "choose a different name");
                 else if (!armEnv.TryAdd(arm.Binds[i], type)) Error(arm.Line, "duplicate-name", $"`{arm.Binds[i]}` is already defined", "choose a different name");
                 _patNames.Add(arm.Binds[i]);
             }
             var bt = TypeOf(arm.Body, armEnv, used);
+            for (int i = restore.Count - 1; i >= 0; i--) if (restore[i].Was) _erased.Add(restore[i].Name); else _erased.Remove(restore[i].Name);
             if (bt == "") continue;
             if (result == null) result = bt;
             else if (!Compat(result, bt)) Error(arm.Line, "type-mismatch", $"this case gives {bt} but earlier cases give {result}");
@@ -201,9 +213,9 @@ sealed partial class Checker
                 if (known && (l != "Int" || r != "Int")) Error(b.Line, "type-mismatch", $"`{b.Op}` needs Int on both sides, found {l} and {r}");
                 return "Bool";
             case "==" or "!=":
-                if (known && (!Compat(l, r) || l == "Unit" || IsList(l) || program.Types.ContainsKey(l)))
+                if (known && (!Compat(l, r) || l == "Unit" || IsList(l) || IsVar(l) || UserType(l) != null))
                     Error(b.Line, "type-mismatch", $"`{b.Op}` compares {l} with {r}",
-                        IsList(l) ? "lists, sets and maps cannot be compared; compare their sizes or items" : program.Types.ContainsKey(l) ? "structs and variants cannot be compared; compare their fields, or use `match`" : null);
+                        IsList(l) ? "lists, sets and maps cannot be compared; compare their sizes or items" : IsVar(l) ? "a value of a type parameter cannot be compared" : UserType(l) != null ? "structs and variants cannot be compared; compare their fields, or use `match`" : null);
                 return "Bool";
             default: // and, or, =>
                 if (known && (l != "Bool" || r != "Bool")) Error(b.Line, "type-mismatch", $"`{b.Op}` needs Bool on both sides, found {l} and {r}");

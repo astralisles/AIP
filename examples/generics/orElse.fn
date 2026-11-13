@@ -1,0 +1,10 @@
+fn orElse(opt Option<T>, fallback T) -> T
+  "The value inside Some, or the fallback for None."
+  pure
+  example orElse(Some(3), 9) == 3
+  example orElse(None(), 9) == 9
+body
+  let result = match opt
+    Some(value) => value
+    None() => fallback
+  result

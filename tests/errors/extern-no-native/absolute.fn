@@ -1,0 +1,4 @@
+fn absolute(n Int) -> Int
+  "Absolute value."
+  pure
+extern
