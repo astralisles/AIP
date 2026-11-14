@@ -1,0 +1,4 @@
+time ok: true
+random: 5
+env set: false
+env value empty: true
