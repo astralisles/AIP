@@ -155,6 +155,8 @@ sealed partial class Interp(ProgramModel program)
                 return null;
             case IfExpr i:
                 return (bool)Eval(i.Cond, env)! ? Eval(i.Then, env) : Eval(i.Else, env);
+            case LoopExpr lp: return EvalLoop(lp, env);
+            case ForExpr fr: return EvalFor(fr, env);
             case Binary b:
                 {
                     if (b.Op == "and") return (bool)Eval(b.Left, env)! && (bool)Eval(b.Right, env)!;
@@ -290,6 +292,7 @@ sealed partial class Interp(ProgramModel program)
         QueueExtern,
         SortedExtern,
         NetExtern,
+        TimeExtern,
         FnExtern,
     };
 

@@ -45,6 +45,10 @@ sealed partial class Checker
                 case Assign a: Walk(a.Value, a, false, cond); break;
                 case MatchExpr m: Walk(m.Subject, m, false, cond); foreach (var arm in m.Arms) Walk(arm.Body, m, false, cond + 1); break;
                 case BlockExpr bl: foreach (var s in bl.Stmts) Walk(s, bl, false, cond); break;
+                case LoopExpr lp: foreach (var x in lp.Parts) Walk(x, lp, false, cond + 1); break;
+                case ForExpr fe: foreach (var x in fe.Parts) Walk(x, fe, false, cond + 1); break;
+                case DoneExpr d: Walk(d.Value, d, false, cond); break;
+                case NextExpr n: foreach (var x in n.Args) Walk(x, n, false, cond); break;
             }
         }
 

@@ -1,0 +1,9 @@
+fn sumTo(n Int) -> Int
+  "Add 1 + 2 + ... + n with one loop."
+  pure
+body
+  loop
+    i = 1
+    total = 0
+    body
+      if i > n then done total else next i + 1, total + i

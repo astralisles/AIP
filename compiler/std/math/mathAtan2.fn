@@ -1,0 +1,4 @@
+fn mathAtan2(y F64, x F64) -> F64
+  "Angle in radians of the point (x, y), from -pi to pi."
+  pure
+extern

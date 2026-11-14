@@ -1,0 +1,5 @@
+fn gfxUniformInt(window GfxWindow, program Int, name Text, value Int) -> Unit
+  "Set an int uniform of the program, for example the texture unit of a sampler2D."
+  effects gfx.draw
+  fails
+extern

@@ -1,0 +1,4 @@
+fn mathLog(x F64) -> F64
+  "Natural logarithm; NaN for a negative number, -infinity for zero."
+  pure
+extern

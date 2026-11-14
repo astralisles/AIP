@@ -23,6 +23,9 @@ sealed partial class Checker
             Binary b => BinaryType(b, env, used),
             IfExpr i => IfType(i, env, used),
             BlockExpr k => BlockType(k, env, used),
+            LoopExpr l => LoopType(l, env, used),
+            ForExpr f => ForType(f, env, used),
+            DoneExpr or NextExpr => ExitType(e),
             _ => "",
         };
         return e.Type;

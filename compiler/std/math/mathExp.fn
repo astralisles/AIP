@@ -1,0 +1,4 @@
+fn mathExp(x F64) -> F64
+  "e raised to x."
+  pure
+extern

@@ -19,6 +19,10 @@ static partial class Lint
         Binary b => new[] { b.Left, b.Right },
         IfExpr i => new[] { i.Cond, i.Then, i.Else },
         BlockExpr k => k.Stmts,
+        LoopExpr l => l.Parts,
+        ForExpr f => f.Parts,
+        DoneExpr d => new[] { d.Value },
+        NextExpr n => n.Args,
         _ => Array.Empty<Expr>(),
     };
 

@@ -1,0 +1,11 @@
+fn printTable(rows Int, cols Int) -> Unit
+  "Print a multiplication table: a `for` for the rows, with a `loop` inside that builds each row's text."
+  effects terminal.write
+body
+  for r in 1..rows + 1
+    let line = loop
+      c = 1
+      text = ""
+      body
+        if c > cols then done text else next c + 1, "{text} {r * c}"
+    printLine(line)

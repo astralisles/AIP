@@ -1,0 +1,5 @@
+fn main() -> Unit
+  "A for with no statements."
+  pure
+body
+  for i in 1..3

@@ -9,7 +9,6 @@ sealed partial class CsBackend
         d["fileExists"] = "Rt.FileExists({0})";
         d["fileAppend"] = "Rt.Append({0}, {1})";
         d["dirList"] = "Rt.DirList({0})";
-        d["timeNow"] = "System.DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()";
         d["randomInt"] = "Rt.RandomInt({0}, {1})";
         d["envGet"] = "(System.Environment.GetEnvironmentVariable({0}) ?? \"\")";
         d["envHas"] = "(System.Environment.GetEnvironmentVariable({0}) != null)";

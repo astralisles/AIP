@@ -1,0 +1,7 @@
+fn rollDice(sides Int, state Int, count Int, acc Text) -> Text
+  "Roll count dice with the seeded generator and list the results; the same state gives the same list."
+  pure
+  requires sides > 0
+body
+  let next = randomNext(state)
+  if count <= 0 then acc else rollDice(sides, next, count - 1, "{acc}{randomRange(next, sides) + 1} ")

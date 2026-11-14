@@ -1,0 +1,8 @@
+fn firstSquareAbove(limit Int) -> Int
+  "The first square number greater than limit: the loop leaves early with `done`."
+  pure
+body
+  loop
+    k = 1
+    body
+      if k * k > limit then done k * k else next k + 1

@@ -7,11 +7,13 @@ sealed partial class CsBackend
     {
         ("Rt.Core.cs", RtCore),
         ("Rt.Fn.cs", RtFn),
+        ("Rt.Gfx.cs", RtGfx),
         ("Rt.Map.cs", RtMap),
         ("Rt.Net.cs", RtNet),
         ("Rt.Profile.cs", RtProfile),
         ("Rt.Sorted.cs", RtSorted),
         ("Rt.Tasks.cs", RtTasks),
+        ("Rt.Time.cs", RtTime),
         ("Rt.System.cs", RtSystem),
     };
 

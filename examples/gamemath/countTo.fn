@@ -1,0 +1,5 @@
+fn countTo(limit Int, n Int) -> Int
+  "Count up to limit by calling itself in tail position; it runs as a loop, so ten million steps use constant stack."
+  pure
+body
+  if n >= limit then n else countTo(limit, n + 1)
