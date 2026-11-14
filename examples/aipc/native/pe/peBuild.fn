@@ -1,0 +1,6 @@
+fn peBuild(code List<I64>) -> List<I64>
+  "The whole .exe file: headers (512 bytes), the import section (512 bytes), then the code padded to 512."
+  pure
+  fails
+body
+  asmCat3(peHeaders(listLength(code)), pePad(peImports(), 512), pePad(code, peAlign(listLength(code), 512)))

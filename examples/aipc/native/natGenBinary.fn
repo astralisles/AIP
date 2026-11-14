@@ -1,0 +1,6 @@
+fn natGenBinary(op Text, left List<I64>, right List<I64>, n I64) -> List<I64>
+  "Code for a binary expression; the result is in rax."
+  pure
+  fails
+body
+  if op == "and" or op == "or" or op == "=>" then natGenLogic(op, left, right) else asmCat6(left, asmPush(regRax), right, asmMovRR(regRcx, regRax), asmPop(regRax), natBinOp(op, n))

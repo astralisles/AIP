@@ -1,0 +1,20 @@
+fn natCheck(e Expr, ctx NatCtx) -> Text
+  "The first thing in an expression the native compiler cannot compile, described for the error message, or an empty text when all is fine."
+  pure
+  fails
+body
+  match e
+    IntNum(text) => ""
+    FloatNum(text) => "a float number"
+    BoolVal(value) => ""
+    Lit(text) => ""
+    TextParts(parts) => natCheckParts(parts, 0, ctx)
+    NameRef(name) => if natVarIndex(ctx.vars, name, listLength(ctx.vars) - 1) < 0 then "the name `{name}`" else ""
+    FnOf(name) => "a function value"
+    CallFn(name, args) => natCheckCall(name, args, ctx)
+    FieldOf(target, name) => "field access"
+    UnaryOp(op, operand) => natFirst(natCheck(operand, ctx), if op == "not" or natTypeOf(operand, ctx) == "I64" then "" else "`{op}` on {natTypeOf(operand, ctx)}")
+    BinaryOp(op, left, right) => natCheckBinary(op, left, right, ctx)
+    IfExpr(cond, whenTrue, whenFalse) => natFirst(natCheck(cond, ctx), natFirst(natCheck(whenTrue, ctx), natCheck(whenFalse, ctx)))
+    MatchOn(subject) => "`match` expressions"
+    BadExpr(message) => "an expression the parser could not read ({message})"

@@ -1,0 +1,5 @@
+fn asmMark(kind I64, target I64) -> List<I64>
+  "A 32-bit field that must hold the distance to a target, written as four list items: target + 256 (no real byte is that big), the kind, 0, 0. Kind 0 targets the code of function number target; kind 1 targets the address (relative virtual address) target. natLink replaces the four items once the layout is known."
+  pure
+body
+  listAppend(listAppend(listAppend(listAppend(listEmpty(), target + 256), kind), 0), 0)

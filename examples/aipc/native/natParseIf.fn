@@ -1,0 +1,9 @@
+fn natParseIf(lines List<Text>, i I64, indent I64, cond Expr, acc List<NatS>) -> NatBlock
+  "Read an `if cond then` block on line i with its optional `else` block, then the rest of the enclosing block."
+  pure
+  fails
+body
+  let whenTrue = natParseBlock(lines, i + 1, indent + 2, listEmpty())
+  let hasElse = whenTrue.next < listLength(lines) and textTrim(listGet(lines, whenTrue.next)) == "else"
+  let whenFalse = if hasElse then natParseBlock(lines, whenTrue.next + 1, indent + 2, listEmpty()) else NatBlock(listEmpty(), whenTrue.next)
+  natParseBlock(lines, whenFalse.next, indent, listAppend(acc, SIf(cond, whenTrue.stmts, whenFalse.stmts)))

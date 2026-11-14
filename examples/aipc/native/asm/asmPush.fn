@@ -1,0 +1,5 @@
+fn asmPush(r I64) -> List<I64>
+  "push r"
+  pure
+body
+  if r >= 8 then asmCat(asmByte(65), asmByte(80 + (r & 7))) else asmByte(80 + r)

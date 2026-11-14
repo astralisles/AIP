@@ -1,0 +1,9 @@
+fn natParseStmt(lines List<Text>, i I64, indent I64, text Text, acc List<NatS>) -> NatBlock
+  "Read the statement on line i (already trimmed to text): an `if` block, a `let` or an expression, then the rest of the block."
+  pure
+  fails
+body
+  let size = textLength(text)
+  let isIf = size > 8 and textStartsWith(text, "if ") and textEndsWith(text, " then")
+  let eq = textFind(text, " = ")
+  if isIf then natParseIf(lines, i, indent, parseExprText(textSlice(text, 3, size - 5)), acc) else if textStartsWith(text, "let ") and eq > 4 then natParseBlock(lines, i + 1, indent, listAppend(acc, SLet(textSlice(text, 4, eq), parseExprText(textSlice(text, eq + 3, size))))) else natParseBlock(lines, i + 1, indent, listAppend(acc, SExpr(parseExprText(text))))

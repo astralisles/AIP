@@ -1,0 +1,8 @@
+fn natParseBlock(lines List<Text>, i I64, indent I64, acc List<NatS>) -> NatBlock
+  "Read the statements of a block whose lines are indented by indent: stop at a shallower line, at `else`, or at the end."
+  pure
+  fails
+body
+  let text = if i < listLength(lines) then textTrim(listGet(lines, i)) else ""
+  let depth = if i < listLength(lines) then countSpaces(listGet(lines, i), 0) else 0
+  if i >= listLength(lines) then NatBlock(acc, i) else if text == "" then natParseBlock(lines, i + 1, indent, acc) else if depth < indent or text == "else" then NatBlock(acc, i) else natParseStmt(lines, i, indent, text, acc)

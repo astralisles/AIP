@@ -1,0 +1,8 @@
+fn natGenParts(parts List<Expr>, i I64, ctx NatCtx) -> List<I64>
+  "Code for the parts of a text from i on: each part is joined to the text so far (kept on the stack) with concat."
+  pure
+  fails
+body
+  let last = i == listLength(parts) - 1
+  let join = if i > 0 then asmCat3(asmMovRR(regRdx, regRax), asmPop(regRcx), asmCallFn(listLength(ctx.fns) + 3)) else asmNone()
+  asmCat4(natGenPart(listGet(parts, i), ctx), join, if last then asmNone() else asmPush(regRax), if last then asmNone() else natGenParts(parts, i + 1, ctx))

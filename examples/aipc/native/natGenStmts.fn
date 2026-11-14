@@ -1,0 +1,6 @@
+fn natGenStmts(stmts List<NatS>, i I64, ctx NatCtx, slot I64) -> List<I64>
+  "The machine code of the statements from i on, one after the other."
+  pure
+  fails
+body
+  if i >= listLength(stmts) then asmNone() else asmCat(natGenStmt(listGet(stmts, i), ctx, slot), natGenStmts(stmts, i + 1, natAfter(listGet(stmts, i), ctx, slot), slot + natStmtLets(listGet(stmts, i))))

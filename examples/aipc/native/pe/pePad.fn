@@ -1,0 +1,5 @@
+fn pePad(bytes List<I64>, size I64) -> List<I64>
+  "The bytes followed by zeros up to size bytes."
+  pure
+body
+  asmCat(bytes, asmZeros(size - listLength(bytes)))

@@ -1,0 +1,11 @@
+fn natCheckBinary(op Text, left Expr, right Expr, ctx NatCtx) -> Text
+  "The first problem in a binary expression, or an empty text. Numbers take + - * / % & | ^ and the comparisons; Bool takes == and !=."
+  pure
+  fails
+body
+  let type = natTypeOf(left, ctx)
+  let logic = op == "and" or op == "or" or op == "=>"
+  let arith = op == "+" or op == "-" or op == "*" or op == "/" or op == "%" or op == "&" or op == "|" or op == "^" or op == "==" or op == "!=" or op == "<" or op == "<=" or op == ">" or op == ">="
+  let typed = if logic or type == "I64" or (type == "Bool" and (op == "==" or op == "!=")) then "" else "`{op}` on {type}"
+  let known = if logic or arith then "" else "the operator `{op}`"
+  natFirst(natFirst(natCheck(left, ctx), natCheck(right, ctx)), natFirst(known, typed))

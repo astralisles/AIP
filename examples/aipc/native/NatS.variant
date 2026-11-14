@@ -1,0 +1,5 @@
+variant NatS
+  "One statement of a function body as the native compiler reads it: a `let`, an expression, or an `if cond then` block with its `else` block."
+  SLet(name Text, value Expr)
+  SExpr(value Expr)
+  SIf(cond Expr, whenTrue List<NatS>, whenFalse List<NatS>)

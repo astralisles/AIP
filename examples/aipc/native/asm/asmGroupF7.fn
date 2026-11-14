@@ -1,0 +1,5 @@
+fn asmGroupF7(ext I64, r I64) -> List<I64>
+  "A one-register instruction of the F7 group: 2 not, 3 neg, 6 div, 7 idiv."
+  pure
+body
+  asmCat3(asmByte(asmRex(1, 0, r)), asmByte(247), asmByte(asmModRm(3, ext, r)))

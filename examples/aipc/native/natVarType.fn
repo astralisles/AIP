@@ -1,0 +1,7 @@
+fn natVarType(ctx NatCtx, name Text) -> Text
+  "The type of a name in scope, or an empty text for an unknown name."
+  pure
+  fails
+body
+  let at = natVarIndex(ctx.vars, name, listLength(ctx.vars) - 1)
+  if at < 0 then "" else listGet(ctx.vars, at).type

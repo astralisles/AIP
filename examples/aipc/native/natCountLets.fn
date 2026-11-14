@@ -1,0 +1,6 @@
+fn natCountLets(stmts List<NatS>, i I64) -> I64
+  "How many stack slots the statements need: one per `let`, also inside `if` blocks."
+  pure
+  fails
+body
+  if i >= listLength(stmts) then 0 else natStmtLets(listGet(stmts, i)) + natCountLets(stmts, i + 1)

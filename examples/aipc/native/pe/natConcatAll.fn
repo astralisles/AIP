@@ -1,0 +1,6 @@
+fn natConcatAll(blocks List<List<I64>>, i I64, acc List<I64>) -> List<I64>
+  "All the blocks one after the other."
+  pure
+  fails
+body
+  if i >= listLength(blocks) then acc else natConcatAll(blocks, i + 1, asmCat(acc, listGet(blocks, i)))

@@ -1,0 +1,6 @@
+fn natRtExit() -> List<I64>
+  "Runtime helper exit(rcx): ExitProcess with a 16-byte aligned stack and shadow space."
+  pure
+  fails
+body
+  asmCat3(asmAluRI(4, regRsp, 0 - 16), asmAluRI(5, regRsp, 32), asmCallRva(natIatBase + 16))

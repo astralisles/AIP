@@ -1,0 +1,20 @@
+fn natTypeOf(e Expr, ctx NatCtx) -> Text
+  "The type of an expression; an empty text when it cannot be told."
+  pure
+  fails
+body
+  match e
+    IntNum(text) => "I64"
+    FloatNum(text) => "F64"
+    BoolVal(value) => "Bool"
+    Lit(text) => "Text"
+    TextParts(parts) => "Text"
+    NameRef(name) => natVarType(ctx, name)
+    FnOf(name) => ""
+    CallFn(name, args) => natCallType(ctx, name)
+    FieldOf(target, name) => ""
+    UnaryOp(op, operand) => if op == "not" then "Bool" else "I64"
+    BinaryOp(op, left, right) => if natIsLogic(op) then "Bool" else "I64"
+    IfExpr(cond, whenTrue, whenFalse) => natTypeOf(whenTrue, ctx)
+    MatchOn(subject) => ""
+    BadExpr(message) => ""

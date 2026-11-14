@@ -1,0 +1,6 @@
+fn natEntry(n I64, mainAt I64) -> List<I64>
+  "The code at the entry point: set up the heap, call main, exit with code 0. n is the number of functions (the exit helper is number n)."
+  pure
+  fails
+body
+  asmCat6(asmRipRva(141, regRax, natBssHeap), asmRipRva(137, regRax, natBssPtr), asmAluRI(0, regRax, natHeapSize), asmRipRva(137, regRax, natBssEnd), asmCallFn(mainAt), asmCat(asmMovRI(regRcx, 0), asmCallFn(n)))

@@ -1,0 +1,8 @@
+fn natRtItoaLoop() -> List<I64>
+  "The digit loop of itoa: write one digit backwards, repeat while the number is not zero (the jump back is part of it)."
+  pure
+body
+  let body = asmCat4(asmMovRR(regRax, regRsi), asmAlu(opXor, regRdx, regRdx), asmGroupF7(6, regR9), asmMovRR(regRsi, regRax))
+  let store = asmCat4(asmAluRI(0, regRdx, 48), asmAluRI(5, regRdi, 1), asmStoreByte(regRdi, 0, regRdx), asmTest(regRsi, regRsi))
+  let both = asmCat(body, store)
+  asmCat(both, asmJcc(ccNe, 0 - listLength(both) - 6))

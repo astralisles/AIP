@@ -1,0 +1,6 @@
+fn natCheckStmts(stmts List<NatS>, i I64, ctx NatCtx, slot I64) -> Text
+  "The first problem in the statements from i on, or an empty text."
+  pure
+  fails
+body
+  if i >= listLength(stmts) then "" else natFirst(natCheckStmt(listGet(stmts, i), ctx, slot), natCheckStmts(stmts, i + 1, natAfter(listGet(stmts, i), ctx, slot), slot + natStmtLets(listGet(stmts, i))))

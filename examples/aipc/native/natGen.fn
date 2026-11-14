@@ -1,0 +1,20 @@
+fn natGen(e Expr, ctx NatCtx) -> List<I64>
+  "The machine code of an expression; the value ends up in rax (a Text is a pointer to its length followed by its bytes). natCheck must have accepted the expression."
+  pure
+  fails
+body
+  match e
+    IntNum(text) => asmMovRI(regRax, textToInt(text))
+    FloatNum(text) => asmNone()
+    BoolVal(value) => asmMovRI(regRax, if value then 1 else 0)
+    Lit(text) => asmLit(text)
+    TextParts(parts) => if listLength(parts) == 0 then asmLit("") else natGenParts(parts, 0, ctx)
+    NameRef(name) => asmLoad(regRax, regRbp, listGet(ctx.vars, natVarIndex(ctx.vars, name, listLength(ctx.vars) - 1)).disp)
+    FnOf(name) => asmNone()
+    CallFn(name, args) => natGenCall(name, args, ctx)
+    FieldOf(target, name) => asmNone()
+    UnaryOp(op, operand) => natGenUnary(op, natGen(operand, ctx))
+    BinaryOp(op, left, right) => natGenBinary(op, natGen(left, ctx), natGen(right, ctx), listLength(ctx.fns))
+    IfExpr(cond, whenTrue, whenFalse) => natGenIf(natGen(cond, ctx), natGen(whenTrue, ctx), natGen(whenFalse, ctx))
+    MatchOn(subject) => asmNone()
+    BadExpr(message) => asmNone()

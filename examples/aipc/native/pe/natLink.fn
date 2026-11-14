@@ -1,0 +1,6 @@
+fn natLink(code List<I64>, offs List<I64>, i I64, acc List<I64>) -> List<I64>
+  "Replace every relocation marker (see asmMark) with the 32-bit distance from the end of the field to its target. offs holds the code offset of each function."
+  pure
+  fails
+body
+  if i >= listLength(code) then acc else if listGet(code, i) >= 256 then natLink(code, offs, i + 4, asmCat(acc, w32(natTarget(code, offs, i) - (natTextRva + i + 4)))) else natLink(code, offs, i + 1, listAppend(acc, listGet(code, i)))

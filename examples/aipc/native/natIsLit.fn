@@ -1,0 +1,19 @@
+fn natIsLit(e Expr) -> Bool
+  "True for a piece of literal text inside a text with `{...}` parts."
+  pure
+body
+  match e
+    IntNum(text) => false
+    FloatNum(text) => false
+    BoolVal(value) => false
+    Lit(text) => true
+    TextParts(parts) => false
+    NameRef(name) => false
+    FnOf(name) => false
+    CallFn(name, args) => false
+    FieldOf(target, name) => false
+    UnaryOp(op, operand) => false
+    BinaryOp(op, left, right) => false
+    IfExpr(cond, whenTrue, whenFalse) => false
+    MatchOn(subject) => false
+    BadExpr(message) => false

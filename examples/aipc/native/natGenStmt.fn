@@ -1,0 +1,9 @@
+fn natGenStmt(s NatS, ctx NatCtx, slot I64) -> List<I64>
+  "The machine code of one statement."
+  pure
+  fails
+body
+  match s
+    SLet(name, value) => asmCat(natGen(value, ctx), asmStore(regRbp, 0 - 8 * (slot + 1), regRax))
+    SExpr(value) => natGen(value, ctx)
+    SIf(cond, whenTrue, whenFalse) => natGenIf(natGen(cond, ctx), natGenStmts(whenTrue, 0, ctx, slot), natGenStmts(whenFalse, 0, ctx, slot + natCountLets(whenTrue, 0)))

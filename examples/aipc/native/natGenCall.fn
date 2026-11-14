@@ -1,0 +1,9 @@
+fn natGenCall(name Text, args List<Expr>, ctx NatCtx) -> List<I64>
+  "Code for a call: printLine and textFromInt are runtime helpers, every other name is a function of the program."
+  pure
+  fails
+body
+  let n = listLength(ctx.fns)
+  let at = natFnIndex(ctx.fns, name, 0)
+  let drop = if listLength(args) > 0 then asmAluRI(0, regRsp, 8 * listLength(args)) else asmNone()
+  if name == "printLine" then asmCat3(natGen(listGet(args, 0), ctx), asmMovRR(regRcx, regRax), asmCallFn(n + 2)) else if name == "textFromInt" then asmCat(natGen(listGet(args, 0), ctx), asmCallFn(n + 4)) else asmCat3(natPushArgs(args, 0, ctx), asmCallFn(at), drop)

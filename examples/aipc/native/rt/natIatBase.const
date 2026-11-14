@@ -1,0 +1,3 @@
+const natIatBase I64
+  "Address of the first import address table slot: GetStdHandle, then WriteFile, then ExitProcess, 8 bytes each."
+  value 4168

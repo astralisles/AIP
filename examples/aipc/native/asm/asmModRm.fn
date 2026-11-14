@@ -1,0 +1,5 @@
+fn asmModRm(mode I64, reg I64, rm I64) -> I64
+  "A ModRM byte: the mode (3 = register, 2 = base + 32-bit offset, 0 = no offset or RIP-relative) and two register fields."
+  pure
+body
+  mode * 64 + (reg & 7) * 8 + (rm & 7)

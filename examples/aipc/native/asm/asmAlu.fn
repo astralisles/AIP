@@ -1,0 +1,5 @@
+fn asmAlu(op I64, dst I64, src I64) -> List<I64>
+  "op dst, src for op one of opAdd, opOr, opAnd, opSub, opXor, opCmp."
+  pure
+body
+  asmCat3(asmByte(asmRex(1, src, dst)), asmByte(op), asmByte(asmModRm(3, src, dst)))

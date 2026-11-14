@@ -1,0 +1,3 @@
+const natTextRva I64
+  "Address (relative to the image base) where the code section starts: after the import data and the heap."
+  value 67121152

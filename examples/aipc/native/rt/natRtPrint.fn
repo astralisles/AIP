@@ -1,0 +1,14 @@
+fn natRtPrint() -> List<I64>
+  "Runtime helper print(rcx text): the text and a newline to standard output."
+  pure
+  fails
+body
+  let open = asmCat4(asmPush(regRbp), asmMovRR(regRbp, regRsp), asmPush(regRbx), asmPush(regRsi))
+  let setup = asmCat4(asmMovRR(regRbx, regRcx), asmAluRI(4, regRsp, 0 - 16), asmAluRI(5, regRsp, 64), asmMovRI(regRcx, 0 - 11))
+  let handle = asmCat3(asmCallRva(natIatBase), asmMovRR(regRsi, regRax), asmMovRR(regRcx, regRsi))
+  let first = asmCat4(asmLea(regRdx, regRbx, 8), asmLoad(regR8, regRbx, 0), asmLea(regR9, regRsp, 40), asmMovRI(regRax, 0))
+  let write1 = asmCat3(asmStore(regRsp, 32, regRax), asmCallRva(natIatBase + 8), asmMovRI(regRax, 10))
+  let second = asmCat4(asmStoreByte(regRsp, 48, regRax), asmMovRR(regRcx, regRsi), asmLea(regRdx, regRsp, 48), asmMovRI(regR8, 1))
+  let write2 = asmCat4(asmLea(regR9, regRsp, 40), asmMovRI(regRax, 0), asmStore(regRsp, 32, regRax), asmCallRva(natIatBase + 8))
+  let close = asmCat4(asmLea(regRsp, regRbp, 0 - 16), asmPop(regRsi), asmPop(regRbx), asmCat(asmPop(regRbp), asmByte(195)))
+  asmCat6(open, setup, handle, first, write1, asmCat3(second, write2, close))

@@ -1,0 +1,4 @@
+struct NatCtx
+  "What code generation knows at one point: the names in scope and all the functions of the program."
+  vars List<NatVar>
+  fns List<NatFn>

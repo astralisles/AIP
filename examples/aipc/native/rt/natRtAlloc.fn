@@ -1,0 +1,8 @@
+fn natRtAlloc(n I64) -> List<I64>
+  "Runtime helper alloc(rcx bytes) -> rax: bump allocator over the heap; out of memory ends the program with exit code 3. n is the number of user functions (the exit helper is function number n)."
+  pure
+body
+  let ok = asmCat(asmRipRva(137, regRdx, natBssPtr), asmByte(195))
+  let check = asmCat4(asmAluRI(0, regRcx, 7), asmAluRI(4, regRcx, 0 - 8), asmRipRva(139, regRax, natBssPtr), asmMovRR(regRdx, regRax))
+  let more = asmCat4(asmAlu(opAdd, regRdx, regRcx), asmRipRva(139, regR10, natBssEnd), asmAlu(opCmp, regRdx, regR10), asmJcc(ccA, listLength(ok)))
+  asmCat4(check, more, ok, asmCat(asmMovRI(regRcx, 3), asmJmpFn(n)))

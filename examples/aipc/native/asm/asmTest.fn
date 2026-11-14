@@ -1,0 +1,5 @@
+fn asmTest(a I64, b I64) -> List<I64>
+  "test a, b"
+  pure
+body
+  asmCat3(asmByte(asmRex(1, b, a)), asmByte(133), asmByte(asmModRm(3, b, a)))

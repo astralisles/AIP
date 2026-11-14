@@ -1,0 +1,10 @@
+fn natCompile(fns List<NatFn>) -> List<I64>
+  "The whole .exe as bytes. The functions must have passed natCheckFns and there must be a `main`."
+  pure
+  fails
+body
+  let n = listLength(fns)
+  let entry = natEntry(n, natFnIndex(fns, "main", 0))
+  let helpers = listAppend(listAppend(listAppend(listAppend(listAppend(natGenFns(fns, 0, listEmpty()), natRtExit()), natRtAlloc(n)), natRtPrint()), natRtConcat(n)), natRtItoa(n))
+  let offs = natOffsets(helpers, 0, listLength(entry), listEmpty())
+  peBuild(natLink(asmCat(entry, natConcatAll(helpers, 0, listEmpty())), offs, 0, listEmpty()))

@@ -1,0 +1,7 @@
+fn natTarget(code List<I64>, offs List<I64>, i I64) -> I64
+  "The address a relocation marker at position i points to."
+  pure
+  fails
+body
+  let t = listGet(code, i) - 256
+  if listGet(code, i + 1) == 0 then natTextRva + listGet(offs, t) else t

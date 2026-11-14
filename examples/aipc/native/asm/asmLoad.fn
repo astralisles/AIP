@@ -1,0 +1,5 @@
+fn asmLoad(reg I64, base I64, disp I64) -> List<I64>
+  "mov reg, [base+disp]"
+  pure
+body
+  asmMem(1, 139, reg, base, disp)

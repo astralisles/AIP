@@ -1,0 +1,6 @@
+fn natFnIndex(fns List<NatFn>, name Text, i I64) -> I64
+  "The number of the function called name; -1 when there is none."
+  pure
+  fails
+body
+  if i >= listLength(fns) then 0 - 1 else if listGet(fns, i).header.name == name then i else natFnIndex(fns, name, i + 1)

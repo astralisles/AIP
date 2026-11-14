@@ -1,0 +1,5 @@
+fn asmByte(v I64) -> List<I64>
+  "One byte (the low 8 bits of v) as a list."
+  pure
+body
+  listAppend(listEmpty(), v & 255)

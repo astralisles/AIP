@@ -1,0 +1,3 @@
+const regR9 I64
+  "x86-64 register number of r9."
+  value 9

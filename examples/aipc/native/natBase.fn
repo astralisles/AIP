@@ -1,0 +1,7 @@
+fn natBase(type Text) -> Text
+  "A type as written in a header without its range: `Text 1..` is `Text`."
+  pure
+  fails
+body
+  let p = textFind(type, " ")
+  if p < 0 then type else textSlice(type, 0, p)

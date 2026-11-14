@@ -1,0 +1,8 @@
+fn natLoadOne(path Text) -> NatFn
+  "Read one .fn file: its header and its body statements."
+  effects file.read
+  fails
+body
+  let text = textReplace(bytesDecode(fileRead(path)), textFromCode(13), "")
+  let lines = textSplit(text, "\n")
+  NatFn(parseHeader(lexAll(text)), natParseBlock(lines, findBodyLine(lines, 0), 2, listEmpty()).stmts)

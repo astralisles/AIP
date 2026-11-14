@@ -1,0 +1,3 @@
+const ccLe I64
+  "Condition code `less or equal` (signed)."
+  value 14

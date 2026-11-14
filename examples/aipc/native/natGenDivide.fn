@@ -1,0 +1,7 @@
+fn natGenDivide(op Text, n I64) -> List<I64>
+  "Code for / and % with the dividend in rax and the divisor in rcx. A zero divisor ends the program with exit code 1."
+  pure
+  fails
+body
+  let stop = asmCat(asmMovRI(regRcx, 1), asmCallFn(n))
+  asmCat6(asmTest(regRcx, regRcx), asmJcc(ccNe, listLength(stop)), stop, asmHex("4899"), asmGroupF7(7, regRcx), if op == "%" then asmMovRR(regRax, regRdx) else asmNone())

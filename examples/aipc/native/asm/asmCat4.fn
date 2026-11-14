@@ -1,0 +1,5 @@
+fn asmCat4(a List<I64>, b List<I64>, c List<I64>, d List<I64>) -> List<I64>
+  "Four byte lists in a row."
+  pure
+body
+  listConcat(asmCat3(a, b, c), d)

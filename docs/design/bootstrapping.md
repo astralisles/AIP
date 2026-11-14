@@ -18,3 +18,6 @@ Still missing before the compiler can compile itself:
 3. Emitter that writes the C# text; compare with the C# back end's output for every example.
 4. A way to run `dotnet publish` (a `process.run` effect) from AIP.
 5. Then: C# compiler builds the AIP compiler (stage 1), stage 1 builds itself (stage 2), stage 2 output must equal stage 1.
+
+The native Windows exe compiler is also written in AIP: `aipc native <dir> <out.exe>`, see `docs/design/native-compiler-in-aip-T-1033.md`
+(`tests\checks\bootstrap-native.ps1`).

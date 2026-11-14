@@ -1,0 +1,5 @@
+fn natCc(op Text) -> I64
+  "The condition code of a comparison operator."
+  pure
+body
+  if op == "==" then ccE else if op == "!=" then ccNe else if op == "<" then ccL else if op == "<=" then ccLe else if op == ">" then ccG else ccGe

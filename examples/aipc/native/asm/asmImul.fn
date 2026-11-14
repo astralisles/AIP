@@ -1,0 +1,5 @@
+fn asmImul(dst I64, src I64) -> List<I64>
+  "imul dst, src"
+  pure
+body
+  asmCat4(asmByte(asmRex(1, dst, src)), asmByte(15), asmByte(175), asmByte(asmModRm(3, dst, src)))

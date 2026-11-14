@@ -1,0 +1,5 @@
+fn asmRipRva(op I64, reg I64, rva I64) -> List<I64>
+  "A 64-bit instruction on reg and the memory at the address rva, RIP-relative: op 139 loads, 137 stores, 141 is lea."
+  pure
+body
+  asmCat4(asmByte(asmRex(1, reg, 0)), asmByte(op), asmByte(asmModRm(0, reg, 5)), asmMark(1, rva))

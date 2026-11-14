@@ -1,0 +1,7 @@
+fn natWriteExe(out Text, exe List<I64>) -> Unit
+  "Write the .exe and say so."
+  effects file.write, terminal.write
+  fails
+body
+  fileWrite(out, bytesFromList(exe))
+  printLine("wrote {listLength(exe)} bytes to {out}")

@@ -1,0 +1,4 @@
+struct NatBlock
+  "Statements read from the body lines, and the index of the first line after them."
+  stmts List<NatS>
+  next I64

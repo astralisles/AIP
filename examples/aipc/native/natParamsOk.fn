@@ -1,0 +1,6 @@
+fn natParamsOk(params List<ParamDecl>, i I64) -> Bool
+  "True when every parameter has a type the native compiler can handle."
+  pure
+  fails
+body
+  if i >= listLength(params) then true else natSupported(natBase(listGet(params, i).type)) and natParamsOk(params, i + 1)

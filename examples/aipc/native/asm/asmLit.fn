@@ -1,0 +1,9 @@
+fn asmLit(text Text) -> List<I64>
+  "Code that leaves in rax a pointer to the text, kept inside the code: `jmp over; [length:8][bytes, padded to 8]; over: lea rax, [rip - size]`."
+  pure
+  fails
+body
+  let raw = bytesFromText(text)
+  let size = 8 + (listLength(raw) + 7) / 8 * 8
+  let data = asmCat3(asmLe(listLength(raw), 8), raw, asmZeros(size - 8 - listLength(raw)))
+  asmCat3(asmJmp(size), data, asmCat4(asmByte(asmRex(1, 0, 0)), asmByte(141), asmByte(asmModRm(0, 0, 5)), asmLe(0 - size - 7, 4)))

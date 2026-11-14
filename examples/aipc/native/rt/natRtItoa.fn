@@ -1,0 +1,12 @@
+fn natRtItoa(n I64) -> List<I64>
+  "Runtime helper itoa(rax n) -> rax: n in decimal as a text. Digits are written backwards from the end of a 32-byte block. n is the number of user functions (alloc is function number n + 1)."
+  pure
+body
+  let open = asmCat4(asmPush(regRbp), asmMovRR(regRbp, regRsp), asmMovRR(regRsi, regRax), asmMovRR(regR8, regRax))
+  let block = asmCat4(asmMovRI(regRcx, 32), asmCallFn(n + 1), asmMovRR(regR11, regRax), asmLea(regRdi, regRax, 32))
+  let negate = asmGroupF7(3, regRsi)
+  let abs = asmCat4(asmMovRI(regR9, 10), asmTest(regRsi, regRsi), asmJcc(ccNs, listLength(negate)), negate)
+  let sign = asmCat3(asmAluRI(5, regRdi, 1), asmMovRI(regRdx, 45), asmStoreByte(regRdi, 0, regRdx))
+  let signed = asmCat3(asmTest(regR8, regR8), asmJcc(ccNs, listLength(sign)), sign)
+  let done = asmCat4(asmLea(regRax, regR11, 32), asmAlu(opSub, regRax, regRdi), asmAluRI(5, regRdi, 8), asmStore(regRdi, 0, regRax))
+  asmCat6(open, block, abs, natRtItoaLoop(), signed, asmCat4(done, asmMovRR(regRax, regRdi), asmPop(regRbp), asmByte(195)))

@@ -1,0 +1,17 @@
+fn peHeaders(codeSize I64) -> List<I64>
+  "The DOS header, PE header, optional header and the three section headers (.rdata, .bss, .text), padded to 512 bytes. Layout: .rdata at 4096, .bss at 8192 (the heap), .text at natTextRva."
+  pure
+  fails
+body
+  let codeRaw = peAlign(codeSize, 512)
+  let bssSize = 16 + natHeapSize
+  let imageSize = natTextRva + peAlign(codeSize, 4096)
+  let dos = asmCat4(asmHex("4D5A"), asmZeros(58), w32(64), asmHex("50450000"))
+  let coff = asmCat4(w16(34404), w16(3), asmCat3(w32(0), w32(0), w32(0)), asmCat(w16(240), w16(34)))
+  let sizes = asmCat6(w16(523), asmByte(14), asmByte(0), w32(codeRaw), w32(512), w32(bssSize))
+  let entry = asmCat4(w32(natTextRva), w32(natTextRva), w64(5368709120), asmCat(w32(4096), w32(512)))
+  let versions = asmCat6(w16(6), w16(0), w16(0), w16(0), w16(6), asmCat(w16(0), w32(0)))
+  let image = asmCat6(w32(imageSize), w32(512), w32(0), w16(3), w16(33024), asmCat4(w64(268435456), w64(1048576), w64(1048576), w64(4096)))
+  let dirs = asmCat6(w32(0), w32(16), asmZeros(8), w32(4096), w32(40), asmZeros(112))
+  let sections = asmCat3(peSection(".rdata", 160, 4096, 512, 512, 1073741888), peSection(".bss", bssSize, 8192, 0, 0, 3221225600), peSection(".text", codeSize, natTextRva, codeRaw, 1024, 1610612768))
+  pePad(asmCat6(dos, coff, sizes, entry, versions, asmCat4(image, dirs, sections, asmNone())), 512)

@@ -1,0 +1,6 @@
+fn asmCallRva(rva I64) -> List<I64>
+  "call [rip+...] through the import address table slot at the address rva"
+  pure
+  fails
+body
+  asmCat3(asmHex("FF15"), asmMark(1, rva), asmNone())

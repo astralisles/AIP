@@ -1,0 +1,3 @@
+const ccG I64
+  "Condition code `greater` (signed)."
+  value 15

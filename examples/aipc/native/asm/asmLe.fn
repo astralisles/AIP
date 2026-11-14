@@ -1,0 +1,5 @@
+fn asmLe(v I64, n I64) -> List<I64>
+  "The low n bytes of v, least significant first."
+  pure
+body
+  if n <= 0 then asmNone() else asmCat(asmByte(v), asmLe(v >> 8, n - 1))

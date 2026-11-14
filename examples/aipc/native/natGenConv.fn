@@ -1,0 +1,8 @@
+fn natGenConv(type Text, code List<I64>, n I64) -> List<I64>
+  "Turn the value in rax into a Text for a `{...}` part: a number becomes its digits, a Bool becomes true or false."
+  pure
+  fails
+body
+  let yes = asmLit("true")
+  let no = asmLit("false")
+  if type == "Text" then code else if type == "I64" then asmCat(code, asmCallFn(n + 4)) else asmCat4(code, asmTest(regRax, regRax), asmJcc(ccE, listLength(yes) + 5), asmCat3(yes, asmJmp(listLength(no)), no))

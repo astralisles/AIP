@@ -1,0 +1,6 @@
+fn natPushArgs(args List<Expr>, i I64, ctx NatCtx) -> List<I64>
+  "Code that evaluates the arguments left to right and pushes each."
+  pure
+  fails
+body
+  if i >= listLength(args) then asmNone() else asmCat3(natGen(listGet(args, i), ctx), asmPush(regRax), natPushArgs(args, i + 1, ctx))
