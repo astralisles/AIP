@@ -1,0 +1,17 @@
+fn main() -> Unit
+  "Show float math and the seeded random generator; every line is deterministic."
+  effects terminal.write
+body
+  printLine("sqrt 2 = {mathSqrt(2.0)}")
+  printLine("floor -1.5 = {mathFloor(-1.5)}, ceil -1.5 = {mathCeil(-1.5)}, round 2.5 = {mathRound(2.5)}")
+  printLine("sin(pi/2) = {mathSin(mathPi() / 2.0)}")
+  printLine("atan2(1, 1) * 4 = {mathAtan2(1.0, 1.0) * 4.0}")
+  printLine("pow 2^10 = {mathPow(2.0, 10.0)}, lerp 10..20 at 0.25 = {mathLerp(10.0, 20.0, 0.25)}")
+  printLine("clamp 7 into 0..5 = {mathClamp(7.0, 0.0, 5.0)}, sqrt -1 is NaN: {mathIsNaN(mathSqrt(-1.0))}")
+  let parsed = textToFloat("3.25") * 2.0
+  let first = rollDice(6, 42, 8, "")
+  let second = rollDice(6, 42, 8, "")
+  printLine("parsed: {parsed}")
+  printLine("dice: {first}")
+  printLine("same seed, same dice: {second}")
+  printLine("count to ten million without growing the stack: {countTo(10000000, 0)}")

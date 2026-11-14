@@ -1,0 +1,4 @@
+fn gfxSwap(window GfxWindow) -> Unit
+  "Show the frame just drawn (swap the buffers) and handle window events."
+  effects gfx.window
+extern

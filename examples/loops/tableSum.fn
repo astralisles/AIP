@@ -1,0 +1,14 @@
+fn tableSum(rows Int, cols Int) -> Int
+  "Sum r * c over a rows x cols table: an outer loop whose body holds an inner loop."
+  pure
+body
+  loop
+    r = 1
+    total = 0
+    body
+      let rowTotal = loop
+        c = 1
+        sum = 0
+        body
+          if c > cols then done sum else next c + 1, sum + r * c
+      if r > rows then done total else next r + 1, total + rowTotal

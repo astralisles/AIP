@@ -13,6 +13,12 @@ sealed partial class Interp
         {
             case "listEmpty": return new List<object?>();
             case "listLength": return (long)L(0).Count;
+            case "listSort":
+                {
+                    var self = _active ?? throw new Unsupported("no interpreter is running");
+                    return L(0).OrderBy(x => x, Comparer<object?>.Create((p, q) =>
+                        (bool)self.CallValue(a[1], p, q)! ? -1 : (bool)self.CallValue(a[1], q, p)! ? 1 : 0)).ToList();
+                }
             case "listGet": return L(0)[(int)(long)a[1]!];
             case "listAppend": return new List<object?>(L(0)) { a[1] };
             case "listSet": { var r = new List<object?>(L(0)); r[(int)(long)a[1]!] = a[2]; return r; }

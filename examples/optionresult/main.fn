@@ -1,0 +1,11 @@
+fn main() -> Unit
+  "Show Option and Result from the standard library."
+  effects terminal.write
+body
+  let xs = listRange(10, 13)
+  printLine(describe(listTryGet(xs, 1)))
+  printLine(describe(listTryGet(xs, 7)))
+  printLine(describe(mapTryGet(mapSet(mapEmpty(), "a", 5), "a")))
+  printLine(describe(mapTryGet(mapSet(mapEmpty(), "a", 5), "b")))
+  printLine(show(safeDiv(10, 2)))
+  printLine(show(safeDiv(1, 0)))

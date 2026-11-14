@@ -1,0 +1,12 @@
+fn main() -> Unit
+  "Show function values: map, filter, fold, sort and a direct indirect call."
+  effects terminal.write
+  fails
+body
+  let xs = listRange(1, 9)
+  printLine("{listLength(listMap(xs, &double))}")
+  printLine("{listGet(listMap(xs, &double), 3)}")
+  printLine("{listLength(listFilter(xs, &isBig))}")
+  printLine("{listFold(xs, 0, &add)}")
+  printLine("{listGet(listSort(xs, &greater), 0)}")
+  printLine("{applyTwice(&double, 5)}")

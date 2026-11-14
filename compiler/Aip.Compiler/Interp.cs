@@ -6,6 +6,7 @@ namespace Aip;
 /// <summary>A struct or variant value: which case, and its field values in declaration order.</summary>
 sealed record Val(Case Case, object?[] Fields);
 
+
 /// <summary>
 /// Tree-walking evaluator for pure functions. It runs `example` lines and checks `requires`, `ensures` and
 /// parameter/result ranges at every call. It follows the C# back end's rules (checked sized integers, truncating division, IEEE floats).
@@ -21,12 +22,16 @@ sealed partial class Interp(ProgramModel program)
         public string Code = code;
     }
 
+    object? CallIndirect(Call ic, Dictionary<string, object?> env) =>
+        CallFn(((FnVal)env[ic.Name]!).Target, ic.Args.Select(a => Eval(a, env)).ToList());
+
     int _depth;
     const int MaxDepth = 100_000;
 
     object? CallFn(Fn fn, List<object?> args)
     {
         if (fn.Effects.Count > 0) throw new Unsupported($"`{fn.Name}` has effects ({fn.EffectsText})");
+        _active = this;
         for (int i = 0; i < fn.Params.Count; i++) args[i] = Coerce(args[i], fn.Params[i].Type.Name);
         for (int i = 0; i < fn.Params.Count; i++) CheckRange(fn.Params[i].Type, args[i], $"argument `{fn.Params[i].Name}` of `{fn.Name}`");
         if (fn.IsExtern) return Extern(fn.Name, args);
@@ -107,11 +112,14 @@ sealed partial class Interp(ProgramModel program)
             case FloatLit fl: return fl.Type == "F32" ? (object)(float)fl.Value : fl.Value;
             case BoolLit b: return b.Value;
             case NameRef { Const: true } k: return CallFn(program.Fns[k.Name], new List<object?>());
+            case FnRef fr: return new FnVal(program.Fns[fr.Name]);
             case NameRef n: return env[n.Name];
             case TextLit t:
                 return string.Concat(t.Parts.Select(p => p is string s ? s : Text(Eval((Expr)p, env))));
             case Call { Ctor: not null } c:
                 return new Val(program.Ctors[c.Name].Case, c.Args.Select(a => Eval(a, env)).ToArray());
+            case Call { Indirect: true } ic:
+                return CallIndirect(ic, env);
             case Call c:
                 return CallFn(program.Fns[c.Name], c.Args.Select(a => Eval(a, env)).ToList());
             case Assign a:
@@ -147,6 +155,8 @@ sealed partial class Interp(ProgramModel program)
                 return null;
             case IfExpr i:
                 return (bool)Eval(i.Cond, env)! ? Eval(i.Then, env) : Eval(i.Else, env);
+            case LoopExpr lp: return EvalLoop(lp, env);
+            case ForExpr fr: return EvalFor(fr, env);
             case Binary b:
                 {
                     if (b.Op == "and") return (bool)Eval(b.Left, env)! && (bool)Eval(b.Right, env)!;
@@ -282,6 +292,8 @@ sealed partial class Interp(ProgramModel program)
         QueueExtern,
         SortedExtern,
         NetExtern,
+        TimeExtern,
+        FnExtern,
     };
 
     /// <summary>

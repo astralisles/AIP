@@ -1,0 +1,4 @@
+fn listSort(items List<T>, less Fn<T,T,Bool>) -> List<T>
+  "The items ordered so that less(a, b) puts a first; equal items keep their order."
+  pure
+extern

@@ -1,0 +1,5 @@
+fn double(n Int) -> Int
+  "Twice a number."
+  pure
+body
+  n * 2

@@ -1,0 +1,9 @@
+fn f() -> Int
+  "Next gives too few values."
+  pure
+body
+  loop
+    i = 0
+    total = 0
+    body
+      if i > 3 then done total else next i + 1

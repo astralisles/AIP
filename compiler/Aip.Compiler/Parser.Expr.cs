@@ -45,6 +45,16 @@ sealed partial class Parser
             ExpectEnd();
             return m;
         }
+        if (_inLoopBody > 0 && Peek.Kind == T.Ident && Peek.Text is "done" or "next" && !(_pos + 1 < _toks.Count && _toks[_pos + 1].Kind == T.Sym && _toks[_pos + 1].Text == "("))
+        {
+            bool done = Peek.Text == "done";
+            _pos++;
+            if (done) return new DoneExpr { Line = _line, Value = ParseExpr() };
+            var n = new NextExpr { Line = _line };
+            n.Args.Add(ParseExpr());
+            while (IsSym(",")) { _pos++; n.Args.Add(ParseExpr()); }
+            return n;
+        }
         if (Peek.Kind == T.Ident && Peek.Text == "if")
         {
             _pos++;
@@ -108,6 +118,8 @@ sealed partial class Parser
     {
         var t = Peek;
         _pos++;
+        if (t.Kind == T.Sym && t.Text == "&")
+            return new FnRef { Line = _line, Name = Expect(T.Ident, "a function name after `&`").Text };
         switch (t.Kind)
         {
             case T.Int:

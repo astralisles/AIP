@@ -1,0 +1,8 @@
+fn f() -> Int
+  "The loop has no done."
+  pure
+body
+  loop
+    i = 0
+    body
+      next i + 1

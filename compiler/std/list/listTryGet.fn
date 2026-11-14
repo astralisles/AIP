@@ -1,0 +1,5 @@
+fn listTryGet(items List<T>, index Int) -> Option<T>
+  "The item at an index as Some, or None when the index is outside the list."
+  pure
+body
+  if index < 0 or index >= listLength(items) then None() else Some(listGet(items, index))

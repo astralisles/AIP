@@ -1,0 +1,4 @@
+sum with if: 500000500000
+sum with match: 500000500000
+liftoff
+deep but not a tail call is still fine: 1000

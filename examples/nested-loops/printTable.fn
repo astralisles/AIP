@@ -1,0 +1,9 @@
+fn printTable(r Int, rows Int, cols Int) -> Unit
+  "Outer loop with an effect: print rows 1..rows of the multiplication table."
+  effects terminal.write
+body
+  if r > rows then
+    printLine("done")
+  else
+    printRow(r, 1, cols, "")
+    printTable(r + 1, rows, cols)

@@ -1,0 +1,6 @@
+fn main() -> Unit
+  "Calls a function value with the wrong argument type."
+  effects terminal.write
+body
+  let f = &double
+  printLine("{f(true)}")

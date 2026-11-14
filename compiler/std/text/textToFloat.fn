@@ -1,0 +1,4 @@
+fn textToFloat(text Text) -> F64
+  "Parse a number written in decimal, such as 3.25 or -1e3."
+  pure
+extern
