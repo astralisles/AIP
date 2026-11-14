@@ -19,7 +19,7 @@ for r in 1..rows          r runs from 1 up to rows - 1; the body is Unit stateme
 - The last line of a `body` is the step: an `if` chain whose leaves are `done value` (leave, the loop is worth that value)
   or `next a, b` (run again; the next value of every name, in declared order).
 - Nesting is by indentation: `let x = loop` or `for` inside a body. No labels, no `break`/`continue`.
-- `done` and `next` are keywords only inside a loop body (`next` is still a normal name elsewhere, e.g. `examples/aipc`).
+- `done` and `next` are keywords only inside a loop body (`next` is still a normal name elsewhere, e.g. `compiler/aipc`).
 - Loop names and `for` variables cannot be reused by a later `let` in the function (the C# back end declares them in one scope).
 - `for` bounds are I64; the end is exclusive. The body may only hold Unit statements and `let`s.
 

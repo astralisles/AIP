@@ -1,7 +1,7 @@
-# bootstrap: the native Windows compiler written in AIP (examples\aipc, `aipc native <dir> <out.exe>`) writes an .exe
+# bootstrap: the native Windows compiler written in AIP (compiler\aipc, `aipc native <dir> <out.exe>`) writes an .exe
 # by itself (no C#, no linker) that prints what the cs back end prints.
-$build = (& $aip build examples\aipc | Out-String).Trim()
-$aipc = Join-Path $root 'examples\aipc\build\bin\windows-x64\aipc.exe'
+$build = (& $aip build compiler\aipc | Out-String).Trim()
+$aipc = Join-Path $root 'compiler\aipc\build\bin\windows-x64\aipc.exe'
 if ($LASTEXITCODE -ne 0 -or -not (Test-Path $aipc)) { Report 'bootstrap: aipc native' $false $build; return }
 $tmp = NewTempDir 'aipc-native-'
 foreach ($name in 'hello', 'control') {

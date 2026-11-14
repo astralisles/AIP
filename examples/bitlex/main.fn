@@ -1,5 +1,5 @@
 fn main() -> Unit
-  "Use shift operators outside text and a nested list type, so the AIP lexer and parser in examples/aipc meet `<<`, `>>` and `~` as tokens."
+  "Use shift operators outside text and a nested list type, so the AIP lexer and parser in compiler/aipc meet `<<`, `>>` and `~` as tokens."
   effects terminal.write
   fails
 body
