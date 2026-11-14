@@ -6,8 +6,9 @@ sealed class PackageInfo
     public string Name = "";
     public string Version = "";
     public string Dir = "";
-    public List<(string Id, string Version)> Nuget = new();
     public List<string> Handles = new();
+    // C# back end only (packages/<name>/cs/cs.txt): another back end gets its own folder, the rest of the package is shared.
+    public List<(string Id, string Version)> Nuget = new();
     /// <summary>Function name to C# template ({0}, {1}... are the arguments), like CsBackend `Externs` for std.</summary>
     public Dictionary<string, string> Externs = new();
 }
@@ -42,9 +43,26 @@ static class Packages
                 case "name": p.Name = arg; break;
                 case "version": p.Version = arg; break;
                 case "handle": p.Handles.Add(arg); break;
-                case "nuget" when arg.Split(' ', StringSplitOptions.RemoveEmptyEntries) is [var id, var v]: p.Nuget.Add((id, v)); break;
-                case "extern" when arg.Split(' ', 2) is [var fn, var template]: p.Externs[fn] = template.Trim(); break;
                 default: error = $"package.txt line {n} of `{name}` is not understood: {line}"; return null;
+            }
+        }
+        var cs = Path.Combine(dir, "cs", "cs.txt");
+        if (File.Exists(cs))
+        {
+            n = 0;
+            foreach (var raw in File.ReadAllLines(cs))
+            {
+                n++;
+                var line = raw.Trim();
+                if (line == "" || line[0] == '#') continue;
+                var parts = line.Split(' ', 2, StringSplitOptions.TrimEntries);
+                var arg = parts.Length > 1 ? parts[1] : "";
+                switch (parts[0])
+                {
+                    case "nuget" when arg.Split(' ', StringSplitOptions.RemoveEmptyEntries) is [var id, var v]: p.Nuget.Add((id, v)); break;
+                    case "extern" when arg.Split(' ', 2) is [var fn, var template]: p.Externs[fn] = template.Trim(); break;
+                    default: error = $"cs/cs.txt line {n} of `{name}` is not understood: {line}"; return null;
+                }
             }
         }
         if (p.Name != name || p.Version == "") { error = $"package.txt of `{name}` must say `name {name}` and a `version`"; return null; }

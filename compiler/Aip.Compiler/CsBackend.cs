@@ -121,7 +121,7 @@ sealed partial class CsBackend : IBackend
         files["Persistent.cs"] = PersistentRt.Source;
         foreach (var (name, source) in RuntimeParts) files[name] = source;
         if (program.Types.Count > 0) files["Types.cs"] = EmitTypes(program);
-        foreach (var pkg in program.Packages) files["Rt." + pkg.Name + ".cs"] = File.ReadAllText(Path.Combine(pkg.Dir, "Rt.cs"));
+        foreach (var pkg in program.Packages) files["Rt." + pkg.Name + ".cs"] = File.ReadAllText(Path.Combine(pkg.Dir, "cs", "Rt.cs"));
         files[program.Name + ".csproj"] = CsprojWithPackages(program.Packages);
         return files;
     }

@@ -1,12 +1,4 @@
 # MongoDB: documents, filters and updates are JSON text.
 name mongo
 version 1.0.0
-nuget MongoDB.Driver 3.13.0
 handle MongoConn
-extern mongoOpen Rt.MongoOpen({0}, {1})
-extern mongoInsert Rt.MongoInsert({0}, {1}, {2})
-extern mongoFind Rt.MongoFind({0}, {1}, {2})
-extern mongoUpdate Rt.MongoUpdate({0}, {1}, {2}, {3})
-extern mongoDelete Rt.MongoDelete({0}, {1}, {2})
-extern mongoDrop Rt.MongoDrop({0}, {1})
-extern mongoClose Rt.MongoClose({0})

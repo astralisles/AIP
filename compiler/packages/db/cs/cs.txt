@@ -1,0 +1,6 @@
+# C# back end: pinned NuGet references and call templates ({0}, {1}... are the arguments).
+nuget Microsoft.Data.Sqlite 10.0.13
+extern dbOpen Rt.DbOpen({0})
+extern dbExec Rt.DbExec({0}, {1}, {2})
+extern dbQuery Rt.DbQuery({0}, {1}, {2})
+extern dbClose Rt.DbClose({0})

@@ -10,8 +10,10 @@ that is not the shipped one is a compile error (`unknown-package`, `package-vers
 
 A package is a folder `packages/<name>/` with:
 - `<fn>.fn`: header-only `extern` functions, one per file (as in std; no group-name rule);
-- `package.txt`: `name`, `version`, `nuget <id> <version>` (pinned), `handle <Type>` (opaque type, erased to `object`), `extern <fn> <C# template>`;
-- `Rt.cs`: the C# runtime, emitted as `Rt.<name>.cs` into the generated program.
+- `package.txt`: target independent: `name`, `version`, `handle <Type>` (opaque type);
+- `cs/`: the C# back end's part: `cs.txt` (`nuget <id> <version>` pinned, `extern <fn> <C# template>`) and `Rt.cs`
+  (the runtime, emitted as `Rt.<name>.cs`). Another back end adds its own folder; headers, effects, version and
+  handle types do not change.
 
 Packages today: `db` (relational, SQLite), `mongo` (MongoDB). Design: `docs/design/packages-T-0987.md`.
 `aip test` refuses their effectful functions like any other effect.
