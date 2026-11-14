@@ -22,6 +22,7 @@ List them with `scripts\aip.ps1 std`.
 | `num/`      | number conversions (`numToU8`, `numToF64`) | name starts with `num`       |
 | `log/`      | diagnostics to stderr (`logLine`)      | effect `log.*`               |
 | `process/`  | command line (`arg`, `argCount`)       | effect `process.*`           |
+| `task/`     | `Task<R>`: `taskRun`, `taskAwait` (T-0935) | effect `parallel`        |
 | `core/`     | language helpers (`noop`)              | only for what fits no group  |
 
 Rules, checked by the compiler on every run (error `std-layout`):

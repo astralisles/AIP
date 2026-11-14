@@ -1,0 +1,7 @@
+fn main() -> Unit
+  "Pass a task to a function."
+  effects terminal.write, parallel
+  fails
+body
+  let t = taskRun(&sq, 3)
+  printLine("{wait(t)}")

@@ -1,0 +1,9 @@
+fn main() -> Unit
+  "Await twice."
+  effects terminal.write, parallel
+  fails
+body
+  let t = taskRun(&sq, 3)
+  let a = taskAwait(t)
+  let b = taskAwait(t)
+  printLine("{a}{b}")

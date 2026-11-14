@@ -1,0 +1,7 @@
+fn addInts(a Int, b Int) -> Int
+  "The sum of a and b."
+  pure
+  cannot-fail
+  example addInts(1, 2) == 3
+body
+  a + b
