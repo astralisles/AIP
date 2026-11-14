@@ -15,3 +15,33 @@ Answer: **no, nested loops are not difficult with recursion; the decision in `lo
 - If it still reads badly, the step-3 sugar `for x in list` would desugar to the same two functions; nesting is just two of them.
 
 Not done: no compiler change. Only an example and this note were added.
+
+## Follow-up: would loop grammar read better than a loop-is-a-function? (feedback on T-0994)
+
+Fair point: recursion is checkable, but a reader must find the helper functions and see that `rowSum` is "the inner loop".
+Syntax that shows the loop in place would be easier to read. Proposal that keeps the rule "state is visible, values are immutable":
+a loop is an expression that names its counter and its state, and its value is the final state. Nesting is indentation.
+
+Today (two files, `examples/nested-loops`):
+
+    tableSum(r, rows, cols, total) = if r > rows then total else tableSum(r + 1, rows, cols, rowSum(r, 1, cols, total))
+    rowSum(r, c, cols, total)      = if c > cols then total else rowSum(r, c + 1, cols, total + r * c)
+
+Option A, `fold` (value loop, state is declared in the header):
+
+    fold r in 1..rows with total = 0
+      fold c in 1..cols with total = total
+        total + r * c
+
+The body of a `fold` is the next state. The inner `fold` starts from the outer state, so nothing is reset by hand.
+
+Option B, `for` (Unit loop with an effect, no state):
+
+    for r in 1..rows
+      for c in 1..cols
+        printLine("{r * c}")
+
+Both desugar to the same recursive functions (generated, so tail-call lowering from T-0975 applies) and the function's
+`effects` line covers them. Costs: a new indented block grammar (today blocks do not nest), the generated helper
+functions are not in the one-line index, and there are now two ways to write a loop.
+Decision needed from the user; no compiler change made yet.
