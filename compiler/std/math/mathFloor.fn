@@ -1,0 +1,4 @@
+fn mathFloor(x F64) -> F64
+  "Largest whole number not above x, as F64."
+  pure
+extern

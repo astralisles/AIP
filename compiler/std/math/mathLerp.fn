@@ -1,0 +1,4 @@
+fn mathLerp(a F64, b F64, t F64) -> F64
+  "Blend from a (t = 0) to b (t = 1): a + (b - a) * t."
+  pure
+extern

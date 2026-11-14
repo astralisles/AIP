@@ -1,6 +1,7 @@
 fn parseUnary(toks List<Text>, pos Int) -> ExprParsed
   "Read an expression that may start with `-` or `not`."
   pure
+  fails
 body
   let t = tokAt(toks, pos)
   if t == "Sym -" or t == "Ident not" then unaryStep(toks, pos) else parsePostfix(toks, pos)

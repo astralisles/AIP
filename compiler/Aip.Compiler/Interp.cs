@@ -27,6 +27,7 @@ sealed partial class Interp(ProgramModel program)
     object? CallFn(Fn fn, List<object?> args)
     {
         if (fn.Effects.Count > 0) throw new Unsupported($"`{fn.Name}` has effects ({fn.EffectsText})");
+        _active = this;
         for (int i = 0; i < fn.Params.Count; i++) args[i] = Coerce(args[i], fn.Params[i].Type.Name);
         for (int i = 0; i < fn.Params.Count; i++) CheckRange(fn.Params[i].Type, args[i], $"argument `{fn.Params[i].Name}` of `{fn.Name}`");
         if (fn.IsExtern) return Extern(fn.Name, args);
@@ -107,6 +108,7 @@ sealed partial class Interp(ProgramModel program)
             case FloatLit fl: return fl.Type == "F32" ? (object)(float)fl.Value : fl.Value;
             case BoolLit b: return b.Value;
             case NameRef { Const: true } k: return CallFn(program.Fns[k.Name], new List<object?>());
+            case FnRef fr: return new FnVal(program.Fns[fr.Name]);
             case NameRef n: return env[n.Name];
             case TextLit t:
                 return string.Concat(t.Parts.Select(p => p is string s ? s : Text(Eval((Expr)p, env))));
@@ -282,6 +284,8 @@ sealed partial class Interp(ProgramModel program)
         QueueExtern,
         SortedExtern,
         NetExtern,
+        TimeExtern,
+        FnExtern,
     };
 
     /// <summary>

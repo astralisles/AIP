@@ -1,0 +1,4 @@
+fn mathPow(base F64, exponent F64) -> F64
+  "base raised to exponent."
+  pure
+extern

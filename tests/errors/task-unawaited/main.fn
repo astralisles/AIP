@@ -1,0 +1,6 @@
+fn main() -> Unit
+  "Start a task and never await it."
+  effects terminal.write, parallel
+body
+  let t = taskRun(&sq, 3)
+  printLine("done")

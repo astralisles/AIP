@@ -1,0 +1,6 @@
+fn shout(n Int) -> Int
+  "Prints and returns n."
+  effects terminal.write
+body
+  printLine("{n}")
+  n

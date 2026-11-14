@@ -1,0 +1,4 @@
+fn mathIsNaN(x F64) -> Bool
+  "True when x is not a number (for example the square root of -1)."
+  pure
+extern

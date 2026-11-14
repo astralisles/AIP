@@ -1,0 +1,6 @@
+fn wait(t Task<Int>) -> Int
+  "Awaits a task."
+  effects parallel
+  fails
+body
+  taskAwait(t)

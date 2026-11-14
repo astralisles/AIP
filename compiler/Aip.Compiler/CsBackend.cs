@@ -131,6 +131,8 @@ sealed partial class CsBackend : IBackend
     {
         "Int" => "long", "F32" => "float", "F64" => "double", "I8" => "sbyte", "I16" => "short", "I32" => "int",
         "U8" => "byte", "U16" => "ushort", "U32" => "uint", "U64" => "ulong", "Text" => "string", "Bool" => "bool", "_" => "object",
+        _ when t.StartsWith("Fn<", StringComparison.Ordinal) => "System.Func<object[], object>", // a function value: arguments in an array, result boxed
+        _ when t.StartsWith("Task<", StringComparison.Ordinal) => "object", // a started task, only ever passed to Rt.TaskAwait
         "TcpListener" or "TcpConn" or "UdpSocket" or "GfxWindow" => "object", // handles, opened by effectful std functions
         _ when t.Length == 1 && char.IsAsciiLetterUpper(t[0]) => "object", // a type parameter: erased
         _ when t.StartsWith("List<", StringComparison.Ordinal) => "Aip.Persistent.PList",
@@ -216,13 +218,18 @@ sealed partial class CsBackend : IBackend
         var argList = string.Join(", ", fn.Params.Select(p => $"@{p.Name}"));
         sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"        if (Rt.Calls) Rt.Call(\"{fn.Name}\", new object[] {{ {argList} }});\n");
         sb.Append("        long __t = Rt.Prof ? Rt.Enter() : 0;\n        try\n        {\n");
+        // Self-calls in tail position become a loop (docs/design/tail-calls-T-0983.md): constant stack, no new syntax.
+        var body = new StringBuilder();
         for (int i = 0; i < fn.Body.Count; i++)
         {
             var s = fn.Body[i];
-            if (s.Let != null) sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"        var @{s.Let} = {Emit(s.Value)};\n");
-            else if (i == fn.Body.Count - 1 && fn.Ret.Name != "Unit") sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"        return {Emit(s.Value)};\n");
-            else sb.Append(EmitUnit(s.Value, "        "));
+            if (s.Let != null) body.Append(System.Globalization.CultureInfo.InvariantCulture, $"        var @{s.Let} = {Emit(s.Value)};\n");
+            else if (i == fn.Body.Count - 1) body.Append(EmitTail(s.Value, fn, "        "));
+            else body.Append(EmitUnit(s.Value, "        "));
         }
+        var text = body.ToString();
+        if (text.Contains("/*tail*/")) sb.Append("        while (true)\n        {\n").Append(text).Append("        }\n");
+        else sb.Append(text);
         sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"        }}\n        finally {{ if (Rt.Prof) Rt.Leave(\"{fn.Name}\", __t); }}\n");
         sb.Append("    }\n}\n");
         return sb.ToString();
@@ -241,6 +248,32 @@ sealed partial class CsBackend : IBackend
         sb.Append("static partial class ConstCell\n{\n");
         sb.Append(System.Globalization.CultureInfo.InvariantCulture, $"    internal static readonly System.Lazy<{t}> @{k.Name} = new(() => {Emit(k.Body[0].Value)});\n}}\n");
         return sb.ToString();
+    }
+
+    /// <summary>The last statement of a function. A call to the function itself becomes "set the parameters, continue the loop".</summary>
+    static string EmitTail(Expr e, Fn fn, string indent)
+    {
+        var ci = System.Globalization.CultureInfo.InvariantCulture;
+        switch (e)
+        {
+            case Call { Ctor: null } c when c.Name == fn.Name && !Externs.ContainsKey(c.Name) && c.Args.Count == fn.Params.Count:
+                {
+                    var sb = new StringBuilder();
+                    for (int i = 0; i < c.Args.Count; i++) sb.Append(ci, $"{indent}var __a{i} = {Emit(c.Args[i])};\n");
+                    for (int i = 0; i < c.Args.Count; i++) sb.Append(ci, $"{indent}@{fn.Params[i].Name} = __a{i};\n");
+                    return sb.Append(indent).Append("continue; /*tail*/\n").ToString();
+                }
+            case IfExpr i:
+                return $"{indent}if ({Emit(i.Cond)})\n{indent}{{\n{EmitTail(i.Then, fn, indent + "    ")}{indent}}}\n{indent}else\n{indent}{{\n{EmitTail(i.Else, fn, indent + "    ")}{indent}}}\n";
+            case BlockExpr k when k.Stmts.Count > 0:
+                return string.Concat(k.Stmts.Take(k.Stmts.Count - 1).Select(x => EmitUnit(x, indent))) + EmitTail(k.Stmts[^1], fn, indent);
+            case MatchExpr m:
+                return $"{indent}switch ({Emit(m.Subject)})\n{indent}{{\n"
+                    + string.Concat(m.Arms.Select(a => $"{indent}    case {Pattern(a)}:\n{indent}    {{\n{EmitTail(a.Body, fn, indent + "        ")}{indent}    }}\n"))
+                    + $"{indent}    default: throw new System.InvalidOperationException();\n{indent}}}\n";
+            default:
+                return fn.Ret.Name == "Unit" ? EmitUnit(e, indent) + $"{indent}return;\n" : $"{indent}return {Emit(e)};\n";
+        }
     }
 
     /// <summary>A statement. A Unit `if` becomes an if statement because C# cannot use void in `?:`.</summary>
@@ -267,6 +300,7 @@ sealed partial class CsBackend : IBackend
         FloatLit { Type: "F32" } f => f.Value.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + "F",
         FloatLit f => f.Value.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + "D",
         BoolLit b => b.Value ? "true" : "false",
+        FnRef r => EmitFnRef(r),
         NameRef n => n.Const ? "Const.@" + n.Name : Cast(n.Erased, n.Type, "@" + n.Name),
         TextLit t => t.Parts.Count == 1 && t.Parts[0] is string only
             ? Quote(only)
@@ -275,7 +309,7 @@ sealed partial class CsBackend : IBackend
         Field f => Cast(f.Erased, f.Type, $"{Emit(f.Target)}.@{f.Name}"),
         MatchExpr m => $"({Emit(m.Subject)} switch {{ {string.Join(", ", m.Arms.Select(a => $"{Pattern(a)} => {Emit(a.Body)}"))}, _ => throw new System.InvalidOperationException() }})",
         Call c => Externs.TryGetValue(c.Name, out var template)
-            ? (c.Name is "listGet" or "mapGet" or "sortedMapGet" or "queueFront" or "priorityQueueFront" ? $"(({CsType(c.Type)})" : "") + string.Format(System.Globalization.CultureInfo.InvariantCulture, template.Replace("<T>", CsType(c.Type)), c.Args.Select(Emit).ToArray<object>()) + (c.Name is "listGet" or "mapGet" or "sortedMapGet" or "queueFront" or "priorityQueueFront" ? ")" : "")
+            ? (c.Name is "listGet" or "listFold" or "taskAwait" or "mapGet" or "sortedMapGet" or "queueFront" or "priorityQueueFront" ? $"(({CsType(c.Type)})" : "") + string.Format(System.Globalization.CultureInfo.InvariantCulture, template.Replace("<T>", CsType(c.Type)), c.Args.Select(Emit).ToArray<object>()) + (c.Name is "listGet" or "listFold" or "taskAwait" or "mapGet" or "sortedMapGet" or "queueFront" or "priorityQueueFront" ? ")" : "")
             : Cast(c.Erased, c.Type, $"Fn.@{c.Name}({string.Join(", ", c.Args.Select(Emit))})"),
         Unary u => u.Op == "-" ? $"(-{Emit(u.Operand)})" : u.Op == "~" ? $"unchecked(({CsType(u.Type)})(~{Emit(u.Operand)}))" : $"(!{Emit(u.Operand)})",
         Binary b => b.Op switch
@@ -294,6 +328,17 @@ sealed partial class CsBackend : IBackend
         IfExpr i => $"({Emit(i.Cond)} ? {Emit(i.Then)} : {Emit(i.Else)})",
         _ => throw new InvalidOperationException("unknown expression"),
     };
+
+    /// <summary>`&name` as a delegate that takes its arguments in an array (so one runtime helper serves every function type).</summary>
+    static string EmitFnRef(FnRef r)
+    {
+        var f = r.Target!;
+        var args = string.Join(", ", f.Params.Select((p, i) => CsType(p.Type.Name) == "object" ? $"a[{i}]" : $"({CsType(p.Type.Name)})a[{i}]"));
+        var call = $"Fn.@{f.Name}({args})";
+        return f.Ret.Name == "Unit"
+            ? $"((System.Func<object[], object>)(a => {{ {call}; return null; }}))"
+            : $"((System.Func<object[], object>)(a => (object){call}))";
+    }
 
     /// <summary>A value that is `object` in C# because its declared type is a type parameter is cast back to its real type.</summary>
     static string Cast(bool erased, string type, string code) => erased && type != "" && CsType(type) != "object" ? $"(({CsType(type)}){code})" : code;

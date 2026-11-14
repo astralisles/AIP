@@ -1,0 +1,4 @@
+fn mathAbs(x F64) -> F64
+  "Absolute value."
+  pure
+extern

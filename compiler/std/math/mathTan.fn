@@ -1,0 +1,4 @@
+fn mathTan(x F64) -> F64
+  "Tangent of an angle in radians."
+  pure
+extern

@@ -1,0 +1,8 @@
+fn main() -> Unit
+  "Reference an effectful function."
+  effects terminal.write
+  fails
+body
+  let xs = listAppend(listEmpty(), 1)
+  let r = listMap(xs, &shout)
+  printLine("{listLength(r)}")

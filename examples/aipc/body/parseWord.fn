@@ -1,6 +1,7 @@
 fn parseWord(toks List<Text>, pos Int) -> ExprParsed
   "Read a name, `true`, `false` or a call (a name followed by `(`) at pos."
   pure
+  fails
 body
   let word = tokText(tokAt(toks, pos))
   if word == "true" then ExprParsed(BoolVal(true), pos + 1) else if word == "false" then ExprParsed(BoolVal(false), pos + 1) else if word == "match" then ExprParsed(BadExpr(word), pos + 1) else if tokAt(toks, pos + 1) == "Sym (" then parseCall(toks, word, pos + 2) else ExprParsed(NameRef(word), pos + 1)
