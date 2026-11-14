@@ -119,7 +119,8 @@ sealed partial class CsBackend : IBackend
         files["Persistent.cs"] = PersistentRt.Source;
         foreach (var (name, source) in RuntimeParts) files[name] = source;
         if (program.Types.Count > 0) files["Types.cs"] = EmitTypes(program);
-        files[program.Name + ".csproj"] = Csproj;
+        if (UsesDb(program)) files["Rt.Db.cs"] = RtDb;
+        files[program.Name + ".csproj"] = UsesDb(program) ? CsprojDb : Csproj;
         return files;
     }
 
@@ -131,7 +132,7 @@ sealed partial class CsBackend : IBackend
     {
         "Int" => "long", "F32" => "float", "F64" => "double", "I8" => "sbyte", "I16" => "short", "I32" => "int",
         "U8" => "byte", "U16" => "ushort", "U32" => "uint", "U64" => "ulong", "Text" => "string", "Bool" => "bool", "_" => "object",
-        "TcpListener" or "TcpConn" or "UdpSocket" => "object", // handles, opened by effectful std functions
+        "TcpListener" or "TcpConn" or "UdpSocket" or "DbConn" => "object", // handles, opened by effectful std functions
         _ when t.Length == 1 && char.IsAsciiLetterUpper(t[0]) => "object", // a type parameter: erased
         _ when t.StartsWith("List<", StringComparison.Ordinal) => "Aip.Persistent.PList",
         _ when t.StartsWith("Queue<", StringComparison.Ordinal) => "Aip.Persistent.PFifo",

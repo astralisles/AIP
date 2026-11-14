@@ -1,0 +1,4 @@
+fn dbOpen(url Text) -> DbConn
+  "Open a relational database: `sqlite:path/to/file.db` or `sqlite::memory:`."
+  effects db.connect
+extern
