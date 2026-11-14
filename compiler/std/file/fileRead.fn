@@ -1,4 +1,4 @@
-fn fileRead(path Text) -> Bytes
+fn fileRead(path Text) -> List<U8>
   "Read a whole file as bytes. Use bytesDecode for text."
   effects file.read
   fails

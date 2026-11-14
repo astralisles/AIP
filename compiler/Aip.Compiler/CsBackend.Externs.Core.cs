@@ -58,8 +58,8 @@ sealed partial class CsBackend
         d["numFromF64"] = "Rt.ToInt({0})";
         d["numF32ToF64"] = "((double)({0}))";
         d["numF64ToF32"] = "((float)({0}))";
-        d["fileRead"] = "System.IO.File.ReadAllBytes({0})";
-        d["fileWrite"] = "Rt.Write({0}, {1})";
+        d["fileRead"] = "Rt.FromByteArray(System.IO.File.ReadAllBytes({0}))";
+        d["fileWrite"] = "Rt.Write({0}, Rt.ToByteArray({1}))";
         d["noop"] = "Rt.Nop()";
         d["argCount"] = "(long)Rt.Args.Length";
         d["arg"] = "Rt.Args[(int)({0})]";

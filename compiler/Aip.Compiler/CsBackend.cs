@@ -113,7 +113,8 @@ sealed partial class CsBackend : IBackend
     public static SortedDictionary<string, string> EmitFiles(ProgramModel program)
     {
         var files = new SortedDictionary<string, string>(StringComparer.Ordinal);
-        foreach (var fn in program.ProjectFns) files[fn.Name + ".cs"] = fn.IsConst ? EmitConst(fn) : fn.NativeLib != null ? EmitNative(fn) : EmitFn(fn);
+        // Std constants (numPi, ...) are emitted too; they are lazy, so an unused one costs nothing at run time.
+        foreach (var fn in program.ProjectFns.Concat(program.Fns.Values.Where(f => f.IsStd && f.IsConst).OrderBy(f => f.Name, StringComparer.Ordinal))) files[fn.Name + ".cs"] = fn.IsConst ? EmitConst(fn) : fn.NativeLib != null ? EmitNative(fn) : EmitFn(fn);
         files["Program.cs"] = ProgramCs;
         files["Persistent.cs"] = PersistentRt.Source;
         foreach (var (name, source) in RuntimeParts) files[name] = source;
@@ -130,7 +131,6 @@ sealed partial class CsBackend : IBackend
     {
         "Int" => "long", "F32" => "float", "F64" => "double", "I8" => "sbyte", "I16" => "short", "I32" => "int",
         "U8" => "byte", "U16" => "ushort", "U32" => "uint", "U64" => "ulong", "Text" => "string", "Bool" => "bool", "_" => "object",
-        "Bytes" => "byte[]",
         "TcpListener" or "TcpConn" or "UdpSocket" or "GfxWindow" => "object", // handles, opened by effectful std functions
         _ when t.Length == 1 && char.IsAsciiLetterUpper(t[0]) => "object", // a type parameter: erased
         _ when t.StartsWith("List<", StringComparison.Ordinal) => "Aip.Persistent.PList",

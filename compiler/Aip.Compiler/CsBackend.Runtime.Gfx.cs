@@ -112,9 +112,9 @@ sealed partial class CsBackend
                 if (loc < 0) throw new System.ArgumentException("gfxUniformInt: the program has no uniform " + name);
                 GfxWinApi.Fn<GfxWinApi.D_U1i>("glUniform1i")(loc, (int)value);
             }
-            public static long GfxTexture(object w, long width, long height, byte[] rgba)
+            public static long GfxTexture(object w, long width, long height, Aip.Persistent.PList rgbaList)
             {
-                Cur(w);
+                Cur(w); var rgba = ToByteArray(rgbaList);
                 if (width < 1 || height < 1 || (long)rgba.Length != width * height * 4) throw new System.ArgumentException("gfxTexture: pixels must be width*height*4 bytes (RGBA)");
                 GfxWinApi.glGenTextures(1, out uint id);
                 GfxWinApi.glBindTexture(0x0DE1, id);
@@ -142,13 +142,13 @@ sealed partial class CsBackend
                 };
                 GfxWinApi.glDrawArrays(m, (int)first, (int)count);
             }
-            public static byte[] GfxReadPixels(object w, long x, long y, long width, long height)
+            public static Aip.Persistent.PList GfxReadPixels(object w, long x, long y, long width, long height)
             {
                 Cur(w);
                 if (width < 1 || height < 1 || width > 16384 || height > 16384) throw new System.ArgumentException("gfxReadPixels: size must be 1..16384");
                 var buf = new byte[checked((int)(width * height * 4))];
                 GfxWinApi.glReadPixels((int)x, (int)y, (int)width, (int)height, 0x1908, 0x1401, buf);
-                return buf;
+                return FromByteArray(buf);
             }
         }
 

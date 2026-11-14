@@ -1,0 +1,21 @@
+fn splitEdges() -> Unit
+  "Print how split, join, find, repeat and replace treat empty pieces and empty text."
+  effects terminal.write
+  fails
+body
+  let bar = "|"
+  let comma = ","
+  let none = ""
+  let ab = "ab"
+  let abc = "abc"
+  let z = "z"
+  let y = "y"
+  let a = "a"
+  let abcomma = "a,b,"
+  let comma2 = ",a"
+  let blank = "   "
+  printLine("split empty: {listLength(textSplit(none, comma))} trailing: {listLength(textSplit(abcomma, comma))} leading: {listLength(textSplit(comma2, comma))} only sep: {listLength(textSplit(comma, comma))}")
+  printLine("join empty: [{textJoin(textSplit(none, comma), bar)}]")
+  printLine("repeat zero: [{textRepeat(ab, 0)}] find empty needle: {textFind(abc, none)} missing: {textFind(abc, z)}")
+  printLine("replace absent: [{textReplace(abc, z, y)}] trim blank: [{textTrim(blank)}] upper empty: [{textToUpper(none)}]")
+  printLine("compare: {textCompare(none, a)} {textCompare(a, none)} {textCompare(none, none)}")

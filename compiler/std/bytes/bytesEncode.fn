@@ -1,4 +1,4 @@
-fn bytesEncode(text Text) -> Bytes
+fn bytesEncode(text Text) -> List<U8>
   "The UTF-8 bytes of a text."
   pure
 extern
