@@ -287,6 +287,7 @@ sealed partial class CsBackend : IBackend
             + string.Concat(m.Arms.Select(a => $"{indent}    case {Pattern(a)}:\n{EmitUnit(a.Body, indent + "        ")}{indent}        break;\n"))
             + $"{indent}    default: throw new System.InvalidOperationException();\n{indent}}}\n",
         Assign a => $"{indent}{Emit(a.Target.Target)}.@{a.Target.Name} = {Emit(a.Value)};\n",
+        ForExpr f => EmitFor(f, indent),
         _ => $"{indent}{Emit(e)};\n",
     };
 
@@ -326,6 +327,7 @@ sealed partial class CsBackend : IBackend
             _ => $"({Emit(b.Left)} {b.Op} {Emit(b.Right)})",
         },
         IfExpr i => $"({Emit(i.Cond)} ? {Emit(i.Then)} : {Emit(i.Else)})",
+        LoopExpr l => EmitLoop(l),
         _ => throw new InvalidOperationException("unknown expression"),
     };
 

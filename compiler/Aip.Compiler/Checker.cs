@@ -221,6 +221,7 @@ sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
             Error(fn.Line, "name-mismatch", $"file `{fileName}{ext}` declares `{fn.Name}`", $"rename the {kind} to `{fileName}` or the file to `{fn.Name}{ext}`");
 
         _patNames = new HashSet<string>();
+        _loopNames.Clear();
         var env = new Dictionary<string, string>();
         foreach (var p in fn.Params)
         {
@@ -265,6 +266,7 @@ sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
                 if (t == "Unit") Error(s.Line, "type-mismatch", $"`{s.Let}` would hold Unit, which is not a value");
                 if (IsConstName(s.Let)) Error(s.Line, "duplicate-name", $"`{s.Let}` is a constant ({Path.GetFileName(program.Fns[s.Let].File)})", "choose a different name");
                 else if (_patNames.Contains(s.Let)) Error(s.Line, "duplicate-name", $"`{s.Let}` is already used by a match case", "choose a different name");
+                else if (_loopNames.Contains(s.Let)) Error(s.Line, "duplicate-name", $"`{s.Let}` is already used inside a loop", "choose a different name");
                 else if (!env.TryAdd(s.Let, t)) Error(s.Line, "duplicate-name", $"`{s.Let}` is already defined", "choose a different name");
                 else lets[s.Let] = s.Line;
                 if (last) Error(s.Line, "missing-result", "the body ends with `let`", $"end the body with an expression of type {fn.Ret.Name}");

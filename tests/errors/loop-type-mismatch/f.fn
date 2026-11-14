@@ -1,0 +1,8 @@
+fn f() -> Int
+  "next gives Text for an Int name."
+  pure
+body
+  loop
+    i = 0
+    body
+      if i > 3 then done i else next "x"
