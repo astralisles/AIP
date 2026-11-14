@@ -72,7 +72,7 @@ static class Query
     static SortedSet<string> BodyCalls(Fn f)
     {
         var set = new SortedSet<string>(StringComparer.Ordinal);
-        foreach (var st in f.Body) WalkAll(st.Value, e => { if (e is Call c && c.Ctor == null) set.Add(c.Name); });
+        foreach (var st in f.Body) WalkAll(st.Value, e => { if (e is Call c && c.Ctor == null) set.Add(c.Name); else if (e is FnRef r) set.Add(r.Name); });
         return set;
     }
 

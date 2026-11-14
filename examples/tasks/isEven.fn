@@ -1,0 +1,7 @@
+fn isEven(n Int) -> Bool
+  "True when n is even."
+  pure
+  cannot-fail
+  example isEven(4) == true
+body
+  n % 2 == 0

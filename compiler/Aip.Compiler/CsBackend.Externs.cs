@@ -14,6 +14,7 @@ sealed partial class CsBackend
         AddMapExterns(d);
         AddQueueExterns(d);
         AddSortedExterns(d);
+        AddTaskExterns(d);
         AddNetExterns(d);
         AddSystemExterns(d);
         return d;

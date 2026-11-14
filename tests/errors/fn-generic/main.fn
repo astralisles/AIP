@@ -1,0 +1,8 @@
+fn main() -> Unit
+  "Reference a generic function."
+  effects terminal.write
+  fails
+body
+  let xs = listAppend(listEmpty(), 1)
+  let r = listMap(xs, &same)
+  printLine("{listLength(r)}")

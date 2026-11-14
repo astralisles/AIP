@@ -108,6 +108,8 @@ sealed partial class Parser
     {
         var t = Peek;
         _pos++;
+        if (t.Kind == T.Sym && t.Text == "&")
+            return new FnRef { Line = _line, Name = Expect(T.Ident, "a function name after `&`").Text };
         switch (t.Kind)
         {
             case T.Int:
