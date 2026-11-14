@@ -1,7 +1,7 @@
 # The native Windows compiler, written in AIP (T-1033 #2)
 
 Review feedback on #1: the compiler that writes the bytes must itself be AIP code. It now is: `aipc native <projectDir> <out.exe>`
-(`examples/aipc/native/`). The C# `--backend native` of #1 stays as a reference; the two are not byte-identical (different
+(`compiler/aipc/native/`). The C# `--backend native` of #1 stays as a reference; the two are not byte-identical (different
 section layout) but print the same output.
 
 Layout, one folder per stage:

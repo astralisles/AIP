@@ -1,7 +1,7 @@
-# bootstrap: the AIP header parser (examples\aipc, `aipc index`) must end on a malformed header, not loop forever.
+# bootstrap: the AIP header parser (compiler\aipc, `aipc index`) must end on a malformed header, not loop forever.
 # An unclosed parameter list used to run past the last token for ever and held a build or test run until it was killed.
-$build = (& $aip build examples\aipc | Out-String).Trim()
-$aipc = Join-Path $root 'examples\aipc\build\bin\windows-x64\aipc.exe'
+$build = (& $aip build compiler\aipc | Out-String).Trim()
+$aipc = Join-Path $root 'compiler\aipc\build\bin\windows-x64\aipc.exe'
 if ($LASTEXITCODE -ne 0 -or -not (Test-Path $aipc)) { Report 'bootstrap: aipc index ends on a malformed header' $false $build; return }
 $tmp = NewTempDir 'aipc-hang-'
 $cases = @{ 'unclosed-params' = "fn broken(a I64`n  `"x`"`n  pure`nextern`n"; 'dangling-param' = "fn broken(a I64, b`n  `"x`"`n  pure`nextern`n" }

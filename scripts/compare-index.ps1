@@ -1,4 +1,4 @@
-# Bootstrap check: the parser written in AIP (examples\aipc, `aipc index <files>`) must read every
+# Bootstrap check: the parser written in AIP (compiler\aipc, `aipc index <files>`) must read every
 # function and constant header the same way as the C# compiler: same signature and effects as `aip index`
 # for every example project, and as `aip std` for the standard library.
 # Usage: scripts\compare-index.ps1   (prints PASS/FAIL lines; exit code = number of mismatches)
@@ -6,9 +6,9 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 Set-Location $root
 $aip = Join-Path $PSScriptRoot 'aip.ps1'
-$build = (& $aip build examples\aipc | Out-String).Trim()
+$build = (& $aip build compiler\aipc | Out-String).Trim()
 if ($LASTEXITCODE -ne 0) { "FAIL  aipc: does not build`n$build"; exit 1 }
-$aipc = Join-Path $root 'examples\aipc\build\bin\windows-x64\aipc.exe'
+$aipc = Join-Path $root 'compiler\aipc\build\bin\windows-x64\aipc.exe'
 $cs = Join-Path $root 'compiler\Aip.Compiler\bin\Release\net10.0\aip.exe'
 
 # The source files of a folder in the order the C# compiler loads them (ordinal by full path, no build output).
@@ -31,7 +31,7 @@ function Compare-Lines($name, [string[]]$expected, [string[]]$actual) {
 }
 $bad = 0; $count = 0
 
-foreach ($project in Get-ChildItem examples -Directory | Where-Object { Get-ChildItem $_.FullName -Recurse -File -Include *.fn, *.const | Where-Object { $_.FullName -notmatch "[\/]build[\/]" } } | Sort-Object Name) {  # skips leftover folders holding only build output
+foreach ($project in @(Get-ChildItem examples -Directory) + @(Get-Item compiler\aipc) | Where-Object { Get-ChildItem $_.FullName -Recurse -File -Include *.fn, *.const | Where-Object { $_.FullName -notmatch "[\/]build[\/]" } } | Sort-Object Name) {  # skips leftover folders holding only build output
   $expected = @(& $cs index $project.FullName | ForEach-Object { $_ -replace ' \| checked, not proved$', '' })
   if ($LASTEXITCODE -ne 0) { $bad++; "FAIL  $($project.Name): aip index failed: $expected"; continue }
   $actual = @(& $aipc index @(SourceFiles $project.FullName))

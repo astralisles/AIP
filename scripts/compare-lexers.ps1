@@ -1,12 +1,12 @@
-# Bootstrap check: the lexer written in AIP (examples\aipc, `aipc tokens <file>`) must print exactly the
+# Bootstrap check: the lexer written in AIP (compiler\aipc, `aipc tokens <file>`) must print exactly the
 # tokens the C# lexer prints (`aip tokens`) for every .fn and .const file in the repo.
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 Set-Location $root
 $aip = Join-Path $PSScriptRoot 'aip.ps1'
-$build = (& $aip build examples\aipc | Out-String).Trim()
+$build = (& $aip build compiler\aipc | Out-String).Trim()
 if ($LASTEXITCODE -ne 0) { "FAIL  aipc: does not build`n$build"; exit 1 }
-$lexer = Join-Path $root 'examples\aipc\build\bin\windows-x64\aipc.exe'
+$lexer = Join-Path $root 'compiler\aipc\build\bin\windows-x64\aipc.exe'
 $cs = Join-Path $root 'compiler\Aip.Compiler\bin\Release\net10.0\aip.exe'
 $files = Get-ChildItem examples, tests, compiler\std -Recurse -Include *.fn, *.const | Where-Object { $_.FullName -notmatch '[\/]build[\/]' }
 # one process pair per file is slow: compare in 6 parallel jobs, each over its share of the files
