@@ -1,0 +1,4 @@
+fn mathCos(x F64) -> F64
+  "Cosine of an angle in radians."
+  pure
+extern

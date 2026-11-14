@@ -1,0 +1,10 @@
+fn main() -> Unit
+  "Show the clock, sleep and a random seed; prints only facts that hold on every run."
+  effects terminal.write, time.read, time.sleep, random.read
+body
+  let start = timeMonotonic()
+  timeSleep(60)
+  let elapsed = timeMonotonic() - start
+  printLine("slept at least 50 ms: {elapsed >= 50}")
+  printLine("wall clock is after 2020: {timeNow() > 1577836800000}")
+  printLine("two seeds differ: {randomSeed() != randomSeed()}")

@@ -11,6 +11,7 @@ sealed partial class CsBackend
         ("Rt.Profile.cs", RtProfile),
         ("Rt.Sorted.cs", RtSorted),
         ("Rt.Tasks.cs", RtTasks),
+        ("Rt.Time.cs", RtTime),
         ("Rt.System.cs", RtSystem),
     };
 

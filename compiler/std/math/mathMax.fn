@@ -1,0 +1,4 @@
+fn mathMax(a F64, b F64) -> F64
+  "The larger of two floats."
+  pure
+extern

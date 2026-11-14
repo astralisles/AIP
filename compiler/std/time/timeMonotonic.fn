@@ -1,0 +1,4 @@
+fn timeMonotonic() -> Int
+  "Milliseconds on a clock that only goes forward (not the date); use it to measure frame time and durations."
+  effects time.read
+extern

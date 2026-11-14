@@ -1,0 +1,5 @@
+fn countDown(n Int) -> Unit
+  "A Unit loop: print at the end, otherwise call itself in tail position."
+  effects terminal.write
+body
+  if n <= 0 then printLine("liftoff") else countDown(n - 1)
