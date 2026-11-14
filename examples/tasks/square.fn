@@ -1,0 +1,7 @@
+fn square(n Int) -> Int
+  "The square of n."
+  pure
+  cannot-fail
+  example square(3) == 9
+body
+  n * n

@@ -14,7 +14,7 @@ List them with `scripts\aip.ps1 std`.
 | `queue/` | `Queue<T>`, first in first out | name starts with `queue` |
 | `priorityQueue/` | `PriorityQueue<T>`, lowest priority first | name starts with `priorityQueue` |
 | `sortedSet/` | `SortedSet<T>`, items in order   | name starts with `sortedSet` |
-| `bytes/`    | `Bytes`, an immutable byte array        | name starts with `bytes`     |
+| `bytes/`    | bytes as `List<U8>`: encode, decode    | name starts with `bytes`     |
 | `file/`     | read/write files                       | name starts with `file`      |
 | `terminal/` | console I/O (`printLine`, `readLine`) | effect `terminal.*`          |
 | `tcp/`      | TCP connections that stay open (bytes)  | effect `tcp.*`               |
@@ -25,6 +25,7 @@ List them with `scripts\aip.ps1 std`.
 | `process/`  | command line (`arg`, `argCount`)       | effect `process.*`           |
 | `random/`   | seeded generator (pure) and `randomSeed` | name starts with `random`, or effect `random.*` |
 | `time/`     | clock and sleep (`timeMonotonic`, `timeSleep`) | effect `time.*`              |
+| `task/`     | `Task<R>`: `taskRun`, `taskAwait` (T-0935) | effect `parallel`        |
 | `core/`     | language helpers (`noop`)              | only for what fits no group  |
 
 Rules, checked by the compiler on every run (error `std-layout`):

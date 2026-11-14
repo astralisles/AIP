@@ -1,6 +1,7 @@
 # Building and testing
 
 - Run everything: `scripts\test.ps1` (prints one PASS/FAIL line per test, ends with `ALL PASSED`; exit code = failures).
+- Only what your change needs: `scripts\test.ps1 -Changed` (uses git; compiler or script edits still run everything). Run the full suite before finishing a compiler change.
 - One program: `scripts\aip.ps1 run examples\<name>` (also `check`, `index`, `build [--target linux-x64]`).
   `aip.ps1` rebuilds the compiler only when its sources changed; use it rather than calling `dotnet` yourself.
 - Tests are discovered from files; `scripts\test.ps1` should rarely change. See `tests/checks/README.md`.

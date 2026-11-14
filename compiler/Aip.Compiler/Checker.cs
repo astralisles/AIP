@@ -18,7 +18,7 @@ sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
     static bool IsDefaultLit(string t) => t is "Int" or "F64";
     static bool IsUnsigned(string t) => t.StartsWith('U') && SizedInts.ContainsKey(t);
 
-    static readonly HashSet<string> KnownTypes = new(new[] { "Int", "F32", "F64", "Text", "Bool", "Unit", "Bytes", "TcpListener", "TcpConn", "UdpSocket" }.Concat(SizedInts.Keys));
+    static readonly HashSet<string> KnownTypes = new(new[] { "Int", "F32", "F64", "Text", "Bool", "Unit", "TcpListener", "TcpConn", "UdpSocket" }.Concat(SizedInts.Keys));
 
     /// <summary>An integer literal (maybe negated) used where a sized integer is wanted takes that type if it fits.</summary>
     bool FitLiteral(Expr e, string want)
@@ -162,6 +162,7 @@ sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
         var s = Split(t);
         if (s == null) return program.Types.TryGetValue(t, out var plain) && plain.Params.Count == 0;
         if (!s.Value.Args.All(IsKnown)) return false;
+        if (s.Value.Name == "Fn") return s.Value.Args.Count >= 1; // Fn<A,B,R>: the parameter types, then the result
         if (GenericTypes.Arity.TryGetValue(s.Value.Name, out var n)) return n == s.Value.Args.Count;
         return program.Types.TryGetValue(s.Value.Name, out var g) && g.Params.Count == s.Value.Args.Count;
     }
@@ -238,6 +239,7 @@ sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
                 Error(fn.Line, "bad-type-param", $"the result type uses `{v}`, but no parameter does, so `{v}` can never be known", $"use `{v}` in a parameter type, or give the result a concrete type");
         }
 
+        CheckTaskTypes(fn);
         _inContract = true;
         foreach (var e in fn.Requires) ExpectType(e, env, "Bool", "a `requires` condition");
         var withResult = new Dictionary<string, string>(env);
@@ -275,6 +277,7 @@ sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
             else if (t != "" && t != "Unit")
                 Error(s.Line, "unused-value", $"this {t} value is not used", "bind it with `let` or remove the line");
         }
+        CheckTasks(fn);
         foreach (var (name, line) in lets)
             if (!used.Contains(name)) Error(line, "unused-let", $"`{name}` is never used", "remove the line");
 

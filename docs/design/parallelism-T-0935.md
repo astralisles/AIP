@@ -1,5 +1,7 @@
 # Design decision: parallelism (T-0935)
 
+> `taskRun`/`taskAwait` implemented in T-0978: see `fn-and-tasks-implemented-T-0978.md`.
+
 Yes, but only as deterministic, effect-visible parallelism, and not yet. Because values are
 immutable and there is no global state (T-0925), pure functions cannot race, so parallelism
 needs no locks, atomics or shared memory in the language.

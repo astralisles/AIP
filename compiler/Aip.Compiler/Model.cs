@@ -19,6 +19,8 @@ sealed class BoolLit : Expr { public bool Value; }
 /// <summary>Parts are either string (literal text) or Expr (interpolated).</summary>
 sealed class TextLit : Expr { public List<object> Parts = new(); }
 /// <summary>A local name, or (when Const is set by the checker) a `.const` file.</summary>
+/// <summary>`&name`: a reference to a top-level function (type `Fn<...>`). Counts as a call from the function that writes it.</summary>
+sealed class FnRef : Expr { public string Name = ""; public Fn? Target; }
 sealed class NameRef : Expr { public string Name = ""; public bool Erased; public bool Const; }
 /// <summary>A function call, or (when Ctor is set by the checker) the construction of a struct or variant case.</summary>
 sealed class Call : Expr { public string Name = ""; public List<Expr> Args = new(); public string? Ctor; public bool Erased; }

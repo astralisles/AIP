@@ -1,5 +1,6 @@
 fn postfixRest(toks List<Text>, target ExprParsed) -> ExprParsed
   "Read `.name` after an expression, as many times as it appears."
   pure
+  fails
 body
   if tokAt(toks, target.next) == "Sym ." then postfixRest(toks, ExprParsed(FieldOf(target.expr, tokText(tokAt(toks, target.next + 1))), target.next + 2)) else target

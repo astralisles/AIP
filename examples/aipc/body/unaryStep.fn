@@ -1,6 +1,7 @@
 fn unaryStep(toks List<Text>, pos Int) -> ExprParsed
   "Read the operator at pos and the operand after it."
   pure
+  fails
 body
   let operand = parseUnary(toks, pos + 1)
   ExprParsed(UnaryOp(tokText(tokAt(toks, pos)), operand.expr), operand.next)
