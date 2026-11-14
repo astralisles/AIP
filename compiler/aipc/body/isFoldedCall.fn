@@ -1,0 +1,6 @@
+fn isFoldedCall(name Text) -> Bool
+  "True for two-argument functions that take extra arguments as a left fold; keep in step with FoldedCalls in the C# parser."
+  pure
+  fails
+body
+  name == "listAppend"

@@ -142,7 +142,7 @@ sealed partial class Parser
                         call.Args.Add(ParseExpr());
                     }
                     ExpectSym(")");
-                    return FoldAppend(call);
+                    return FoldCall(call);
                 }
                 return new NameRef { Line = _line, Name = t.Text };
             case T.Sym when t.Text == "(":
@@ -153,10 +153,15 @@ sealed partial class Parser
         throw Err("syntax", t.Kind == T.End ? "the line ends where an expression is expected" : $"unexpected `{t.Text}`");
     }
 
-    /// <summary>`listAppend(items, a, b, c)` is shorthand for `listAppend(listAppend(listAppend(items, a), b), c)` (T-1037).</summary>
-    static Expr FoldAppend(Call call)
+    /// <summary>Two-argument functions that accept extra arguments as a left fold; add a future one here
+    /// (and in compiler/aipc/body/isFoldedCall.fn).</summary>
+    static readonly HashSet<string> FoldedCalls = new() { "listAppend" };
+
+    /// <summary>`f(x, a, b, c)` for a function in <see cref="FoldedCalls"/> is shorthand for `f(f(f(x, a), b), c)`,
+    /// e.g. `listAppend(items, a, b)` (T-1037).</summary>
+    static Expr FoldCall(Call call)
     {
-        if (call.Name != "listAppend" || call.Args.Count <= 2) return call;
+        if (call.Args.Count <= 2 || !FoldedCalls.Contains(call.Name)) return call;
         Expr acc = new Call { Line = call.Line, Name = call.Name, Args = { call.Args[0], call.Args[1] } };
         for (int i = 2; i < call.Args.Count; i++)
             acc = new Call { Line = call.Line, Name = call.Name, Args = { acc, call.Args[i] } };
