@@ -1,0 +1,5 @@
+fn listMapPar(items List<T>, f Fn<T,U>) -> List<U>
+  "Same result as listMap, but the back end may compute items on several threads; f must be pure (no effects)."
+  pure
+  fails
+extern

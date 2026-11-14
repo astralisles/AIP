@@ -64,6 +64,10 @@ sealed partial class Parser
         new[] { "or" },
         new[] { "and" },
         new[] { "==", "!=", "<", "<=", ">", ">=" },
+        new[] { "|" },
+        new[] { "^" },
+        new[] { "&" },
+        new[] { "<<", ">>" },
         new[] { "+", "-" },
         new[] { "*", "/", "%" },
     };
@@ -84,8 +88,8 @@ sealed partial class Parser
     Expr ParseUnary()
     {
         if (IsSym("-")) { _pos++; return new Unary { Line = _line, Op = "-", Operand = ParseUnary() }; }
+        if (IsSym("~")) { _pos++; return new Unary { Line = _line, Op = "~", Operand = ParseUnary() }; }
         if (Peek.Kind == T.Ident && Peek.Text == "not") { _pos++; return new Unary { Line = _line, Op = "not", Operand = ParseUnary() }; }
-        if (IsSym("&")) { _pos++; return new FnRef { Line = _line, Name = Expect(T.Ident, "a function name after `&`").Text }; }
         return ParsePostfix();
     }
 
@@ -104,6 +108,8 @@ sealed partial class Parser
     {
         var t = Peek;
         _pos++;
+        if (t.Kind == T.Sym && t.Text == "&")
+            return new FnRef { Line = _line, Name = Expect(T.Ident, "a function name after `&`").Text };
         switch (t.Kind)
         {
             case T.Int:

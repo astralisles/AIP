@@ -1,5 +1,6 @@
 fn textPartsChar(raw Text, i Int, code Int, cur Text, parts List<Expr>) -> List<Expr>
   "Handle the character at i: an escape (92), the start of a hole (123) or an ordinary character."
   pure
+  fails
 body
   if code == 92 then textPartsFrom(raw, i + 2, "{cur}{unescaped(raw, i + 1)}", parts) else if code == 123 then textPartsHole(raw, i, textFind(textSlice(raw, i, textLength(raw)), "}"), cur, parts) else textPartsFrom(raw, i + 1, "{cur}{textSlice(raw, i, i + 1)}", parts)

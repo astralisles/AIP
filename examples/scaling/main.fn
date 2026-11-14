@@ -1,6 +1,7 @@
 fn main() -> Unit
   "Build collections of 100000 items one update at a time; every update must cost O(log n), not O(n)."
   effects terminal.write
+  fails
 body
   let n = 100000
   let s = fillSet(setEmpty(), 0, n)

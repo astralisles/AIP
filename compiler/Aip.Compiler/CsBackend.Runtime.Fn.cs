@@ -6,25 +6,6 @@ sealed partial class CsBackend
     const string RtFn = """
         public static partial class Rt
         {
-            static object Call1(System.Func<object[], object> f, object a) => f(new object[] { a });
-            public static Aip.Persistent.PList ListMap(Aip.Persistent.PList l, System.Func<object[], object> f)
-            {
-                var r = Aip.Persistent.PList.Empty;
-                foreach (var x in l) r = r.Append(Call1(f, x));
-                return r;
-            }
-            public static Aip.Persistent.PList ListFilter(Aip.Persistent.PList l, System.Func<object[], object> f)
-            {
-                var r = Aip.Persistent.PList.Empty;
-                foreach (var x in l) if ((bool)Call1(f, x)) r = r.Append(x);
-                return r;
-            }
-            public static object ListFold(Aip.Persistent.PList l, object start, System.Func<object[], object> f)
-            {
-                var acc = start;
-                foreach (var x in l) acc = f(new object[] { acc, x });
-                return acc;
-            }
             public static Aip.Persistent.PList ListSort(Aip.Persistent.PList l, System.Func<object[], object> less)
             {
                 var items = new System.Collections.Generic.List<object>(l);

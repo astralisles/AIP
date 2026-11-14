@@ -1,5 +1,6 @@
 fn parseCallArg(toks List<Text>, arg ExprParsed, found List<Expr>) -> ExprsParsed
   "Add one parsed argument and go on after the comma that follows it."
   pure
+  fails
 body
   parseCallArgs(toks, if tokAt(toks, arg.next) == "Sym ," then arg.next + 1 else arg.next, listAppend(found, arg.expr))

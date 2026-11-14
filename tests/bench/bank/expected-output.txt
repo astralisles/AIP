@@ -1,0 +1,8 @@
+ok deposit bob 25 -> bob 75
+ok withdraw alice 30 -> alice 70
+ok transfer alice bob 50 -> alice 20, bob 125
+rejected withdraw bob 500: insufficient funds
+rejected transfer bob carol 10: unknown account carol
+ok deposit alice 5 -> alice 25
+final alice 25
+final bob 125

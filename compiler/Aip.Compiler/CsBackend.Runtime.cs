@@ -11,6 +11,8 @@ sealed partial class CsBackend
         ("Rt.Net.cs", RtNet),
         ("Rt.Profile.cs", RtProfile),
         ("Rt.Sorted.cs", RtSorted),
+        ("Rt.Tasks.cs", RtTasks),
+        ("Rt.System.cs", RtSystem),
     };
 
     const string RtCore = """
@@ -63,7 +65,7 @@ sealed partial class CsBackend
                 return r;
             }
             public static void Nop() { }
-            public static void Write(string path, string content) => System.IO.File.WriteAllText(path, content);
+            public static void Write(string path, byte[] content) => System.IO.File.WriteAllBytes(path, content);
             public static string Text(string v) => v;
             public static string Text(double v) => v.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
             public static string Text(float v) => v.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
@@ -196,16 +198,35 @@ sealed partial class CsBackend
         public static object TcpListen(long port) { var l = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Any, (int)port); l.Start(); return l; }
         public static object TcpAccept(object l) { var c = ((System.Net.Sockets.TcpListener)l).AcceptTcpClient(); c.NoDelay = true; return c; }
         public static object TcpConnect(string host, long port) { var c = new System.Net.Sockets.TcpClient(host, (int)port); c.NoDelay = true; return c; }
-        public static void TcpSend(object c, byte[] data) { var st = ((System.Net.Sockets.TcpClient)c).GetStream(); st.Write(data, 0, data.Length); st.Flush(); }
+        public static void TcpSend(object c, byte[] data) { var st = NetStream(c); st.Write(data, 0, data.Length); st.Flush(); }
         public static byte[] TcpReceive(object c, long max)
         {
             var buf = new byte[System.Math.Max(1, (int)max)];
-            int n = ((System.Net.Sockets.TcpClient)c).GetStream().Read(buf, 0, buf.Length);
+            int n = NetStream(c).Read(buf, 0, buf.Length);
             return buf[..n];
+        }
+        // A TLS connection: the same TcpConn handle type, so tcpSend/tcpReceive/tcpClose work on it unchanged.
+        sealed class TlsConn { public System.Net.Sockets.TcpClient Client = null!; public System.Net.Security.SslStream Stream = null!; }
+        static System.IO.Stream NetStream(object c) => c is TlsConn t ? t.Stream : ((System.Net.Sockets.TcpClient)c).GetStream();
+        public static object TlsConnect(string host, long port)
+        {
+            var c = (System.Net.Sockets.TcpClient)TcpConnect(host, port);
+            var ss = new System.Net.Security.SslStream(c.GetStream(), false);
+            try { ss.AuthenticateAsClient(host); } catch { ss.Dispose(); c.Dispose(); throw; }
+            return new TlsConn { Client = c, Stream = ss };
+        }
+        public static object TlsAccept(object conn, string pfxPath, string password)
+        {
+            var c = (System.Net.Sockets.TcpClient)conn;
+            var cert = System.Security.Cryptography.X509Certificates.X509CertificateLoader.LoadPkcs12FromFile(pfxPath, password);
+            var ss = new System.Net.Security.SslStream(c.GetStream(), false);
+            try { ss.AuthenticateAsServer(cert); } catch { ss.Dispose(); c.Dispose(); throw; }
+            return new TlsConn { Client = c, Stream = ss };
         }
         public static void TcpClose(object o)
         {
             if (o is System.Net.Sockets.TcpListener l) l.Stop();
+            else if (o is TlsConn t) { t.Stream.Dispose(); t.Client.Dispose(); }
             else ((System.IDisposable)o).Dispose();
         }
         public static object UdpOpen(long port) => new System.Net.Sockets.UdpClient((int)port);
@@ -217,16 +238,22 @@ sealed partial class CsBackend
             try { var ep = new System.Net.IPEndPoint(System.Net.IPAddress.Any, 0); return u.Receive(ref ep); }
             catch (System.Net.Sockets.SocketException) { return System.Array.Empty<byte>(); }
         }
-        public static byte[] BytesSlice(byte[] d, long start, long end)
-        {
-            int a = (int)System.Math.Clamp(start, 0, d.Length), b = (int)System.Math.Clamp(end, a, d.Length);
-            return d[a..b];
-        }
-        public static byte[] BytesJoin(byte[] a, byte[] b) { var r = new byte[a.Length + b.Length]; a.CopyTo(r, 0); b.CopyTo(r, a.Length); return r; }
-        public static byte[] BytesFromList(Aip.Persistent.PList l)
+        public static byte[] ToByteArray(Aip.Persistent.PList l)
         {
             var r = new byte[l.Count];
-            for (int i = 0; i < r.Length; i++) r[i] = checked((byte)(long)l[i]);
+            for (int i = 0; i < r.Length; i++) r[i] = (byte)l[i];
+            return r;
+        }
+        public static Aip.Persistent.PList FromByteArray(byte[] b)
+        {
+            var r = Aip.Persistent.PList.Empty;
+            foreach (var x in b) r = r.Append(x);
+            return r;
+        }
+        public static Aip.Persistent.PList BytesFromList(Aip.Persistent.PList l)
+        {
+            var r = Aip.Persistent.PList.Empty;
+            foreach (var x in l) r = r.Append(checked((byte)(long)x));
             return r;
         }
         }

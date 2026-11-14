@@ -39,7 +39,7 @@ sealed partial class Parser
                         if (def.Params.Count > 0) _pos++; // the comma
                         def.Params.Add(Expect(T.Ident, "a type parameter such as T").Text);
                     } while (IsSym(","));
-                    ExpectSym(">");
+                    ExpectCloseAngle();
                 }
                 ExpectEnd();
                 if (!isVariant) def.Cases.Add(new Case { Name = def.Name, Line = _line });

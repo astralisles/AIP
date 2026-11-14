@@ -13,14 +13,11 @@ sealed partial class Interp
         {
             case "listEmpty": return new List<object?>();
             case "listLength": return (long)L(0).Count;
-            case "listMap": return L(0).Select(x => ((FnVal)a[1]!).Invoke(new List<object?> { x })).ToList();
-            case "listFilter": return L(0).Where(x => (bool)((FnVal)a[1]!).Invoke(new List<object?> { x })!).ToList();
-            case "listFold": { var acc = a[1]; foreach (var x in L(0)) acc = ((FnVal)a[2]!).Invoke(new List<object?> { acc, x }); return acc; }
             case "listSort":
                 {
-                    var less = (FnVal)a[1]!;
+                    var self = _active ?? throw new Unsupported("no interpreter is running");
                     return L(0).OrderBy(x => x, Comparer<object?>.Create((p, q) =>
-                        (bool)less.Invoke(new List<object?> { p, q })! ? -1 : (bool)less.Invoke(new List<object?> { q, p })! ? 1 : 0)).ToList();
+                        (bool)self.CallValue(a[1], p, q)! ? -1 : (bool)self.CallValue(a[1], q, p)! ? 1 : 0)).ToList();
                 }
             case "listGet": return L(0)[(int)(long)a[1]!];
             case "listAppend": return new List<object?>(L(0)) { a[1] };

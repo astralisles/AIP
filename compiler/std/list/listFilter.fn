@@ -1,4 +1,5 @@
 fn listFilter(items List<T>, keep Fn<T,Bool>) -> List<T>
-  "The items for which keep returns true, in order."
+  "The items for which keep returns true, in the same order."
   pure
+  fails
 extern

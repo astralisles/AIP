@@ -10,8 +10,8 @@ body
     Lit(text) => false
     TextParts(parts) => false
     NameRef(name) => false
-    CallFn(name, args) => false
     FnOf(name) => false
+    CallFn(name, args) => false
     FieldOf(target, name) => false
     UnaryOp(op, operand) => false
     BinaryOp(op, left, right) => false

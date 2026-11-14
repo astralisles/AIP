@@ -36,7 +36,7 @@ if (args is ["spec"])
     return 0;
 }
 string[] findWords = [];
-if (args.Length >= 3 && args[0] == "find") { findWords = args[2..]; args = args[..2]; }
+if (args.Length >= 3 && args[0] == "find") { findWords = args[2..].SelectMany(a => a.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)).ToArray(); args = args[..2]; }  // "split text" in quotes is two words
 if (args is ["std"]) args = ["std", AppContext.BaseDirectory];
 if (args.Length < 2 || args[0] is not ("check" or "index" or "query" or "build" or "run" or "lint" or "test" or "emit" or "fuzz" or "std" or "find"))
 {
@@ -99,7 +99,7 @@ if (command == "find")
         return (f, score);
     }).Where(h => h.score > 0).OrderByDescending(h => h.score).ThenBy(h => h.f.Name, StringComparer.Ordinal).Take(10).ToList();
     foreach (var (f, _) in hits) Console.WriteLine($"{(f.IsStd ? "std" : "project")} | {f.Signature} | {f.EffectsText} | {f.Doc}");
-    if (hits.Count == 0) Console.WriteLine($"no function matches: {string.Join(" ", findWords)}");
+    if (hits.Count == 0) Console.WriteLine($"no function matches: {string.Join(" ", findWords)}\n  fix: try one word of a name or type (list, text, print), or `aip std` for the whole standard library");
     return 0;
 }
 

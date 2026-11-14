@@ -17,8 +17,7 @@ foreach ($f in Get-ChildItem (Join-Path $root 'compiler\std') -Recurse -Filter *
   $lines = Get-Content $f.FullName
   $eff = 'pure'
   foreach ($l in $lines) { if ($l -match '^  effects (.+)$') { $eff = $Matches[1].Trim() } }
-  if (-not ($lines -contains 'extern')) { continue } # a std function written in AIP (listTryGet) has no template
-  $std[[IO.Path]::GetFileNameWithoutExtension($f.Name)] = @{ Effects = $eff; Extern = ($lines -contains 'extern'); First = $lines[0] }
+  $std[[IO.Path]::GetFileNameWithoutExtension($f.Name)] = @{ Effects = $eff; Extern = ($lines -contains 'extern'); HasBody = ($lines -contains 'body'); First = $lines[0] }
 }
 $interpNames = @{}
 foreach ($m in [regex]::Matches($interp, 'case ((?:"\w+"(?: or )?)+):')) {
@@ -26,12 +25,12 @@ foreach ($m in [regex]::Matches($interp, 'case ((?:"\w+"(?: or )?)+):')) {
 }
 $problems = @()
 foreach ($n in $std.Keys | Sort-Object) {
-  if (-not $std[$n].Extern) { $problems += "std/$n.fn is not an extern header" }
+  if (-not $std[$n].Extern) { if (-not $std[$n].HasBody) { $problems += "std/$n.fn is not an extern header" }; continue }
   if ($std[$n].First -notmatch "^fn $n\(") { $problems += "std/$n.fn: the first line does not declare fn $n(" }
   if (-not $templates.ContainsKey($n)) { $problems += "std/$n.fn has no template in CsBackend.cs Externs" }
 }
 foreach ($n in $templates.Keys | Sort-Object) { if (-not $std.ContainsKey($n)) { $problems += "CsBackend.cs Externs has $n but there is no std/$n.fn" } }
-$touches = 'System\.Console|System\.IO|Rt\.Args|Rt\.Write|Rt\.Tcp|Rt\.Udp|Environment'
+$touches = 'System\.Console|System\.IO|Rt\.Args|Rt\.Write|Rt\.Tcp|Rt\.Udp|Rt\.Task|Rt\.Tls|Rt\.(Exit|FileExists|Append|DirList|RandomInt)|DateTimeOffset|Environment'
 foreach ($n in $templates.Keys | Sort-Object) {
   if (-not $std.ContainsKey($n)) { continue }
   $impure = $templates[$n] -match $touches

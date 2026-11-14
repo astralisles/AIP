@@ -1,5 +1,6 @@
 fn findBodyLine(lines List<Text>, i Int) -> Int
   "The index of the line after `body`, or the number of lines when there is none (an extern function)."
   pure
+  fails
 body
   if i >= listLength(lines) then i else if listGet(lines, i) == "body" then i + 1 else findBodyLine(lines, i + 1)

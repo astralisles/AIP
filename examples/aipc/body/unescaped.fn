@@ -1,5 +1,6 @@
 fn unescaped(raw Text, i Int) -> Text
   "The character an escape stands for: n is a newline, t a tab, any other is itself; at the end a backslash."
   pure
+  fails
 body
   if i >= textLength(raw) then textFromCode(92) else if textCode(raw, i) == 110 then textFromCode(10) else if textCode(raw, i) == 116 then textFromCode(9) else textSlice(raw, i, i + 1)

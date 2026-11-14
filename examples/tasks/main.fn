@@ -1,0 +1,15 @@
+fn main() -> Unit
+  "Map, filter, fold and run a task."
+  effects terminal.write, parallel
+  fails
+body
+  let xs = listAppend(listAppend(listAppend(listAppend(listEmpty(), 1), 2), 3), 4)
+  let sq = listMap(xs, &square)
+  printLine("squares: {listGet(sq, 0)} {listGet(sq, 1)} {listGet(sq, 2)} {listGet(sq, 3)}")
+  let evens = listFilter(xs, &isEven)
+  printLine("evens: {listLength(evens)}, first {listGet(evens, 0)}")
+  printLine("sum: {listFold(xs, 0, &addInts)}")
+  let par = listMapPar(xs, &square)
+  printLine("parallel last: {listGet(par, 3)}")
+  let t = taskRun(&square, 12)
+  printLine("task: {taskAwait(t)}")
