@@ -13,4 +13,5 @@ variant Expr
   BinaryOp(op Text, left Expr, right Expr)
   IfExpr(cond Expr, whenTrue Expr, whenFalse Expr)
   MatchOn(subject Expr)
+  NoElse
   BadExpr(message Text)

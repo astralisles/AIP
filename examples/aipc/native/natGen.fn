@@ -17,4 +17,5 @@ body
     BinaryOp(op, left, right) => natGenBinary(op, natGen(left, ctx), natGen(right, ctx), listLength(ctx.fns))
     IfExpr(cond, whenTrue, whenFalse) => natGenIf(natGen(cond, ctx), natGen(whenTrue, ctx), natGen(whenFalse, ctx))
     MatchOn(subject) => asmNone()
+    NoElse() => asmNone()
     BadExpr(message) => asmNone()

@@ -17,4 +17,5 @@ body
     BinaryOp(op, left, right) => natCheckBinary(op, left, right, ctx)
     IfExpr(cond, whenTrue, whenFalse) => natFirst(natCheck(cond, ctx), natFirst(natCheck(whenTrue, ctx), natCheck(whenFalse, ctx)))
     MatchOn(subject) => "`match` expressions"
+    NoElse() => ""
     BadExpr(message) => "an expression the parser could not read ({message})"

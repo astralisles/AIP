@@ -10,7 +10,6 @@ sealed partial class Interp
     {
         switch (name)
         {
-            case "noop": return null;
             case "textLength": return (long)((string)a[0]!).Length;
             case "textSlice":
                 {

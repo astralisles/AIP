@@ -61,8 +61,8 @@ sealed partial class Parser
             var e = new IfExpr { Line = _line, Cond = ParseExpr() };
             ExpectWord("then");
             e.Then = ParseExpr();
-            ExpectWord("else");
-            e.Else = ParseExpr();
+            if (Peek.Kind == T.Ident && Peek.Text == "else") { _pos++; e.Else = ParseExpr(); }
+            else { e.Else = new BlockExpr { Line = _line }; e.NoElse = true; }
             return e;
         }
         return ParseBinary(0);

@@ -66,7 +66,6 @@ sealed partial class CsBackend
                 for (long i = start; i < end; i++) r = r.Append(i);
                 return r;
             }
-            public static void Nop() { }
             public static void MakeFolder(string p) => System.IO.Directory.CreateDirectory(p);
             public static void Write(string path, byte[] content) => System.IO.File.WriteAllBytes(path, content);
             public static string Text(string v) => v;

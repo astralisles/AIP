@@ -27,7 +27,7 @@ List them with `scripts\aip.ps1 std`.
 | `random/`   | seeded generator (pure) and `randomSeed` | name starts with `random`, or effect `random.*` |
 | `time/`     | clock and sleep (`timeMonotonic`, `timeSleep`) | effect `time.*`              |
 | `task/`     | `Task<R>`: `taskRun`, `taskAwait` (T-0935) | effect `parallel`        |
-| `core/`     | language helpers (`noop`)              | only for what fits no group  |
+| `core/`     | language types (`Option`, `Result`)     | only for what fits no group  |
 
 Rules, checked by the compiler on every run (error `std-layout`):
 - a std file must be in a group folder, never directly in `std/`;

@@ -16,4 +16,5 @@ body
     BinaryOp(op, left, right) => false
     IfExpr(cond, whenTrue, whenFalse) => false
     MatchOn(subject) => false
+    NoElse() => false
     BadExpr(message) => false

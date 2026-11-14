@@ -3,4 +3,4 @@ fn printIndex(i I64) -> Unit
   effects file.read, process.args, terminal.write
   fails
 body
-  if i >= argCount() then noop() else printIndexThenRest(i)
+  if i < argCount() then printIndexThenRest(i)

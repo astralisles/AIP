@@ -36,7 +36,7 @@ sealed class Unary : Expr { public string Op = ""; public Expr Operand = null!; 
 sealed class Binary : Expr { public string Op = ""; public Expr Left = null!; public Expr Right = null!; }
 /// <summary>The indented lines of one branch of a multi-line `if`: Unit statements run in order.</summary>
 sealed class BlockExpr : Expr { public List<Expr> Stmts = new(); }
-sealed class IfExpr : Expr { public Expr Cond = null!; public Expr Then = null!; public Expr Else = null!; }
+sealed class IfExpr : Expr { public Expr Cond = null!; public Expr Then = null!; public Expr Else = null!; public bool NoElse; /* no `else` in the source: Else is an empty BlockExpr */ }
 
 /// <summary>One shape of a type: all of a struct, or one case of a variant.</summary>
 sealed class Case { public string Name = ""; public int Line; public List<Param> Fields = new(); }

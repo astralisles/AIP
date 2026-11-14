@@ -3,4 +3,4 @@ fn printHeader(lines List<Text>, i I64, prefix Text) -> Unit
   effects terminal.write
   fails
 body
-  if i >= listLength(lines) then noop() else if listGet(lines, i) == "body" or listGet(lines, i) == "extern" then noop() else if textStartsWith(listGet(lines, i), "  {prefix}") then printHeaderLine(lines, i, prefix) else printHeader(lines, i + 1, prefix)
+  if i < listLength(lines) and listGet(lines, i) != "body" and listGet(lines, i) != "extern" then if textStartsWith(listGet(lines, i), "  {prefix}") then printHeaderLine(lines, i, prefix) else printHeader(lines, i + 1, prefix)

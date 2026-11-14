@@ -321,6 +321,11 @@ sealed partial class Checker
         if (c != "" && c != "Bool") Error(i.Line, "type-mismatch", $"the `if` condition must be Bool, found {c}");
         var a = TypeOf(i.Then, env, used);
         var b = TypeOf(i.Else, env, used);
+        if (i.NoElse)
+        {
+            if (a != "" && a != "Unit") Error(i.Line, "missing-else", $"an `if` without `else` must give Unit, but `then` gives {a}", "add `else` and a value for the other case, or make the `then` part a Unit statement");
+            return "Unit";
+        }
         if (a != "" && b != "" && !Compat(a, b)) Error(i.Line, "type-mismatch", $"`then` gives {a} but `else` gives {b}");
         return a == "" || b == "" ? a + b : Merge(a, b);
     }

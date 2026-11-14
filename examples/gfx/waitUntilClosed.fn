@@ -5,5 +5,3 @@ body
   if visible and not gfxShouldClose(win) then
     gfxSwap(win)
     waitUntilClosed(win, visible)
-  else
-    noop()
