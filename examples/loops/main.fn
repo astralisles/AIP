@@ -1,0 +1,8 @@
+fn main() -> Unit
+  "Show `loop` (a value from repeated steps, nestable) and `for` (repeated effects, nestable)."
+  effects terminal.write
+body
+  printLine("sum 1..10 = {sumTo(10)}")
+  printLine("sum of the 3x3 table = {tableSum(3, 3)}")
+  printLine("first square above 50 = {firstSquareAbove(50)}")
+  printTable(3, 4)

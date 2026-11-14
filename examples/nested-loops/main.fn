@@ -1,0 +1,6 @@
+fn main() -> Unit
+  "Show nested loops: each loop is its own function, the inner one is called from the outer one."
+  effects terminal.write
+body
+  printLine("sum of the 3x3 table = {tableSum(1, 3, 3, 0)}")
+  printTable(1, 3, 3)

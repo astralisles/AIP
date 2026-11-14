@@ -91,6 +91,10 @@ static class Query
             case Field f: WalkAll(f.Target, visit); break;
             case MatchExpr m: WalkAll(m.Subject, visit); foreach (var a in m.Arms) WalkAll(a.Body, visit); break;
             case BlockExpr bl: foreach (var x in bl.Stmts) WalkAll(x, visit); break;
+            case LoopExpr l: foreach (var x in l.Parts) WalkAll(x, visit); break;
+            case ForExpr fe: foreach (var x in fe.Parts) WalkAll(x, visit); break;
+            case DoneExpr d: WalkAll(d.Value, visit); break;
+            case NextExpr n: foreach (var x in n.Args) WalkAll(x, visit); break;
         }
     }
 
