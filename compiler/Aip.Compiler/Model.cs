@@ -126,6 +126,9 @@ sealed class ProgramModel
     public string Dir = "";
     public Dictionary<string, Fn> Fns = new();
     public Dictionary<string, TypeDef> Types = new();
+    /// <summary>Packages the project declared in packages.txt, and the handle types they add.</summary>
+    public List<PackageInfo> Packages = new();
+    public HashSet<string> HandleTypes = new();
     /// <summary>Constructor name (struct name or variant case name) to its type and case.</summary>
     public Dictionary<string, (TypeDef Def, Case Case)> Ctors = new();
     public IEnumerable<Fn> ProjectFns => Fns.Values.Where(f => !f.IsStd).OrderBy(f => f.Name, StringComparer.Ordinal);

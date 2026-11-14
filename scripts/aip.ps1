@@ -12,12 +12,15 @@ if (-not $stale) {
   $src = @(Get-ChildItem $proj -File | Where-Object { $_.Extension -in '.cs', '.csproj' })
   $std = Join-Path $root 'compiler\std'
   $src += Get-ChildItem $std -Recurse -File
+  $pkgs = Join-Path $root 'compiler\packages'
+  if (Test-Path $pkgs) { $src += Get-ChildItem $pkgs -Recurse -File }
   $stale = [bool]($src | Where-Object { $_.LastWriteTimeUtc -gt $built } | Select-Object -First 1)
   # A moved, added or deleted std file keeps old timestamps: also rebuild when the file lists differ.
   if (-not $stale) {
     $copy = Join-Path (Split-Path $exe) 'std'
     $list = { param($d) if (Test-Path $d) { (Get-ChildItem $d -Recurse -File -Include *.fn,*.const | ForEach-Object { $_.FullName.Substring($d.Length) }) -join '|' } }
     $stale = (& $list $std) -ne (& $list $copy)
+    if (-not $stale -and (Test-Path $pkgs)) { $stale = (& $list $pkgs) -ne (& $list (Join-Path (Split-Path $exe) 'packages')) }
   }
 }
 if ($stale) {

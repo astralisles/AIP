@@ -18,8 +18,6 @@ List them with `scripts\aip.ps1 std`.
 | `file/`     | read/write files                       | name starts with `file`      |
 | `terminal/` | console I/O (`printLine`, `readLine`) | effect `terminal.*`          |
 | `tcp/`      | TCP connections that stay open (bytes)  | effect `tcp.*`               |
-| `db/`       | relational databases (SQLite first)     | effect `db.*`                |
-| `mongo/`    | MongoDB (JSON documents)                | effect `mongo.*`             |
 | `udp/`      | UDP sockets (bytes)                     | effect `udp.*`               |
 | `num/`      | number conversions (`numToU8`, `numToF64`) | name starts with `num`       |
 | `log/`      | diagnostics to stderr (`logLine`)      | effect `log.*`               |

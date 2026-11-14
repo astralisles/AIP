@@ -34,7 +34,7 @@ sealed partial class CsBackend : IBackend
             var name = todo.Pop();
             if (reach.Add(name) && program.Fns.TryGetValue(name, out var cur)) foreach (var callee in cur.Calls) todo.Push(callee);
         }
-        foreach (var fn in program.Fns.Values.Where(f => f.IsExtern && f.NativeLib == null && !Externs.ContainsKey(f.Name) && reach.Contains(f.Name)))
+        foreach (var fn in program.Fns.Values.Where(f => f.IsExtern && f.NativeLib == null && !Externs.ContainsKey(f.Name) && !program.Packages.Any(p => p.Externs.ContainsKey(f.Name)) && reach.Contains(f.Name)))
         {
             Console.WriteLine($"error backend-missing-extern: the cs back end has no implementation of `{fn.Name}`");
             return null;
@@ -113,27 +113,40 @@ sealed partial class CsBackend : IBackend
     public static SortedDictionary<string, string> EmitFiles(ProgramModel program)
     {
         var files = new SortedDictionary<string, string>(StringComparer.Ordinal);
+        PackageTemplates = program.Packages.SelectMany(p => p.Externs).ToDictionary(e => e.Key, e => e.Value);
+        PackageHandles = program.HandleTypes;
         // Std constants (numPi, ...) are emitted too; they are lazy, so an unused one costs nothing at run time.
         foreach (var fn in program.ProjectFns.Concat(program.Fns.Values.Where(f => f.IsStd && f.IsConst).OrderBy(f => f.Name, StringComparer.Ordinal))) files[fn.Name + ".cs"] = fn.IsConst ? EmitConst(fn) : fn.NativeLib != null ? EmitNative(fn) : EmitFn(fn);
         files["Program.cs"] = ProgramCs;
         files["Persistent.cs"] = PersistentRt.Source;
         foreach (var (name, source) in RuntimeParts) files[name] = source;
         if (program.Types.Count > 0) files["Types.cs"] = EmitTypes(program);
-        if (UsesDb(program)) files["Rt.Db.cs"] = RtDb;
-        if (UsesMongo(program)) files["Rt.Mongo.cs"] = RtMongo;
-        files[program.Name + ".csproj"] = CsprojWithPackages(UsesDb(program), UsesMongo(program));
+        foreach (var pkg in program.Packages) files["Rt." + pkg.Name + ".cs"] = File.ReadAllText(Path.Combine(pkg.Dir, "Rt.cs"));
+        files[program.Name + ".csproj"] = CsprojWithPackages(program.Packages);
         return files;
     }
 
     /// <summary>The names of the standard-library functions the back end implements.</summary>
     public static IEnumerable<string> ExternNames => Externs.Keys.OrderBy(k => k, StringComparer.Ordinal);
 
+    // Set at the start of EmitFiles from the declared packages (see Packages.cs); emitting is single-threaded.
+    static Dictionary<string, string> PackageTemplates = new();
+    static HashSet<string> PackageHandles = new();
+
+    /// <summary>The project file; each declared package adds its pinned NuGet references.</summary>
+    static string CsprojWithPackages(List<PackageInfo> packages)
+    {
+        var refs = string.Concat(packages.SelectMany(p => p.Nuget).Select(n => $"<PackageReference Include=\"{n.Id}\" Version=\"{n.Version}\" />"));
+        return refs == "" ? Csproj : Csproj.Replace("</PropertyGroup>", "</PropertyGroup><ItemGroup>" + refs + "</ItemGroup>");
+    }
+
     // Lists are type-erased at run time (List<object>); reads cast back to the element type.
     static string CsType(string t) => t switch
     {
         "Int" => "long", "F32" => "float", "F64" => "double", "I8" => "sbyte", "I16" => "short", "I32" => "int",
         "U8" => "byte", "U16" => "ushort", "U32" => "uint", "U64" => "ulong", "Text" => "string", "Bool" => "bool", "_" => "object",
-        "TcpListener" or "TcpConn" or "UdpSocket" or "DbConn" or "MongoConn" => "object", // handles, opened by effectful std functions
+        "TcpListener" or "TcpConn" or "UdpSocket" => "object", // handles, opened by effectful std functions
+        _ when PackageHandles.Contains(t) => "object", // handle types of declared packages
         _ when t.Length == 1 && char.IsAsciiLetterUpper(t[0]) => "object", // a type parameter: erased
         _ when t.StartsWith("List<", StringComparison.Ordinal) => "Aip.Persistent.PList",
         _ when t.StartsWith("Queue<", StringComparison.Ordinal) => "Aip.Persistent.PFifo",
@@ -276,7 +289,7 @@ sealed partial class CsBackend : IBackend
         Call { Ctor: not null } c => $"new {c.Ctor}({string.Join(", ", c.Args.Select(Emit))})",
         Field f => Cast(f.Erased, f.Type, $"{Emit(f.Target)}.@{f.Name}"),
         MatchExpr m => $"({Emit(m.Subject)} switch {{ {string.Join(", ", m.Arms.Select(a => $"{Pattern(a)} => {Emit(a.Body)}"))}, _ => throw new System.InvalidOperationException() }})",
-        Call c => Externs.TryGetValue(c.Name, out var template)
+        Call c => (Externs.TryGetValue(c.Name, out var template) || PackageTemplates.TryGetValue(c.Name, out template))
             ? (c.Name is "listGet" or "mapGet" or "sortedMapGet" or "queueFront" or "priorityQueueFront" ? $"(({CsType(c.Type)})" : "") + string.Format(System.Globalization.CultureInfo.InvariantCulture, template.Replace("<T>", CsType(c.Type)), c.Args.Select(Emit).ToArray<object>()) + (c.Name is "listGet" or "mapGet" or "sortedMapGet" or "queueFront" or "priorityQueueFront" ? ")" : "")
             : Cast(c.Erased, c.Type, $"Fn.@{c.Name}({string.Join(", ", c.Args.Select(Emit))})"),
         Unary u => u.Op == "-" ? $"(-{Emit(u.Operand)})" : u.Op == "~" ? $"unchecked(({CsType(u.Type)})(~{Emit(u.Operand)}))" : $"(!{Emit(u.Operand)})",

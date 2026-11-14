@@ -1,0 +1,9 @@
+# Relational databases (SQLite first); the engine is picked by the url given to dbOpen.
+name db
+version 1.0.0
+nuget Microsoft.Data.Sqlite 10.0.13
+handle DbConn
+extern dbOpen Rt.DbOpen({0})
+extern dbExec Rt.DbExec({0}, {1}, {2})
+extern dbQuery Rt.DbQuery({0}, {1}, {2})
+extern dbClose Rt.DbClose({0})

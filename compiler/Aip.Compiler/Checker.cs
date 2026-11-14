@@ -18,7 +18,7 @@ sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
     static bool IsDefaultLit(string t) => t is "Int" or "F64";
     static bool IsUnsigned(string t) => t.StartsWith('U') && SizedInts.ContainsKey(t);
 
-    static readonly HashSet<string> KnownTypes = new(new[] { "Int", "F32", "F64", "Text", "Bool", "Unit", "TcpListener", "TcpConn", "UdpSocket", "DbConn", "MongoConn" }.Concat(SizedInts.Keys));
+    static readonly HashSet<string> KnownTypes = new(new[] { "Int", "F32", "F64", "Text", "Bool", "Unit", "TcpListener", "TcpConn", "UdpSocket" }.Concat(SizedInts.Keys));
 
     /// <summary>An integer literal (maybe negated) used where a sized integer is wanted takes that type if it fits.</summary>
     bool FitLiteral(Expr e, string want)
@@ -154,9 +154,11 @@ sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
     HashSet<string> _typeVars = new(); // type parameters in scope while a type definition is checked
     HashSet<string> _erased = new();   // match-bound names whose declared field type is a type parameter (the back end casts them)
 
+    bool IsBuiltinType(string t) => KnownTypes.Contains(t) || program.HandleTypes.Contains(t);
+
     bool IsKnown(string t)
     {
-        if (KnownTypes.Contains(t)) return true;
+        if (KnownTypes.Contains(t) || program.HandleTypes.Contains(t)) return true;
         if (t == "_") return _fn?.IsStd == true;
         if (IsVar(t)) return _fn != null || _typeVars.Contains(t);
         var s = Split(t);
@@ -322,11 +324,11 @@ sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
             foreach (var tp in def.Params)
                 if (!IsVar(tp)) Err(def.Line, "bad-type-param", $"`{tp}` is not a valid type parameter", "use a single capital letter such as T");
                 else if (!declared.Add(tp)) Err(def.Line, "bad-type-param", $"type parameter `{tp}` is declared twice");
-            if (def.IsVariant && (def.Name.Length < 2 || KnownTypes.Contains(def.Name) || ReservedTypeNames.Contains(def.Name)))
+            if (def.IsVariant && (def.Name.Length < 2 || IsBuiltinType(def.Name) || ReservedTypeNames.Contains(def.Name)))
                 Err(def.Line, "bad-type-name", $"`{def.Name}` is not a valid type or case name", "use two or more letters starting with a capital, not Fn, Rt, Program or a built-in type");
             foreach (var c in def.Cases)
             {
-                if (c.Name.Length < 2 || !char.IsAsciiLetterUpper(c.Name[0]) || ReservedTypeNames.Contains(c.Name) || KnownTypes.Contains(c.Name))
+                if (c.Name.Length < 2 || !char.IsAsciiLetterUpper(c.Name[0]) || ReservedTypeNames.Contains(c.Name) || IsBuiltinType(c.Name))
                     Err(c.Line, "bad-type-name", $"`{c.Name}` is not a valid type or case name", "use two or more letters starting with a capital, not Fn, Rt, Program, Const, ConstCell or a built-in type");
                 var seen = new HashSet<string>();
                 foreach (var f in c.Fields)

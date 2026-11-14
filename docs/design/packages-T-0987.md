@@ -1,20 +1,23 @@
-# Packages, with MongoDB as the first (T-0987, proposal)
+# Packages, with `mongo` and `db` as the first (T-0987)
 
-Status: proposal, not built. Answers "should `mongo/` be a package instead of std?" and gives open question 6 in `open-questions-T-0944.md` a first concrete shape.
+Status: built. Gives open question 6 in `open-questions-T-0944.md` a first answer for the compiler-shipped case.
 
-## Why mongo (and db) are package-shaped
-- They need a NuGet dependency (`MongoDB.Driver`, `Microsoft.Data.Sqlite`) that the compiler itself does not; std today has none.
-- They are used by few programs, yet today their names, handle types (`MongoConn`, `DbConn`) and C# runtime live inside the compiler (`Checker.KnownTypes`, `CsBackend.Externs.Mongo.cs`, `CsBackend.Runtime.Mongo.cs`). Every new engine would edit the compiler.
-- Supply chain (T-0936): an optional dependency should be visible and pinned where the project says it uses it, not hidden in a compiler class.
+## Why mongo and db are packages, not std
+- They need a NuGet dependency (`MongoDB.Driver`, `Microsoft.Data.Sqlite`); std has none.
+- Few programs use them, yet their names, handle types and C# runtime used to live inside the compiler. Now a new engine is a new folder.
+- Supply chain (T-0936): the dependency list of a project is one reviewable file, pinned.
 
-## Proposed shape
-- A package is a folder `packages/<name>/` shipped beside `std/`: the same one-function-per-file `.fn` files (header-only `extern`), plus `package.txt`:
-  `name`, `version`, `nuget MongoDB.Driver 3.13.0`, `handle MongoConn` (types erased to `object`), `runtime Rt.cs` (the C# part), and one `extern <fn> <template>` line per function.
-- The compiler reads those lines instead of hard-coded tables; `Checker`, `CsBackend.Externs.*` and `Interp` learn nothing about mongo.
-- A project uses a package by naming it in a one-line file `packages.txt` in the project folder (`mongo 3.13.0`). A package that is not named is not loaded, its names do not exist, and no NuGet reference is emitted (so the "no dependency unless used" rule stays, and the dependency list is reviewable in one file).
-- Effects keep the package prefix (`mongo.*`), so the security view of a function is unchanged.
+## Shape
+- `compiler/packages/<name>/`: `.fn` headers, `package.txt` (name, version, pinned `nuget`, `handle`, `extern` templates), `Rt.cs`. See `compiler/packages/README.md`.
+- The project's `packages.txt` (`mongo 1.0.0`) is the manifest of used packages and their versions. The version must equal the shipped one exactly, so a package change is visible in the project's diff.
+- Not listed means not loaded: its functions do not exist (`unknown-name`) and no NuGet reference is emitted.
+- Effects keep the package prefix (`mongo.*`, `db.*`), so security review reads the same as for std.
+- Front end stays target independent: the checker only learns handle types from the manifest; templates and `Rt.cs` are used by the C# back end.
 
-## Not decided (needs the user)
-1. Declaring: `packages.txt` per project (proposed) vs. automatic when a function is called (today's behaviour).
-2. Trust: only packages shipped with the compiler (proposed first step) vs. any folder a project points to (copy-in, needs a review rule).
-3. Move `db/` too, as a second package (recommended, same reasons).
+## Decisions taken (user asked what to suggest)
+1. Declaration: per-project `packages.txt` with name and exact version (yes, a manifest is needed: it is the only place the dependency is stated).
+2. Trust: only packages shipped with the compiler. Copy-in packages from a project folder are not allowed yet (needs a review rule).
+3. `db/` moved too.
+
+## Not done
+- Version ranges, a package registry, signatures/hashes of `Rt.cs`, packages depending on packages, interpreter (`aip test`) support.

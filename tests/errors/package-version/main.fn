@@ -1,0 +1,15 @@
+fn main() -> Unit
+  "Database demo: an in-memory SQLite table, an insert with parameters and a query."
+  effects db.connect, db.read, db.write, db.close, terminal.write
+  fails
+body
+  let conn = dbOpen("sqlite::memory:")
+  let none = listEmpty()
+  let made = dbExec(conn, "create table people (name text, age integer)", none)
+  let one = dbExec(conn, "insert into people values (?, ?)", listAppend(listAppend(none, "Ada"), "36"))
+  let two = dbExec(conn, "insert into people values (?, ?)", listAppend(listAppend(none, "Linus"), "55"))
+  let rows = dbQuery(conn, "select name, age from people where age > ? order by age", listAppend(none, "40"))
+  printLine("rows: {listLength(rows)}")
+  printLine("first: {listGet(listGet(rows, 0), 0)}")
+  printLine("changed: {made + one + two}")
+  dbClose(conn)
