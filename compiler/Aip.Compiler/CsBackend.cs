@@ -113,7 +113,8 @@ sealed partial class CsBackend : IBackend
     public static SortedDictionary<string, string> EmitFiles(ProgramModel program)
     {
         var files = new SortedDictionary<string, string>(StringComparer.Ordinal);
-        foreach (var fn in program.ProjectFns) files[fn.Name + ".cs"] = fn.IsConst ? EmitConst(fn) : fn.NativeLib != null ? EmitNative(fn) : EmitFn(fn);
+        // Std constants (numPi, ...) are emitted too; they are lazy, so an unused one costs nothing at run time.
+        foreach (var fn in program.ProjectFns.Concat(program.Fns.Values.Where(f => f.IsStd && f.IsConst).OrderBy(f => f.Name, StringComparer.Ordinal))) files[fn.Name + ".cs"] = fn.IsConst ? EmitConst(fn) : fn.NativeLib != null ? EmitNative(fn) : EmitFn(fn);
         files["Program.cs"] = ProgramCs;
         files["Persistent.cs"] = PersistentRt.Source;
         foreach (var (name, source) in RuntimeParts) files[name] = source;
