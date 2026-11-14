@@ -1,0 +1,4 @@
+fn tlsConnect(host Text, port I64) -> TcpConn
+  "Open an encrypted (TLS) connection; the server certificate must be valid for host, else it fails. Use tcpSend, tcpReceive and tcpClose on it."
+  effects tcp.connect
+extern

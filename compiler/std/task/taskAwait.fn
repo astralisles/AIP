@@ -1,0 +1,5 @@
+fn taskAwait(task Task<R>) -> R
+  "Waits for a task and returns its result; if the task failed, the failure happens here."
+  effects parallel
+  fails
+extern

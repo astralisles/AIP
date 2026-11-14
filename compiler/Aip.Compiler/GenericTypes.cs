@@ -15,5 +15,6 @@ static class GenericTypes
         ["Set"] = 1,
         ["SortedMap"] = 2,
         ["SortedSet"] = 1,
+        ["Task"] = 1,
     };
 }

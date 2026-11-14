@@ -1,5 +1,0 @@
-fn fileList(path Text) -> List<Text>
-  "The names of the files and folders directly inside a folder, in ordinal order."
-  effects file.read
-  fails
-extern

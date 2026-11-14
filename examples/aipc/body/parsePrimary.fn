@@ -1,7 +1,8 @@
 fn parsePrimary(toks List<Text>, pos I64) -> ExprParsed
   "Read a number, text, name, call or parenthesised expression at pos."
   pure
+  fails
 body
   let t = tokAt(toks, pos)
   let kind = tokKind(t)
-  if kind == "Int" then ExprParsed(IntNum(tokText(t)), pos + 1) else if kind == "Float" then ExprParsed(FloatNum(tokText(t)), pos + 1) else if kind == "Text" then ExprParsed(TextParts(parseTextParts(tokText(t))), pos + 1) else if kind == "Ident" then parseWord(toks, pos) else if t == "Sym (" then parseParen(toks, pos + 1) else ExprParsed(BadExpr(t), pos + 1)
+  if kind == "Int" then ExprParsed(IntNum(tokText(t)), pos + 1) else if kind == "Float" then ExprParsed(FloatNum(tokText(t)), pos + 1) else if kind == "Text" then ExprParsed(TextParts(parseTextParts(tokText(t))), pos + 1) else if kind == "Ident" then parseWord(toks, pos) else if t == "Sym &" then ExprParsed(FnOf(tokText(tokAt(toks, pos + 1))), pos + 2) else if t == "Sym (" then parseParen(toks, pos + 1) else ExprParsed(BadExpr(t), pos + 1)

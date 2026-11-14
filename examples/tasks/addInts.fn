@@ -1,0 +1,7 @@
+fn addInts(a I64, b I64) -> I64
+  "The sum of a and b."
+  pure
+  cannot-fail
+  example addInts(1, 2) == 3
+body
+  a + b

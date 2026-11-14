@@ -1,0 +1,7 @@
+fn sq(n I64) -> I64
+  "The square of n."
+  pure
+  cannot-fail
+  example sq(2) == 4
+body
+  n * n

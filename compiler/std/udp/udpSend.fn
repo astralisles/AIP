@@ -1,4 +1,4 @@
-fn udpSend(socket UdpSocket, host Text, port I64, data Bytes) -> Unit
+fn udpSend(socket UdpSocket, host Text, port I64, data List<U8>) -> Unit
   "Send one datagram."
   effects udp.send
 extern

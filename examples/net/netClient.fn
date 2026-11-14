@@ -1,6 +1,7 @@
 fn netClient(port I64) -> Unit
   "Connect, read the server greeting, then send two messages (one of raw bytes) and read each answer."
   effects tcp.connect, tcp.send, tcp.receive, tcp.close, terminal.write
+  fails
 body
   let conn = tcpConnect("127.0.0.1", port)
   let greeting = bytesDecode(tcpReceive(conn, 1024))

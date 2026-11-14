@@ -1,0 +1,6 @@
+fn wait(t Task<I64>) -> I64
+  "Awaits a task."
+  effects parallel
+  fails
+body
+  taskAwait(t)

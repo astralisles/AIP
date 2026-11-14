@@ -1,0 +1,5 @@
+fn randomInt(low I64, high I64) -> I64
+  "A random whole number from low up to but not including high; low must be below high."
+  effects random.read
+  fails
+extern

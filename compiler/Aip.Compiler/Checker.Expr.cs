@@ -14,6 +14,7 @@ sealed partial class Checker
             BoolLit => "Bool",
             TextLit t => TextType(t, env, used),
             NameRef n => NameType(n, env, used),
+            FnRef r => FnRefType(r),
             Call c => CallType(c, env, used),
             Field f => FieldType(f, env, used),
             Assign a => AssignType(a, env, used),
@@ -59,8 +60,35 @@ sealed partial class Checker
         return "";
     }
 
+    FnRef? _taskTarget; // the `&name` given to taskRun: the only place a function with effects may be referenced
+
+    /// <summary>`&name`: the type is `Fn<params..., result>`. Effects are not part of the type, so only pure functions can be
+    /// passed around; `taskRun(&f, x)` is the one place an effectful function is allowed (its effects join the caller's).</summary>
+    string FnRefType(FnRef r)
+    {
+        if (!program.Fns.TryGetValue(r.Name, out var target) || target.IsConst)
+        {
+            Error(r.Line, "unknown-name", $"there is no function `{r.Name}` to point at", Suggest(r.Name, program.Fns.Keys));
+            return "";
+        }
+        _fn.Calls.Add(r.Name);
+        r.Target = target;
+        if (target.Effects.Count > 0 && !ReferenceEquals(r, _taskTarget))
+        {
+            Error(r.Line, "fn-effects", $"`{r.Name}` has effects ({target.EffectsText}), so `&{r.Name}` cannot be passed around", "only pure functions can be function values; an effectful function can be started with `taskRun(&name, argument)`");
+            return "";
+        }
+        if (target.Params.Any(p => IsVar(p.Type.Name)) || IsVar(target.Ret.Name))
+        {
+            Error(r.Line, "fn-generic", $"`{r.Name}` is generic, so `&{r.Name}` has no single type", "point at a function with concrete types, or write a small wrapper function");
+            return "";
+        }
+        return Join("Fn", target.Params.Select(p => p.Type.Name).Append(target.Ret.Name));
+    }
+
     string CallType(Call c, Dictionary<string, string> env, HashSet<string> used)
     {
+        if (c.Name == "taskRun" && c.Args.Count > 0 && c.Args[0] is FnRef first) _taskTarget = first;
         var argTypes = c.Args.Select(a => TypeOf(a, env, used)).ToList();
         if (!program.Fns.TryGetValue(c.Name, out var target))
         {
@@ -81,6 +109,8 @@ sealed partial class Checker
                 Error(c.Line, "contract-not-pure", $"`{c.Name}` has effects ({target.EffectsText}) and cannot be used in a contract or example");
         }
         else _effects.UnionWith(target.Effects);
+        if (c.Name == "taskRun" && target.IsStd && c.Args.Count > 0 && c.Args[0] is FnRef tr && program.Fns.TryGetValue(tr.Name, out var started) && !_inContract)
+            _effects.UnionWith(started.Effects); // the forked function runs with its own effects, so the caller must declare them too
 
         if (argTypes.Count != target.Params.Count)
             Error(c.Line, "wrong-arguments", $"`{c.Name}` takes {target.Params.Count} argument(s), found {argTypes.Count}", $"signature: {target.Signature}");

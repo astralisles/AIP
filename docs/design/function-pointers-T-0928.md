@@ -1,5 +1,7 @@
 # Design decision: function pointers (T-0928)
 
+> Implemented in T-0978 in a simpler form: see `fn-and-tasks-implemented-T-0978.md`.
+
 Yes, but as a restricted feature, and not yet. Higher-order operations (`map`, `filter`,
 `fold`, sort by key, callbacks in a compiler pass) are needed for the bootstrapped
 compiler; without them every loop is hand-written recursion.

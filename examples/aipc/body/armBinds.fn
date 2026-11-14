@@ -1,5 +1,6 @@
 fn armBinds(toks List<Text>, pos I64, acc List<Text>) -> NamesParsed
   "Read the names bound by an arm up to the `)`; with no `(` the position is already at `=>` and nothing is read."
   pure
+  fails
 body
   if tokAt(toks, pos) == "Sym )" then NamesParsed(acc, pos + 1) else if tokAt(toks, pos) == "Sym =>" then NamesParsed(acc, pos) else if tokAt(toks, pos) == "Sym ," then armBinds(toks, pos + 1, acc) else if tokKind(tokAt(toks, pos)) == "Ident" then armBinds(toks, pos + 1, listAppend(acc, tokText(tokAt(toks, pos)))) else NamesParsed(acc, pos)

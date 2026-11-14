@@ -1,4 +1,0 @@
-fn bytesSlice(data Bytes, start I64, end I64) -> Bytes
-  "Bytes from start up to end, clamped to the data."
-  pure
-extern

@@ -1,0 +1,4 @@
+fn envGet(name Text) -> Text
+  "The value of an environment variable; empty text if it is not set (see envHas)."
+  effects process.env
+extern

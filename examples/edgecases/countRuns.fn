@@ -1,0 +1,7 @@
+fn countRuns(text Text, i I64, runs I64) -> I64
+  "Number of runs of equal characters; empty text has 0 runs, 'aabaa' has 3."
+  pure
+  example countRuns("", 0, 0) == 0
+  example countRuns("aabaa", 0, 0) == 3
+body
+  if i >= textLength(text) then runs else if i == 0 then countRuns(text, 1, 1) else if textSlice(text, i, i + 1) == textSlice(text, i - 1, i) then countRuns(text, i + 1, runs) else countRuns(text, i + 1, runs + 1)

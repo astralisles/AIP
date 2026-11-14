@@ -1,6 +1,7 @@
 fn parseExpr(toks List<Text>, pos I64, matchOk Bool) -> ExprParsed
   "Read an expression at pos. A `match` is read (its subject only) when matchOk is true."
   pure
+  fails
 body
   let t = tokAt(toks, pos)
   if matchOk and t == "Ident match" then parseMatchStart(toks, pos + 1) else if t == "Ident if" then parseIfExpr(toks, pos + 1) else parseBinary(toks, pos, 0)

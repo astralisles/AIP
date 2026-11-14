@@ -8,7 +8,7 @@
 
 ## Done for the bootstrap
 Examples `aipc`: lexer, header parser, body parser (flat dump), compared with the C# compiler by `scripts\compare-*.ps1`.
-Std added in this ticket (example `fileio`, check `tests/checks/fileio.ps1`): `fileList`, `fileExists`, `fileMakeFolder`,
+Std added in this ticket (example `fileio`, check `tests/checks/fileio.ps1`): `dirList`, `fileExists`, `fileMakeFolder`,
 `fileReadBytes`, `fileWriteBytes`, `processExit`.
 
 ## Still needed, in order

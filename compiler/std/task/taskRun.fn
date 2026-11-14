@@ -1,0 +1,4 @@
+fn taskRun(f Fn<A,R>, arg A) -> Task<R>
+  "Starts f(arg) on its own thread; f may have effects, which the caller must declare too. The task must be awaited once with taskAwait."
+  effects parallel
+extern

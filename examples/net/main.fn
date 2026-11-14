@@ -1,6 +1,7 @@
 fn main() -> Unit
   "Console and network demo: `net echo`, `net serve PORT`, `net client PORT`, `net udp-receive PORT`, `net udp-send PORT`."
   effects process.args, terminal.read, terminal.write, tcp.connect, tcp.listen, tcp.accept, tcp.send, tcp.receive, tcp.close, udp.open, udp.send, udp.receive, udp.close
+  fails
 body
   let mode = if argCount() > 0 then arg(0) else "help"
   let port = if argCount() > 1 then textToInt(arg(1)) else 9000

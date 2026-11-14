@@ -1,4 +1,0 @@
-fn bytesLength(data Bytes) -> I64
-  "Number of bytes."
-  pure
-extern

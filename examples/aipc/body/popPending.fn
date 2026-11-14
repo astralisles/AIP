@@ -1,5 +1,6 @@
 fn popPending(pending List<I64>, indent I64) -> List<I64>
   "Drop the matches whose arms are indented deeper than this line."
   pure
+  fails
 body
   if listLength(pending) > 0 and indent < listGet(pending, listLength(pending) - 1) then popPending(listRemoveAt(pending, listLength(pending) - 1), indent) else pending

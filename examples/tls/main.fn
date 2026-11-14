@@ -1,0 +1,6 @@
+fn main() -> Unit
+  "TLS demo: `tls serve PORT PFXFILE PASSWORD` answers one client; `tls client HOST PORT` sends one line over TLS and prints the answer."
+  effects process.args, terminal.write, tcp.connect, tcp.listen, tcp.accept, tcp.send, tcp.receive, tcp.close, file.read
+body
+  let mode = if argCount() > 0 then arg(0) else "help"
+  if mode == "serve" then tlsServe(textToInt(arg(1)), arg(2), arg(3)) else if mode == "client" then tlsClient(arg(1), textToInt(arg(2))) else printLine("usage: tls serve PORT PFXFILE PASSWORD | tls client HOST PORT")

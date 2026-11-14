@@ -1,0 +1,8 @@
+fn collatzSteps(n I64, steps I64) -> I64
+  "Steps for n to reach 1 (halve if even, else 3n+1); 1 takes 0 steps."
+  pure
+  example collatzSteps(1, 0) == 0
+  example collatzSteps(27, 0) == 111
+  requires n >= 1
+body
+  if n == 1 then steps else if n % 2 == 0 then collatzSteps(n / 2, steps + 1) else collatzSteps(3 * n + 1, steps + 1)

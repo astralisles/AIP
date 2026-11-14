@@ -1,5 +1,6 @@
 fn countSpaces(line Text, i I64) -> I64
   "The number of spaces at the start of a line, counting from index i."
   pure
+  fails
 body
   if i < textLength(line) and textCode(line, i) == 32 then countSpaces(line, i + 1) else i

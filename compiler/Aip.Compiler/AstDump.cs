@@ -49,6 +49,7 @@ static class AstDump
         BoolLit b => b.Value ? "(bool true)" : "(bool false)",
         TextLit t => "(text" + string.Concat(t.Parts.Select(p => " " + (p is string s ? Quote(s) : S((Expr)p)))) + ")",
         NameRef n => $"(name {n.Name})",
+        FnRef r => $"(fnref {r.Name})",
         Call c => $"(call {c.Name}" + string.Concat(c.Args.Select(a => " " + S(a))) + ")",
         Field f => $"(field {S(f.Target)} {f.Name})",
         Unary u => $"(unary {u.Op} {S(u.Operand)})",

@@ -1,0 +1,6 @@
+fn shout(n I64) -> I64
+  "Prints and returns n."
+  effects terminal.write
+body
+  printLine("{n}")
+  n
