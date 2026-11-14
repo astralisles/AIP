@@ -1,0 +1,8 @@
+fn tlsClient(host Text, port Int) -> Unit
+  "Connect with TLS (the certificate is checked), send `hello` and print the answer."
+  effects tcp.connect, tcp.send, tcp.receive, tcp.close, terminal.write
+body
+  let conn = tlsConnect(host, port)
+  tcpSend(conn, bytesEncode("hello"))
+  printLine("client: {bytesDecode(tcpReceive(conn, 1024))}")
+  tcpClose(conn)

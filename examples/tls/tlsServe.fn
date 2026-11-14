@@ -1,0 +1,11 @@
+fn tlsServe(port Int, pfx Text, password Text) -> Unit
+  "Accept one client, upgrade it to TLS, read one chunk and answer `secure:` plus the same bytes."
+  effects tcp.listen, tcp.accept, tcp.send, tcp.receive, tcp.close, file.read, terminal.write
+body
+  let listener = tcpListen(port)
+  let conn = tlsAccept(tcpAccept(listener), pfx, password)
+  let data = tcpReceive(conn, 1024)
+  printLine("server: got {bytesLength(data)} bytes")
+  tcpSend(conn, bytesJoin(bytesEncode("secure:"), data))
+  tcpClose(conn)
+  tcpStop(listener)

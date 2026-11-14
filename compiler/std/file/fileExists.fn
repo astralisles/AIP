@@ -1,0 +1,4 @@
+fn fileExists(path Text) -> Bool
+  "True if a file or folder exists at this path."
+  effects file.read
+extern

@@ -1,0 +1,16 @@
+fn main() -> Unit
+  "Use time, random numbers, environment variables and exit."
+  effects terminal.write, time.read, random.read, process.env, process.exit
+  fails
+body
+  let name = "AIP_SURELY_NOT_SET_12345"
+  let now = timeNow()
+  printLine("time ok: {now > 1000000000000}")
+  let r = randomInt(5, 6)
+  printLine("random: {r}")
+  printLine("env set: {envHas(name)}")
+  let value = envGet(name)
+  let isEmpty = textLength(value) == 0
+  printLine("env value empty: {isEmpty}")
+  processExit(0)
+  printLine("not reached")

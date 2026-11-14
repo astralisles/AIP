@@ -1,0 +1,4 @@
+fn tlsAccept(conn TcpConn, pfxFile Text, password Text) -> TcpConn
+  "Turn a connection from tcpAccept into a TLS server connection, using the certificate in a .pfx file."
+  effects tcp.accept, file.read
+extern

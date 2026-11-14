@@ -3,10 +3,10 @@ fn netEchoLoop(conn TcpConn) -> Unit
   effects tcp.send, tcp.receive, terminal.write
 body
   let data = tcpReceive(conn, 1024)
-  let size = bytesLength(data)
+  let size = listLength(data)
   if size == 0 then
     printLine("server: client closed")
   else
     printLine("server: got {size} bytes")
-    tcpSend(conn, bytesJoin(bytesEncode("echo:"), data))
+    tcpSend(conn, listConcat(bytesEncode("echo:"), data))
     netEchoLoop(conn)

@@ -1,4 +1,0 @@
-fn bytesLength(data Bytes) -> Int
-  "Number of bytes."
-  pure
-extern
