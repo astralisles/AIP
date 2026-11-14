@@ -1,0 +1,5 @@
+fn double(n I64) -> I64
+  "Twice a number."
+  pure
+body
+  n * 2

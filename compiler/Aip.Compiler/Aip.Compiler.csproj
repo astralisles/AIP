@@ -16,6 +16,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Content Include="..\std\**\*.fn" LinkBase="std" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\std\**\*.variant" LinkBase="std" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\std\**\*.const" LinkBase="std" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\spec.md" Link="spec.md" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
@@ -23,8 +24,9 @@
        or deleted, or the compiler would load the old copy too and report duplicate names. -->
   <Target Name="RemoveStaleStd" BeforeTargets="CopyFilesToOutputDirectory">
     <ItemGroup>
-      <_StdWanted Include="@(Content->'$(OutDir)%(Link)')" Condition="'%(Content.Extension)' == '.fn' or '%(Content.Extension)' == '.const'" />
+      <_StdWanted Include="@(Content->'$(OutDir)%(Link)')" Condition="'%(Content.Extension)' == '.fn' or '%(Content.Extension)' == '.variant' or '%(Content.Extension)' == '.const'" />
       <_StdCopied Include="$(OutDir)std\**\*.fn" />
+      <_StdCopied Include="$(OutDir)std\**\*.variant" />
       <_StdCopied Include="$(OutDir)std\**\*.const" />
       <_StdStale Include="@(_StdCopied)" Exclude="@(_StdWanted)" />
     </ItemGroup>

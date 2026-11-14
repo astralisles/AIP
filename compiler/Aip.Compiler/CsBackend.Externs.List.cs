@@ -23,6 +23,7 @@ sealed partial class CsBackend
         d["bytesToText"] = "Rt.BytesToText({0})";
         d["bytesToHex"] = "Rt.BytesToHex({0})";
         d["bytesFromHex"] = "Rt.BytesFromHex({0})";
+        d["listSort"] = "Rt.ListSort({0}, {1})";
         d["listRange"] = "Rt.ListRange({0}, {1})";
     }
 }

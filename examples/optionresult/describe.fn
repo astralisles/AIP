@@ -1,0 +1,8 @@
+fn describe(o Option<I64>) -> Text
+  "Say whether an Option holds a number."
+  pure
+body
+  let r = match o
+    Some(v) => "some {v}"
+    None() => "none"
+  r

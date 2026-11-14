@@ -1,0 +1,5 @@
+fn greater(a I64, b I64) -> Bool
+  "True when a is larger than b."
+  pure
+body
+  a > b

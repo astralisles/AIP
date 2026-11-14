@@ -1,0 +1,5 @@
+fn isBig(n I64) -> Bool
+  "True when a number is above 5."
+  pure
+body
+  n > 5

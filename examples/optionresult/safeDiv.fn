@@ -1,0 +1,5 @@
+fn safeDiv(a I64, b I64) -> Result<I64,Text>
+  "Divide, or give an error text when b is zero."
+  pure
+body
+  if b == 0 then Err("divide by zero") else Ok(a / b)
