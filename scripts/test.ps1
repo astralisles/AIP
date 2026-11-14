@@ -4,9 +4,18 @@
 #   - tests\errors\<case>\expected.txt     -> `aip check` must reject the project with this text
 #   - tests\checks\*.ps1                   -> any other check; each file calls Report (see tests\checks\README.md)
 # Prints one PASS/FAIL line per test; exit code = number of failures.
+#   -Changed [-Base <ref>] runs only the tests the git-changed files need (rules: scripts\changed-tests.ps1)
+param([switch]$Changed, [string]$Base)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 Set-Location $root
+$plan = $null
+if ($Changed) {
+  $plan = & (Join-Path $PSScriptRoot 'changed-tests.ps1') -Base $Base
+  if ($plan.All) { "changed files need every test: running all"; $plan = $null }
+  else { "changed files: $($plan.Files.Count); examples: $($plan.Examples -join ',') errors: $($plan.Errors -join ',') checks: $($plan.Checks -join ',')" }
+}
+function Wanted($kind, $name) { (-not $plan) -or ($plan.$kind -contains $name) }
 $aip = Join-Path $PSScriptRoot 'aip.ps1'
 $failed = 0
 function Report($name, $ok, $detail) {
@@ -22,11 +31,14 @@ function NewTempDir($prefix) {
 
 foreach ($file in Get-ChildItem (Join-Path $root 'examples\*\expected-output.txt') | Sort-Object FullName) {
   $name = $file.Directory.Name
+  if (-not (Wanted 'Examples' $name)) { continue }
   $expected = @(Get-Content $file.FullName | Where-Object { $_ -ne '' }) -join '|'
   $lines = @(& $aip run "examples\$name")
   Report "example $name`: output is as expected" ($LASTEXITCODE -eq 0 -and ($lines -join '|') -eq $expected) "expected: $expected`n      got: $($lines -join '|')"
 }
 
+$inline = (-not $plan) -or $plan.Inline   # the hello and cache tests below
+if ($inline) {
 $out = (& $aip query examples\hello callers greeting | Out-String).Trim()
 Report 'hello: query callers greeting -> main' ($LASTEXITCODE -eq 0 -and $out.StartsWith('main()')) $out
 $out = (& $aip query examples\hello fn nope | Out-String).Trim()
@@ -52,13 +64,16 @@ Report 'cache: a deleted file is gone' ($LASTEXITCODE -eq 0 -and -not $out.Conta
 $out = (& $aip query $tmp callers greeting | Out-String).Trim()
 Report 'cache: a damaged cache is ignored' ($LASTEXITCODE -eq 0 -and $out.StartsWith('main()')) $out
 Remove-Item $tmp -Recurse -Force
+}
 
 foreach ($case in Get-ChildItem (Join-Path $root 'tests\errors') -Directory | Sort-Object Name) {
+  if (-not (Wanted 'Errors' $case.Name)) { continue }
   $expected = (Get-Content (Join-Path $case.FullName 'expected.txt') -Raw).Trim()
   $out = (& $aip check $case.FullName | Out-String).Trim()
   Report "error: $($case.Name)" ($LASTEXITCODE -ne 0 -and $out.Contains($expected)) "expected: $expected`n      got: $out"
 }
 foreach ($check in Get-ChildItem (Join-Path $root 'tests\checks\*.ps1') | Sort-Object Name) {
+  if (-not (Wanted 'Checks' $check.Name)) { continue }
   try { . $check.FullName }
   catch { Report "check $($check.Name)" $false "threw: $_" }
   Set-Location $root

@@ -9,6 +9,7 @@
 - `check-error-coverage.ps1` - every compiler error code and lint warning has a test case, and no test names a removed one. `-List` prints all codes.
 - `check-externs.ps1` - `compiler\std` headers, the C# templates and the `aip test` interpreter agree, and `pure` std functions really touch nothing.
 - `check-index.ps1 [dirs]` - the index matches the function headers (derived independently of the compiler), and `build\index.txt` is not stale.
+- `changed-tests.ps1 [-Base ref]` - reads the files git reports as changed (committed since the merge-base with main/master, uncommitted, untracked) and says which tests they need; docs-only changes need none, an edit under `examples\<name>`, `tests\errors\<case>` or `tests\checks\<file>.ps1` needs just that test, anything else (compiler, scripts) needs all. Run it via `scripts\test.ps1 -Changed [-Base ref]`.
 - `compare-ast.ps1` - bootstrap check: the AIP body parser (`examples\aipc`, `aipc ast <file>`) prints the same dump as `aip ast` for every `.fn` file the C# parser accepts. Exit code = mismatches.
 - `compare-index.ps1` - bootstrap check: the AIP parser (`examples\aipc`, `aipc index <files>`) reads every header in `examples\` and `compiler\std` like the C# compiler (`aip index`, `aip std`). Exit code = mismatches.
 - `compare-lexers.ps1` - bootstrap check: the AIP lexer (`examples\aipc`, `aipc tokens <file>`) prints the same tokens as `aip tokens` for every `.fn`/`.const` file. Exit code = mismatches.
