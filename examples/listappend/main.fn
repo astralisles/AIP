@@ -1,0 +1,7 @@
+fn main() -> Unit
+  "Show listAppend with several items at once."
+  effects terminal.write
+body
+  let fruit = listAppend(listEmpty(), "pear", "apple", "plum")
+  let more = listAppend(listAppend(listEmpty(), "pear"), "apple")
+  printLine("{listLength(fruit)} {listGet(fruit, 0)} {listGet(fruit, 2)} {listLength(more)}")
