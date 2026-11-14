@@ -1,0 +1,4 @@
+fn mongoOpen(url Text, database Text) -> MongoConn
+  "Connect to MongoDB (`mongodb://host:27017`) and select a database."
+  effects mongo.connect
+extern

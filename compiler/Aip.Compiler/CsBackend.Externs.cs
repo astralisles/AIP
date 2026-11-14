@@ -16,6 +16,7 @@ sealed partial class CsBackend
         AddSortedExterns(d);
         AddNetExterns(d);
         AddDbExterns(d);
+        AddMongoExterns(d);
         AddSystemExterns(d);
         return d;
     }

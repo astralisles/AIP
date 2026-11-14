@@ -1,0 +1,4 @@
+fn mongoDrop(conn MongoConn, collection Text) -> Unit
+  "Drop a collection and all its documents."
+  effects mongo.write
+extern

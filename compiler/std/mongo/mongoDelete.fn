@@ -1,0 +1,4 @@
+fn mongoDelete(conn MongoConn, collection Text, filter Text) -> Int
+  "Delete every document matching a JSON filter; returns how many were deleted."
+  effects mongo.write
+extern

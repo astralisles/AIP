@@ -1,0 +1,4 @@
+fn mongoInsert(conn MongoConn, collection Text, doc Text) -> Text
+  "Insert one JSON document; returns its `_id` as text (generated when the document has none)."
+  effects mongo.write
+extern

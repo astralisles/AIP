@@ -1,7 +1,7 @@
 # Databases (T-0987)
 
 - Decision: the first support is **relational and engine-neutral**. NoSQL stores (MongoDB, ...) are too different
-  (documents, not rows and SQL) and are a separate, later design; they are not covered here.
+  (documents, not rows and SQL) and have their own family, see `mongodb-T-0987.md`.
 - Std family `db/`: `DbConn` handle (built in, erased to `object`), `dbOpen(url)`, `dbExec(conn, sql, args)` (rows changed),
   `dbQuery(conn, sql, args)` (`List<List<Text>>`, NULL = empty text), `dbClose`. Effects `db.connect`, `db.write`, `db.read`, `db.close`.
 - Values travel as `Text` and parameters are `?` marks filled from `args` (never build SQL by joining text: injection).

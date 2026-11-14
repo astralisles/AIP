@@ -46,21 +46,12 @@ sealed partial class CsBackend
         }
         """;
 
-    const string CsprojDb = """
-        <Project Sdk="Microsoft.NET.Sdk">
-          <PropertyGroup>
-            <OutputType>Exe</OutputType>
-            <TargetFramework>net10.0</TargetFramework>
-            <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
-            <InvariantGlobalization>true</InvariantGlobalization>
-            <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
-            <DebugType>none</DebugType>
-            <GenerateDocumentationFile>false</GenerateDocumentationFile>
-          </PropertyGroup>
-          <ItemGroup>
-            <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.13" />
-          </ItemGroup>
-        </Project>
-
-        """;
+    /// <summary>The project file for a program that uses optional NuGet packages (db: SQLite, mongo: MongoDB.Driver).</summary>
+    static string CsprojWithPackages(bool db, bool mongo)
+    {
+        if (!db && !mongo) return Csproj;
+        var refs = (db ? "<PackageReference Include=\"Microsoft.Data.Sqlite\" Version=\"10.0.13\" />" : "")
+                 + (mongo ? "<PackageReference Include=\"MongoDB.Driver\" Version=\"3.13.0\" />" : "");
+        return Csproj.Replace("</PropertyGroup>", "</PropertyGroup><ItemGroup>" + refs + "</ItemGroup>");
+    }
 }
