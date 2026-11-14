@@ -1,0 +1,10 @@
+fn natRtConcat(n I64) -> List<I64>
+  "Runtime helper concat(rcx a, rdx b) -> rax: a new text holding a then b. n is the number of user functions (alloc is function number n + 1)."
+  pure
+  fails
+body
+  let start = asmCat4(asmMovRR(regR8, regRcx), asmMovRR(regR9, regRdx), asmLoad(regR11, regR8, 0), asmLoad(regR10, regR9, 0))
+  let size = asmCat4(asmAlu(opAdd, regR11, regR10), asmLea(regRcx, regR11, 8), asmCallFn(n + 1), asmStore(regRax, 0, regR11))
+  let copyA = asmCat4(asmLea(regRdi, regRax, 8), asmLea(regRsi, regR8, 8), asmLoad(regRcx, regR8, 0), asmHex("F3A4"))
+  let copyB = asmCat4(asmLea(regRsi, regR9, 8), asmLoad(regRcx, regR9, 0), asmHex("F3A4"), asmByte(195))
+  asmCat4(start, size, copyA, copyB)

@@ -1,0 +1,5 @@
+fn natSupported(type Text) -> Bool
+  "True for the types the native compiler can handle: I64, Bool, Text and Unit."
+  pure
+body
+  type == "I64" or type == "Bool" or type == "Text" or type == "Unit"

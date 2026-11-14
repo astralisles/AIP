@@ -1,0 +1,5 @@
+fn asmCallFn(idx I64) -> List<I64>
+  "call the function (or runtime helper) with this number"
+  pure
+body
+  asmCat(asmByte(232), asmMark(0, idx))

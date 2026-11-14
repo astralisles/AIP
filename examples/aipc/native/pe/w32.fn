@@ -1,0 +1,5 @@
+fn w32(v I64) -> List<I64>
+  "A 32-bit little-endian field."
+  pure
+body
+  asmLe(v, 4)

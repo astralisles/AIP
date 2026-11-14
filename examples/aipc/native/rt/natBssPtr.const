@@ -1,0 +1,3 @@
+const natBssPtr I64
+  "Address of the heap pointer variable."
+  value 8192

@@ -1,0 +1,5 @@
+fn asmMovRI(dst I64, imm I64) -> List<I64>
+  "mov dst, imm64"
+  pure
+body
+  asmCat3(asmByte(asmRex(1, 0, dst)), asmByte(184 + (dst & 7)), asmLe(imm, 8))

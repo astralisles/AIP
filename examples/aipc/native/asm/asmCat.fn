@@ -1,0 +1,5 @@
+fn asmCat(a List<I64>, b List<I64>) -> List<I64>
+  "The bytes of a followed by the bytes of b."
+  pure
+body
+  listConcat(a, b)

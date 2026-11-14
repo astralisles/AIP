@@ -1,0 +1,5 @@
+fn asmStoreByte(base I64, disp I64, reg I64) -> List<I64>
+  "mov byte [base+disp], the low byte of reg (rax, rcx or rdx)"
+  pure
+body
+  asmMem(0, 136, reg, base, disp)

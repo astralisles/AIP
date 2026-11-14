@@ -1,0 +1,6 @@
+fn natCheckList(items List<Expr>, i I64, ctx NatCtx) -> Text
+  "The first problem in a list of expressions, or an empty text."
+  pure
+  fails
+body
+  if i >= listLength(items) then "" else natFirst(natCheck(listGet(items, i), ctx), natCheckList(items, i + 1, ctx))

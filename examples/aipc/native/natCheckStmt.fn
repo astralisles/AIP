@@ -1,0 +1,9 @@
+fn natCheckStmt(s NatS, ctx NatCtx, slot I64) -> Text
+  "The first problem in one statement, or an empty text."
+  pure
+  fails
+body
+  match s
+    SLet(name, value) => natFirst(natCheck(value, ctx), if natSupported(natTypeOf(value, ctx)) then "" else "a `let` of type {natTypeOf(value, ctx)}")
+    SExpr(value) => natCheck(value, ctx)
+    SIf(cond, whenTrue, whenFalse) => natFirst(natCheck(cond, ctx), natFirst(natCheckStmts(whenTrue, 0, ctx, slot), natCheckStmts(whenFalse, 0, ctx, slot + natCountLets(whenTrue, 0))))

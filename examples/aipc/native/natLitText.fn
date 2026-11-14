@@ -1,0 +1,19 @@
+fn natLitText(e Expr) -> Text
+  "The text of a literal piece, or an empty text for any other expression."
+  pure
+body
+  match e
+    IntNum(text) => ""
+    FloatNum(text) => ""
+    BoolVal(value) => ""
+    Lit(text) => text
+    TextParts(parts) => ""
+    NameRef(name) => ""
+    FnOf(name) => ""
+    CallFn(name, args) => ""
+    FieldOf(target, name) => ""
+    UnaryOp(op, operand) => ""
+    BinaryOp(op, left, right) => ""
+    IfExpr(cond, whenTrue, whenFalse) => ""
+    MatchOn(subject) => ""
+    BadExpr(message) => ""

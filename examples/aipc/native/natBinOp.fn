@@ -1,0 +1,6 @@
+fn natBinOp(op Text, n I64) -> List<I64>
+  "Code that combines rax (left) and rcx (right) into rax."
+  pure
+  fails
+body
+  if op == "+" then asmAlu(opAdd, regRax, regRcx) else if op == "-" then asmAlu(opSub, regRax, regRcx) else if op == "&" then asmAlu(opAnd, regRax, regRcx) else if op == "|" then asmAlu(opOr, regRax, regRcx) else if op == "^" then asmAlu(opXor, regRax, regRcx) else if op == "*" then asmImul(regRax, regRcx) else if op == "/" or op == "%" then natGenDivide(op, n) else asmCat3(asmAlu(opCmp, regRax, regRcx), asmSetCc(natCc(op)), asmHex("0FB6C0"))

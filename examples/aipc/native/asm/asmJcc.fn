@@ -1,0 +1,5 @@
+fn asmJcc(cc I64, distance I64) -> List<I64>
+  "jcc forward (or back) by distance bytes counted from the end of this 6-byte instruction."
+  pure
+body
+  asmCat3(asmByte(15), asmByte(128 + cc), asmLe(distance, 4))

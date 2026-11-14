@@ -1,0 +1,6 @@
+fn natGenIf(cond List<I64>, whenTrue List<I64>, whenFalse List<I64>) -> List<I64>
+  "Code for `if`: test the condition, run one of the two branches."
+  pure
+  fails
+body
+  asmCat4(cond, asmTest(regRax, regRax), asmJcc(ccE, listLength(whenTrue) + 5), asmCat3(whenTrue, asmJmp(listLength(whenFalse)), whenFalse))

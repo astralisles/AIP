@@ -1,0 +1,3 @@
+const regRcx I64
+  "x86-64 register number of rcx."
+  value 1

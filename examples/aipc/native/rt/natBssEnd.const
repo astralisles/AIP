@@ -1,0 +1,3 @@
+const natBssEnd I64
+  "Address of the heap end variable."
+  value 8200

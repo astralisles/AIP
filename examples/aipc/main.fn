@@ -1,7 +1,7 @@
 fn main() -> Unit
-  "The AIP compiler written in AIP. `ast <file>` prints the body dump, `tokens <file>` prints the tokens of a file; `index <file>...` prints each file's index line."
-  effects file.read, process.args, terminal.write
+  "The AIP compiler written in AIP. `ast <file>` prints the body dump, `tokens <file>` prints the tokens of a file; `index <file>...` prints each file's index line; `native <projectDir> <out.exe>` compiles a project to a Windows .exe without C# or a linker."
+  effects file.read, file.write, process.args, terminal.write
   fails
 body
   let mode = if argCount() < 2 then "" else arg(0)
-  if mode == "ast" then printAst(arg(1)) else if mode == "tokens" then printAll(lexAll(bytesDecode(fileRead(arg(1)))), 0) else if mode == "index" then printIndex(1) else printLine("usage: aipc tokens <file> | aipc index <file>...")
+  if mode == "ast" then printAst(arg(1)) else if mode == "tokens" then printAll(lexAll(bytesDecode(fileRead(arg(1)))), 0) else if mode == "index" then printIndex(1) else if mode == "native" and argCount() >= 3 then natBuild(arg(1), arg(2)) else printLine("usage: aipc tokens <file> | aipc index <file>... | aipc native <projectDir> <out.exe>")

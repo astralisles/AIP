@@ -1,0 +1,3 @@
+const regRbx I64
+  "x86-64 register number of rbx."
+  value 3

@@ -1,0 +1,3 @@
+const ccNs I64
+  "Condition code `not sign` (the result is not negative)."
+  value 9

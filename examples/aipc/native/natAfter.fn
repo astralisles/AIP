@@ -1,0 +1,9 @@
+fn natAfter(s NatS, ctx NatCtx, slot I64) -> NatCtx
+  "The names in scope after one statement: a `let` adds its name at the next free stack slot."
+  pure
+  fails
+body
+  match s
+    SLet(name, value) => NatCtx(listAppend(ctx.vars, NatVar(name, natTypeOf(value, ctx), 0 - 8 * (slot + 1))), ctx.fns)
+    SExpr(value) => ctx
+    SIf(cond, whenTrue, whenFalse) => ctx

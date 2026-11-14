@@ -1,0 +1,5 @@
+fn natGenUnary(op Text, operand List<I64>) -> List<I64>
+  "Code for - (negate), ~ (flip bits) and not."
+  pure
+body
+  if op == "-" then asmCat(operand, asmGroupF7(3, regRax)) else if op == "~" then asmCat(operand, asmGroupF7(2, regRax)) else asmCat(operand, asmAluRI(6, regRax, 1))

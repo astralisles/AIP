@@ -1,0 +1,6 @@
+fn natGenFns(fns List<NatFn>, i I64, acc List<List<I64>>) -> List<List<I64>>
+  "The machine code of every function, in order."
+  pure
+  fails
+body
+  if i >= listLength(fns) then acc else natGenFns(fns, i + 1, listAppend(acc, natGenFn(listGet(fns, i), fns)))

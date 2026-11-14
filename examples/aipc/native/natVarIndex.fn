@@ -1,0 +1,6 @@
+fn natVarIndex(vars List<NatVar>, name Text, i I64) -> I64
+  "The index of the last name in scope called name, searching down from i; -1 when there is none."
+  pure
+  fails
+body
+  if i < 0 then 0 - 1 else if listGet(vars, i).name == name then i else natVarIndex(vars, name, i - 1)

@@ -1,0 +1,3 @@
+const opAnd I64
+  "Opcode byte of `and r/m64, r64`."
+  value 33

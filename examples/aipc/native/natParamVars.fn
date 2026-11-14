@@ -1,0 +1,6 @@
+fn natParamVars(params List<ParamDecl>, i I64, acc List<NatVar>) -> List<NatVar>
+  "The parameters as names in scope. The caller pushed the arguments left to right, so the last one is nearest to rbp."
+  pure
+  fails
+body
+  if i >= listLength(params) then acc else natParamVars(params, i + 1, listAppend(acc, NatVar(listGet(params, i).name, natBase(listGet(params, i).type), 16 + 8 * (listLength(params) - 1 - i))))

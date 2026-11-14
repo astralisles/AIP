@@ -1,0 +1,5 @@
+fn natFirst(a Text, b Text) -> Text
+  "The first of two messages that is not empty."
+  pure
+body
+  if a == "" then b else a

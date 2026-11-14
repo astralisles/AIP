@@ -1,0 +1,7 @@
+fn natCallType(ctx NatCtx, name Text) -> Text
+  "The type a call to name produces, or an empty text for an unknown function."
+  pure
+  fails
+body
+  let at = natFnIndex(ctx.fns, name, 0)
+  if name == "printLine" then "Unit" else if name == "textFromInt" then "Text" else if at < 0 then "" else natBase(listGet(ctx.fns, at).header.ret)

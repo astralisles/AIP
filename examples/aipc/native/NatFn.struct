@@ -1,0 +1,4 @@
+struct NatFn
+  "One function of the program being compiled: its header and its body statements."
+  header FnHeader
+  body List<NatS>

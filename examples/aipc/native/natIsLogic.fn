@@ -1,0 +1,5 @@
+fn natIsLogic(op Text) -> Bool
+  "True for the operators that give a Bool: and, or, => and the comparisons."
+  pure
+body
+  op == "and" or op == "or" or op == "=>" or op == "==" or op == "!=" or op == "<" or op == "<=" or op == ">" or op == ">="

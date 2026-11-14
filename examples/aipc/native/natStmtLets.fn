@@ -1,0 +1,9 @@
+fn natStmtLets(s NatS) -> I64
+  "How many stack slots one statement needs."
+  pure
+  fails
+body
+  match s
+    SLet(name, value) => 1
+    SExpr(value) => 0
+    SIf(cond, whenTrue, whenFalse) => natCountLets(whenTrue, 0) + natCountLets(whenFalse, 0)

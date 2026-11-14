@@ -1,0 +1,9 @@
+fn peImports() -> List<I64>
+  "The .rdata section: the import directory, the lookup and address tables (3 functions of KERNEL32.dll), the DLL name and the hint/name entries. 160 bytes; the section starts at address 4096."
+  pure
+  fails
+body
+  let descriptor = asmCat4(w32(4096 + 40), w32(0), w32(0), asmCat(w32(4096 + 104), w32(4096 + 72)))
+  let table = asmCat4(w64(4096 + 118), w64(4096 + 134), w64(4096 + 146), w64(0))
+  let names = asmCat4(bytesFromText("KERNEL32.dll"), asmZeros(2), asmCat(w16(0), bytesFromText("GetStdHandle")), asmCat3(asmZeros(2), w16(0), bytesFromText("WriteFile")))
+  asmCat6(descriptor, asmZeros(20), table, table, names, asmCat3(asmZeros(1), w16(0), asmCat(bytesFromText("ExitProcess"), asmZeros(1))))

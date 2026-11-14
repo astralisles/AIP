@@ -1,0 +1,5 @@
+struct NatVar
+  "A name the generated code can read: a parameter or a `let`, its type, and its offset from rbp."
+  name Text
+  type Text
+  disp I64

@@ -1,0 +1,5 @@
+fn asmRex(w I64, reg I64, rm I64) -> I64
+  "A REX prefix byte: w is 1 for 64-bit operands; reg and rm add the high bit of the two register fields."
+  pure
+body
+  64 + w * 8 + (reg >> 3) * 4 + (rm >> 3)

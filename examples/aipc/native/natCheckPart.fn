@@ -1,0 +1,7 @@
+fn natCheckPart(p Expr, ctx NatCtx) -> Text
+  "The first problem in one part of a text, or an empty text."
+  pure
+  fails
+body
+  let type = natTypeOf(p, ctx)
+  if natIsLit(p) then "" else natFirst(natCheck(p, ctx), if type == "I64" or type == "Text" or type == "Bool" then "" else "a {type} inside text")

@@ -1,0 +1,6 @@
+fn natOffsets(blocks List<List<I64>>, i I64, pos I64, acc List<I64>) -> List<I64>
+  "The code offset of each block, given the offset pos where block i starts."
+  pure
+  fails
+body
+  if i >= listLength(blocks) then acc else natOffsets(blocks, i + 1, pos + listLength(listGet(blocks, i)), listAppend(acc, pos))

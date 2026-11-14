@@ -1,0 +1,9 @@
+fn natCheckCall(name Text, args List<Expr>, ctx NatCtx) -> Text
+  "The first problem in a call, or an empty text. Only printLine, textFromInt and the functions of the program can be called."
+  pure
+  fails
+body
+  let at = natFnIndex(ctx.fns, name, 0)
+  let builtin = (name == "printLine" or name == "textFromInt") and listLength(args) == 1
+  let user = at >= 0 and listLength(args) == listLength(listGet(ctx.fns, at).header.params)
+  if builtin or user then natCheckList(args, 0, ctx) else "the call to `{name}`"

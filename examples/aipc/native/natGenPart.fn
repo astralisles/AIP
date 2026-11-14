@@ -1,0 +1,6 @@
+fn natGenPart(p Expr, ctx NatCtx) -> List<I64>
+  "Code for one part of a text: a literal piece or an expression turned into text."
+  pure
+  fails
+body
+  if natIsLit(p) then asmLit(natLitText(p)) else natGenConv(natTypeOf(p, ctx), natGen(p, ctx), listLength(ctx.fns))

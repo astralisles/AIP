@@ -1,0 +1,6 @@
+fn asmHex(hex Text) -> List<I64>
+  "Fixed instruction bytes written as hex digits."
+  pure
+  fails
+body
+  bytesFromHex(hex)

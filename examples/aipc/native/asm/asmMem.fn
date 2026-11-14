@@ -1,0 +1,6 @@
+fn asmMem(w I64, op I64, reg I64, base I64, disp I64) -> List<I64>
+  "An instruction on reg and the memory [base+disp32]: op 139 loads, 137 stores, 141 is lea, 136 stores a byte (w 0)."
+  pure
+body
+  let sib = if (base & 7) == 4 then asmByte(36) else asmNone()
+  asmCat4(asmByte(asmRex(w, reg, base)), asmByte(op), asmByte(asmModRm(2, reg, base)), asmCat(sib, asmLe(disp, 4)))

@@ -1,0 +1,5 @@
+fn peAlign(v I64, a I64) -> I64
+  "v rounded up to a multiple of a."
+  pure
+body
+  (v + a - 1) / a * a

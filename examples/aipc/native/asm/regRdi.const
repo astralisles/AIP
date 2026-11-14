@@ -1,0 +1,3 @@
+const regRdi I64
+  "x86-64 register number of rdi."
+  value 7

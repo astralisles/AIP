@@ -1,0 +1,6 @@
+fn peName8(name Text) -> List<I64>
+  "A section name: its letters padded with zeros to 8 bytes."
+  pure
+  fails
+body
+  pePad(bytesFromText(name), 8)

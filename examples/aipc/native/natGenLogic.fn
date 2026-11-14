@@ -1,0 +1,6 @@
+fn natGenLogic(op Text, left List<I64>, right List<I64>) -> List<I64>
+  "Code for and, or and =>: the right side only runs when the left side does not decide."
+  pure
+body
+  let first = if op == "=>" then asmCat(left, asmAluRI(6, regRax, 1)) else left
+  asmCat4(first, asmTest(regRax, regRax), asmJcc(if op == "and" then ccE else ccNe, listLength(right)), right)

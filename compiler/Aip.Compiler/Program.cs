@@ -16,6 +16,7 @@ const string Usage = """
       aip find <projectDir> <word>...                 search project and std functions by name, doc, effect (best match first)
       aip spec                                        print the one-page language spec (for a model to read first)
     options: --verbose (or -v, or env AIP_VERBOSE=1) logs compiler steps and timings to stderr
+             --backend native|cs  native writes a Windows .exe from machine code with no C# (windows-x64, small subset; default cs)
     run-time: AIP_TRACE=1 makes a crashing program print its full stack trace; `logLine` writes to stderr
     targets: windows-x64, windows-arm64, linux-x64, linux-arm64, macos-arm64 (default: this machine)
     """;
@@ -47,6 +48,7 @@ if (args.Length < 2 || args[0] is not ("check" or "index" or "query" or "build" 
 var command = args[0];
 var dir = Path.GetFullPath(args[1]);
 string? target = null, outDir = null;
+string backendName = "cs";
 bool verbose = Environment.GetEnvironmentVariable("AIP_VERBOSE") is "1" or "true";
 string[] queryArgs = [];
 if (command == "query") { queryArgs = args[2..]; args = args[..2]; }
@@ -55,6 +57,7 @@ for (int i = 2; i < args.Length; i++)
     if (args[i] is "--verbose" or "-v") verbose = true;
     else if (args[i] == "--target" && i + 1 < args.Length) target = args[++i];
     else if (args[i] == "--out" && i + 1 < args.Length) outDir = Path.GetFullPath(args[++i]);
+    else if (args[i] == "--backend" && i + 1 < args.Length && args[i + 1] is "cs" or "native") backendName = args[++i];
     else { Console.WriteLine($"unknown option `{args[i]}`\n{Usage}"); return 2; }
 }
 if (!Directory.Exists(dir)) { Console.WriteLine($"error no-project: `{args[1]}` is not a folder"); return 1; }
@@ -169,7 +172,7 @@ if (command == "run" && target != null && target != host)
 target ??= host;
 Directory.CreateDirectory(outDir);
 File.WriteAllText(Path.Combine(outDir, "index.txt"), Index());
-var backend = new CsBackend { Log = Log };
+IBackend backend = backendName == "native" ? new NativeBackend { Log = Log } : new CsBackend { Log = Log };
 Log($"building for {target} into {outDir}");
 var exe = backend.Build(program, outDir, target);
 if (exe == null) { Log("build failed"); return 1; }

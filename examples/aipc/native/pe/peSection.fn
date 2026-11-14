@@ -1,0 +1,6 @@
+fn peSection(name Text, vsize I64, rva I64, rawSize I64, rawPtr I64, flags I64) -> List<I64>
+  "One 40-byte section header."
+  pure
+  fails
+body
+  asmCat6(peName8(name), w32(vsize), w32(rva), w32(rawSize), w32(rawPtr), asmCat4(w32(0), w32(0), w32(0), w32(flags)))

@@ -1,0 +1,6 @@
+fn natCheckParts(parts List<Expr>, i I64, ctx NatCtx) -> Text
+  "The first problem in the parts of a text, or an empty text. A part can be a Text, I64 or Bool."
+  pure
+  fails
+body
+  if i >= listLength(parts) then "" else natFirst(natCheckPart(listGet(parts, i), ctx), natCheckParts(parts, i + 1, ctx))

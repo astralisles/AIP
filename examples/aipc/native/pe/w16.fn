@@ -1,0 +1,5 @@
+fn w16(v I64) -> List<I64>
+  "A 16-bit little-endian field."
+  pure
+body
+  asmLe(v, 2)

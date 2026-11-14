@@ -1,0 +1,3 @@
+const regRdx I64
+  "x86-64 register number of rdx."
+  value 2

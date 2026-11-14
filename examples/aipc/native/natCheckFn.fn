@@ -1,0 +1,10 @@
+fn natCheckFn(f NatFn, fns List<NatFn>) -> Text
+  "The first thing in a function the native compiler cannot compile, with the function's name, or an empty text."
+  pure
+  fails
+body
+  let name = f.header.name
+  let ctx = NatCtx(natParamVars(f.header.params, 0, listEmpty()), fns)
+  let typesOk = natSupported(natBase(f.header.ret)) and natParamsOk(f.header.params, 0)
+  let problem = if listLength(f.body) == 0 then "the std function `{name}`" else if typesOk then natCheckStmts(f.body, 0, ctx, 0) else "the types in `{name}`"
+  if problem == "" then "" else "{name}: the native back end cannot compile {problem} yet"

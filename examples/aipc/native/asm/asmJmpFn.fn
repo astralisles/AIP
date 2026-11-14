@@ -1,0 +1,5 @@
+fn asmJmpFn(idx I64) -> List<I64>
+  "jmp to the function (or runtime helper) with this number"
+  pure
+body
+  asmCat(asmByte(233), asmMark(0, idx))

@@ -1,0 +1,6 @@
+fn natCheckFns(fns List<NatFn>, i I64) -> Text
+  "The first problem in any function of the program, or an empty text."
+  pure
+  fails
+body
+  if i >= listLength(fns) then "" else natFirst(natCheckFn(listGet(fns, i), fns), natCheckFns(fns, i + 1))

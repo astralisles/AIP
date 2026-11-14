@@ -1,0 +1,5 @@
+fn asmZeros(n I64) -> List<I64>
+  "n zero bytes."
+  pure
+body
+  if n <= 0 then asmNone() else asmCat(asmByte(0), asmZeros(n - 1))

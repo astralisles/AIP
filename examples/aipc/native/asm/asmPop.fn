@@ -1,0 +1,5 @@
+fn asmPop(r I64) -> List<I64>
+  "pop r"
+  pure
+body
+  if r >= 8 then asmCat(asmByte(65), asmByte(88 + (r & 7))) else asmByte(88 + r)

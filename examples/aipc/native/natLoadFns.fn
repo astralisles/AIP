@@ -1,0 +1,6 @@
+fn natLoadFns(dir Text, names List<Text>, i I64, acc List<NatFn>) -> List<NatFn>
+  "Read every .fn file named in names, from i on."
+  effects file.read
+  fails
+body
+  if i >= listLength(names) then acc else natLoadFns(dir, names, i + 1, if textEndsWith(listGet(names, i), ".fn") then listAppend(acc, natLoadOne("{dir}/{listGet(names, i)}")) else acc)

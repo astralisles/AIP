@@ -1,0 +1,9 @@
+fn natGenFn(f NatFn, fns List<NatFn>) -> List<I64>
+  "The machine code of one function: set up the frame, the body, leave and return."
+  pure
+  fails
+body
+  let ctx = NatCtx(natParamVars(f.header.params, 0, listEmpty()), fns)
+  let lets = natCountLets(f.body, 0)
+  let frame = if lets > 0 then asmAluRI(5, regRsp, 8 * lets) else asmNone()
+  asmCat4(asmCat3(asmPush(regRbp), asmMovRR(regRbp, regRsp), frame), natGenStmts(f.body, 0, ctx, 0), asmHex("C9C3"), asmNone())

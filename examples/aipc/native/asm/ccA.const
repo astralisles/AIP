@@ -1,0 +1,3 @@
+const ccA I64
+  "Condition code `above` (unsigned greater)."
+  value 7
