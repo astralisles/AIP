@@ -1,0 +1,4 @@
+# Relational databases (SQLite first); the engine is picked by the url given to dbOpen.
+name db
+version 1.0.0
+handle DbConn

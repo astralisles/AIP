@@ -1,0 +1,4 @@
+fn mongoUpdate(conn MongoConn, collection Text, filter Text, update Text) -> Int
+  "Apply a JSON update document (the set operator with fields) to every matching document; returns how many changed."
+  effects mongo.write
+extern

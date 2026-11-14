@@ -38,7 +38,7 @@ static class Project
 
         string[]? Over(string file) => overrides != null && overrides.TryGetValue(file, out var l) ? l : null;
 
-        void LoadFolder(string root, bool isStd)
+        void LoadFolder(string root, bool isStd, bool checkLayout = true)
         {
             // FileInfo comes from the directory listing, so size and write time cost no extra file opens.
             var infos = new DirectoryInfo(root).EnumerateFiles("*", SearchOption.AllDirectories)
@@ -78,7 +78,7 @@ static class Project
                 if (parsed[i] is Diagnostic d) { diags.Add(d); continue; }
                 var fn = (Fn)parsed[i]!;
                 fn.IsStd = isStd;
-                if (isStd && StdLayoutError(root, file, fn) is { } layout)
+                if (isStd && checkLayout && StdLayoutError(root, file, fn) is { } layout)
                     diags.Add(new Diagnostic(file, fn.Line, "std-layout", layout, "see compiler/std/README.md"));
                 if (program.Fns.TryGetValue(fn.Name, out var other))
                     diags.Add(new Diagnostic(file, fn.Line, "duplicate-name", $"`{fn.Name}` is already defined in {Path.GetFileName(other.File)}{(other.IsStd ? " (standard library)" : "")}", "names are unique across the project; rename one"));
@@ -89,6 +89,13 @@ static class Project
         LoadFolder(Path.Combine(AppContext.BaseDirectory, "std"), true);
         if (stdOnly) return program;
         phase?.Invoke("load cache");
+        // Packages the project declares in packages.txt load like std (they are not project functions); nothing else is visible.
+        foreach (var pkg in Packages.Declared(dir, diags))
+        {
+            program.Packages.Add(pkg);
+            foreach (var h in pkg.Handles) program.HandleTypes.Add(h);
+            LoadFolder(pkg.Dir, true, checkLayout: false);
+        }
         LoadFolder(dir, false);
         phase?.Invoke($"read+parse ({cache?.Hits ?? 0} from cache, {cache?.Misses ?? 0} from disk)");
         cache?.Save();

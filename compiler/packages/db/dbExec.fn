@@ -1,0 +1,4 @@
+fn dbExec(conn DbConn, sql Text, args List<Text>) -> Int
+  "Run an INSERT, UPDATE, DELETE or DDL statement; `?` marks take the args in order. Returns the rows changed."
+  effects db.write
+extern

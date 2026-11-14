@@ -1,0 +1,4 @@
+fn mongoClose(conn MongoConn) -> Unit
+  "Close the MongoDB connection."
+  effects mongo.close
+extern

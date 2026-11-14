@@ -1,0 +1,22 @@
+fn main() -> Unit
+  "MongoDB demo: insert, find, update and delete JSON documents. Connects to the url in the MONGO_URL environment variable (default mongodb://localhost:27017); uses the throwaway database aip_example and drops its collection."
+  effects process.env, mongo.connect, mongo.read, mongo.write, mongo.close, terminal.write
+  fails
+body
+  let given = envGet("MONGO_URL")
+  let url = if envHas("MONGO_URL") then given else "mongodb://localhost:27017"
+  let conn = mongoOpen(url, "aip_example")
+  mongoDrop(conn, "people")
+  let id = mongoInsert(conn, "people", "\{\"name\": \"Ada\", \"age\": 36\}")
+  let id2 = mongoInsert(conn, "people", "\{\"name\": \"Linus\", \"age\": 55\}")
+  printLine("id lengths: {textLength(id)} {textLength(id2)}")
+  let old = mongoFind(conn, "people", "\{\"age\": \{\"$gt\": 40\}\}")
+  printLine("found: {listLength(old)}")
+  let changed = mongoUpdate(conn, "people", "\{\"name\": \"Ada\"\}", "\{\"$set\": \{\"age\": 37\}\}")
+  printLine("updated: {changed}")
+  let all = mongoFind(conn, "people", "\{\}")
+  printLine("all: {listLength(all)}")
+  let gone = mongoDelete(conn, "people", "\{\"name\": \"Linus\"\}")
+  printLine("deleted: {gone}")
+  mongoDrop(conn, "people")
+  mongoClose(conn)

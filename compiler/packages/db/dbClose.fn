@@ -1,0 +1,4 @@
+fn dbClose(conn DbConn) -> Unit
+  "Close a database connection."
+  effects db.close
+extern

@@ -1,0 +1,4 @@
+fn dbQuery(conn DbConn, sql Text, args List<Text>) -> List<List<Text> >
+  "Run a SELECT; `?` marks take the args in order. Returns one list of column texts per row (NULL becomes empty text)."
+  effects db.read
+extern

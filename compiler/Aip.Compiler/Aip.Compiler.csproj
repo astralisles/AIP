@@ -18,6 +18,9 @@
     <Content Include="..\std\**\*.fn" LinkBase="std" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\std\**\*.variant" LinkBase="std" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\std\**\*.const" LinkBase="std" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\packages\**\*.fn" LinkBase="packages" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\packages\**\package.txt" LinkBase="packages" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\packages\**\cs\*" LinkBase="packages" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\spec.md" Link="spec.md" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <!-- std files are grouped in folders (std/text, std/list, ...). Drop copies whose source was moved
