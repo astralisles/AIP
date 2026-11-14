@@ -133,7 +133,7 @@ sealed partial class CsBackend : IBackend
         "U8" => "byte", "U16" => "ushort", "U32" => "uint", "U64" => "ulong", "Text" => "string", "Bool" => "bool", "_" => "object",
         _ when t.StartsWith("Fn<", StringComparison.Ordinal) => "System.Func<object[], object>", // a function value: arguments in an array, result boxed
         _ when t.StartsWith("Task<", StringComparison.Ordinal) => "object", // a started task, only ever passed to Rt.TaskAwait
-        "TcpListener" or "TcpConn" or "UdpSocket" => "object", // handles, opened by effectful std functions
+        "TcpListener" or "TcpConn" or "UdpSocket" or "GfxWindow" => "object", // handles, opened by effectful std functions
         _ when t.Length == 1 && char.IsAsciiLetterUpper(t[0]) => "object", // a type parameter: erased
         _ when t.StartsWith("List<", StringComparison.Ordinal) => "Aip.Persistent.PList",
         _ when t.StartsWith("Queue<", StringComparison.Ordinal) => "Aip.Persistent.PFifo",

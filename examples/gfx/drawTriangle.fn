@@ -1,0 +1,12 @@
+fn drawTriangle(win GfxWindow) -> Unit
+  "Clear to blue, then draw one red triangle with a shader program."
+  effects gfx.draw
+  fails
+body
+  gfxClear(win, 0.0, 0.0, 1.0, 1.0)
+  let program = gfxCompile(win, "attribute vec2 pos; void main() \{ gl_Position = vec4(pos, 0.0, 1.0); \}", "precision mediump float; uniform vec4 color; void main() \{ gl_FragColor = color; \}")
+  gfxUse(win, program)
+  let buffer = gfxBuffer(win, triangleData())
+  gfxAttrib(win, program, "pos", buffer, 2, 2, 0)
+  gfxUniform(win, program, "color", listAppend(listAppend(listAppend(listAppend(listEmpty(), 1.0), 0.0), 0.0), 1.0))
+  gfxDraw(win, "triangles", 0, 3)

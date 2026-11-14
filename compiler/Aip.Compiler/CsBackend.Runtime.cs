@@ -6,6 +6,7 @@ sealed partial class CsBackend
     static readonly (string File, string Source)[] RuntimeParts =
     {
         ("Rt.Core.cs", RtCore),
+        ("Rt.Gfx.cs", RtGfx),
         ("Rt.Map.cs", RtMap),
         ("Rt.Net.cs", RtNet),
         ("Rt.Profile.cs", RtProfile),

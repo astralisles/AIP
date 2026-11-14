@@ -1,0 +1,14 @@
+fn main() -> Unit
+  "OpenGL demo: draw a red triangle on a blue background in a hidden window and read two pixels back. Pass `show` to open a visible window instead."
+  effects process.args, terminal.write, gfx.window, gfx.draw, gfx.read
+  fails
+body
+  let visible = argCount() > 0 and arg(0) == "show"
+  let win = gfxOpen("AIP gfx", 64, 64, visible)
+  drawTriangle(win)
+  let center = gfxReadPixels(win, 32, 32, 1, 1)
+  let corner = gfxReadPixels(win, 1, 60, 1, 1)
+  printLine("center pixel: {pixelText(center)}")
+  printLine("corner pixel: {pixelText(corner)}")
+  waitUntilClosed(win, visible)
+  gfxClose(win)

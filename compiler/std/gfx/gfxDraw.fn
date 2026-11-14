@@ -1,0 +1,5 @@
+fn gfxDraw(window GfxWindow, mode Text, first Int, count Int) -> Unit
+  "Draw count vertices; mode is points, lines, lineStrip, triangles, triangleStrip or triangleFan."
+  effects gfx.draw
+  fails
+extern

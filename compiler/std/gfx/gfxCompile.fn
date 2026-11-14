@@ -1,0 +1,5 @@
+fn gfxCompile(window GfxWindow, vertexSource Text, fragmentSource Text) -> Int
+  "Build a shader program from GLSL ES 1.00 source (the WebGL dialect); returns its id, fails with the compiler log."
+  effects gfx.draw
+  fails
+extern

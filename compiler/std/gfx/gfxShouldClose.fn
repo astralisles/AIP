@@ -1,0 +1,4 @@
+fn gfxShouldClose(window GfxWindow) -> Bool
+  "Handle window events; true once the user closed the window."
+  effects gfx.window
+extern

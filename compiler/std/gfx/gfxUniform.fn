@@ -1,0 +1,5 @@
+fn gfxUniform(window GfxWindow, program Int, name Text, values List<F64>) -> Unit
+  "Set a float uniform of the program: 1 to 4 values make a float, vec2, vec3 or vec4."
+  effects gfx.draw
+  fails
+extern

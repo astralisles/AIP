@@ -1,0 +1,6 @@
+fn pixelText(pixel List<U8>) -> Text
+  "One RGBA pixel as `r g b a`, each 0 to 255."
+  pure
+  fails
+body
+  "{listGet(pixel, 0)} {listGet(pixel, 1)} {listGet(pixel, 2)} {listGet(pixel, 3)}"
