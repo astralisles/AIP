@@ -1,0 +1,9 @@
+fn intEdges() -> Unit
+  "Print integer division, remainder, pow, gcd, clamp and shifts at zero, negative and boundary values."
+  effects terminal.write
+  fails
+body
+  printLine("div: {7 / 2} {-7 / 2} {7 / -2} rem: {7 % 3} {-7 % 3} {7 % -3}")
+  printLine("pow: {intPow(2, 0)} {intPow(0, 0)} {intPow(-2, 3)} {intPow(2, 62)} gcd: {intGcd(0, 5)} {intGcd(0, 0)} {intGcd(-12, 18)}")
+  printLine("clamp: {intClamp(5, 5, 5)} {intClamp(-1, 0, 10)} abs: {intAbs(0)} sign: {intSign(0)}")
+  printLine("shift: {intShiftLeft(1, 0)} {intShiftRight(-1, 10)} {intShiftRight(1, 1)} min/max: {intMin(-1, -1)} {intMax(0, -0)}")

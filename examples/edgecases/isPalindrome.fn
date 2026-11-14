@@ -1,0 +1,8 @@
+fn isPalindrome(text Text) -> Bool
+  "True when the text reads the same both ways; empty and one-letter text are palindromes."
+  pure
+  example isPalindrome("") == true
+  example isPalindrome("a") == true
+  example isPalindrome("abca") == false
+body
+  if textLength(text) < 2 then true else if textSlice(text, 0, 1) != textSlice(text, textLength(text) - 1, textLength(text)) then false else isPalindrome(textSlice(text, 1, textLength(text) - 1))
