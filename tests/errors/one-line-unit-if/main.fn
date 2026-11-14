@@ -1,0 +1,6 @@
+fn main() -> Unit
+  "A one-line if with Unit branches is rejected."
+  effects terminal.write
+body
+  let n = 1
+  if n > 0 then printLine("positive") else printLine("not positive")

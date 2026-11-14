@@ -320,8 +320,11 @@ sealed partial class Checker
         var c = TypeOf(i.Cond, env, used);
         if (c != "" && c != "Bool") Error(i.Line, "type-mismatch", $"the `if` condition must be Bool, found {c}");
         var a = TypeOf(i.Then, env, used);
+        if (i.Else is IfExpr chained) chained.InChain = true;
         var b = TypeOf(i.Else, env, used);
         if (a != "" && b != "" && !Compat(a, b)) Error(i.Line, "type-mismatch", $"`then` gives {a} but `else` gives {b}");
+        if (i.Then is not BlockExpr && !i.InChain && i.Else is not IfExpr && a == "Unit" && b == "Unit")
+            Error(i.Line, "one-line-unit-if", "a one-line `if ... then ... else ...` must give a value, but both branches are Unit", "write an `if c then` block: statements indented 4 under `then`, a line `else` (indented 2), statements indented 4");
         return a == "" || b == "" ? a + b : Merge(a, b);
     }
 }

@@ -1,19 +1,23 @@
 # Should we enforce new lines for readability? (T-1041)
 
-Answer: **no blank-line rule; yes to the line structure the grammar already enforces; maybe later a long-line lint.**
+Answer: **yes for `if` statements. A one-line `if ... then ... else ...` whose branches are both Unit is rejected
+(`one-line-unit-if`); write the block form.** There is still no blank-line rule.
 
-## What is already enforced
-- One definition per file, one header item per line, one `match` arm per line, one statement per line, fixed indentation
-  (`bad-indent` test). A program cannot be written as one long line of statements.
-- The parser ignores blank lines (`Parser.cs`), so they are allowed but never required.
+    if a > 0 then
+      doX()
+    else
+      doY()
 
-## Why not require (or forbid) blank lines
-- AIP files are short (one function) and read mostly by an AI through the index; blank lines add tokens, not meaning.
-- A blank-line rule is a style opinion with no right answer, and every rule adds an error code, a test and a fix-up cost
-  for generated code. Keep one canonical shape instead: if a style is wanted, a future `aip fmt` should produce it, not the checker reject it.
+not `if a > 0 then doX() else doY()`.
 
-## The real readability problem
-Nested calls on one line, for example `examples/shapes/main.fn` building a list with four nested `listAppend` calls (155 columns).
-That is not fixed by blank lines. If we act, the best next step is a lint warning `long-line` (for example over 120 columns,
-advice: split with `let`), added in `Lint.cs` with a `tests/lint/long-line` case. Not done here: it needs a decision on the limit
-and would warn on existing examples.
+## What is enforced
+- Already: one definition per file, one header item, `match` arm and statement per line, fixed indentation.
+- New (T-1041): a one-line `if` that gives a value (`let x = if c then 1 else 2`) is still fine, because a block cannot
+  be a value. One that does something (both branches Unit) must be a block.
+- Not enforced: blank lines (the parser ignores them; they add tokens, not meaning, for an AI reader).
+
+## Open
+- `else if` chains of Unit branches on one line are still accepted, because the block form cannot nest an `if` inside a branch yet
+  (and `compiler/aipc` has its own body parser that would need the same change). Seen in `examples/net/main.fn` and
+  `compiler/aipc/{main,body/printBody,body/printHeader}.fn`. Next step: allow `else if c then` as a block line, then reject chains too.
+- Long nested-call lines (for example the list build in `examples/shapes/main.fn`) are a separate problem: a `long-line` lint.
