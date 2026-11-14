@@ -1,0 +1,4 @@
+fn mathSqrt(x F64) -> F64
+  "Square root; NaN for a negative number."
+  pure
+extern

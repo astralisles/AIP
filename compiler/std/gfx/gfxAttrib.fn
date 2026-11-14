@@ -1,0 +1,5 @@
+fn gfxAttrib(window GfxWindow, program I64, name Text, buffer I64, size I64, stride I64, offset I64) -> Unit
+  "Feed a shader attribute from a buffer: size floats per vertex (1 to 4), stride and offset counted in floats."
+  effects gfx.draw
+  fails
+extern

@@ -1,0 +1,4 @@
+fn gfxClear(window GfxWindow, r F64, g F64, b F64, a F64) -> Unit
+  "Fill the whole frame with one color; each part is 0.0 to 1.0."
+  effects gfx.draw
+extern

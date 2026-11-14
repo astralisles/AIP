@@ -1,0 +1,4 @@
+fn randomNext(state I64) -> I64
+  "The next state of the seeded generator (SplitMix64). Pure: the same state always gives the same result, so games replay exactly. Keep the state, pass it on."
+  pure
+extern

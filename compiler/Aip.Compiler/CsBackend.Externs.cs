@@ -16,6 +16,8 @@ sealed partial class CsBackend
         AddSortedExterns(d);
         AddTaskExterns(d);
         AddNetExterns(d);
+        AddGfxExterns(d);
+        AddTimeExterns(d);
         AddSystemExterns(d);
         return d;
     }

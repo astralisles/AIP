@@ -1,0 +1,9 @@
+fn waitUntilClosed(win GfxWindow, visible Bool) -> Unit
+  "When the window is visible, keep showing it until the user closes it."
+  effects gfx.window
+body
+  if visible and not gfxShouldClose(win) then
+    gfxSwap(win)
+    waitUntilClosed(win, visible)
+  else
+    noop()

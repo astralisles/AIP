@@ -1,0 +1,8 @@
+fn printRow(r I64, c I64, cols I64, line Text) -> Unit
+  "Inner loop with an effect: print one row of the multiplication table."
+  effects terminal.write
+body
+  if c > cols then
+    printLine(line)
+  else
+    printRow(r, c + 1, cols, "{line} {r * c}")

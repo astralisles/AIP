@@ -168,6 +168,14 @@ sealed partial class Parser
             }
 
             // state 2: a statement
+            if (IsCompoundHeader(text, out var compoundLet))
+            {
+                var compound = ParseCompound(lines, ref i, indent, text);
+                fn.Body.Add(new Stmt { Line = compound.Line, Let = compoundLet, Value = compound });
+                pending.Clear();
+                i--;
+                continue;
+            }
             if (text.StartsWith("if ", StringComparison.Ordinal) && text.EndsWith(" then", StringComparison.Ordinal))
             {
                 openIf = new IfExpr { Line = _line, Cond = ParseExprText(text["if ".Length..^" then".Length]), Then = new BlockExpr { Line = _line }, Else = new BlockExpr { Line = _line } };

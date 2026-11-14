@@ -1,0 +1,5 @@
+fn depth(n I64) -> I64
+  "Not a tail call (the result is added to): uses one stack frame per step."
+  pure
+body
+  if n <= 0 then 0 else 1 + depth(n - 1)

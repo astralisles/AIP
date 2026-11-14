@@ -1,0 +1,7 @@
+fn sumMatch(n I64, acc I64, step Step) -> I64
+  "Add 1..n; the self-call is the body of a match arm, still a tail call."
+  pure
+body
+  match step
+    Go() => if n <= 0 then acc else sumMatch(n - 1, acc + n, Go())
+    Stop() => acc

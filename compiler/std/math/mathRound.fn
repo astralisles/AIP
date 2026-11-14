@@ -1,0 +1,4 @@
+fn mathRound(x F64) -> F64
+  "Nearest whole number, halves away from zero, as F64."
+  pure
+extern

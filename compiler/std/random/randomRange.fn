@@ -1,0 +1,4 @@
+fn randomRange(state I64, bound I64) -> I64
+  "A number from 0 up to but not including bound, taken from the state. Needs bound above 0. Call randomNext first so two draws differ."
+  pure
+extern

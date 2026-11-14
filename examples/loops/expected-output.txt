@@ -1,0 +1,6 @@
+sum 1..10 = 55
+sum of the 3x3 table = 36
+first square above 50 = 64
+ 1 2 3 4
+ 2 4 6 8
+ 3 6 9 12

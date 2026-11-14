@@ -1,0 +1,5 @@
+fn gfxReadPixels(window GfxWindow, x I64, y I64, width I64, height I64) -> List<U8>
+  "Read a rectangle of the drawn frame as RGBA bytes, bottom row first."
+  effects gfx.read
+  fails
+extern

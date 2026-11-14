@@ -1,0 +1,5 @@
+fn gfxOpen(title Text, width I64, height I64, visible Bool) -> GfxWindow
+  "Open a window with an OpenGL ES 2 style context; visible false keeps it hidden (offscreen drawing and tests)."
+  effects gfx.window
+  fails
+extern

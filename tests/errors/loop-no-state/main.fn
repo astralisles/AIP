@@ -1,0 +1,7 @@
+fn main() -> I64
+  "A loop without names."
+  pure
+body
+  loop
+    body
+      done 1
