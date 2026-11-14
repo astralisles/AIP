@@ -55,7 +55,7 @@ All eight runs reported the same costs, independently:
 
 ### 4. Self-hosting
 
-`examples/aipc` has the lexer, header parser and body parser (about 100 files), each compared with the C# compiler.
+`compiler/aipc` has the lexer, header parser and body parser (about 100 files), each compared with the C# compiler.
 The checker, the emitter and `process.run` are missing, and they are the larger part. Self-hosting proves the
 language can carry a big program, which is useful, but it does not test whether models write AIP well, and it
 multiplies the cost of every language change (two parsers to keep equal). `bootstrapping.md` and

@@ -1,6 +1,6 @@
 # Bootstrapping step C1: body parser in AIP (T-0967)
 
-Done: `examples/aipc/body/` reads `requires` / `ensures` / `example` lines and function bodies into an expression tree
+Done: `compiler/aipc/body/` reads `requires` / `ensures` / `example` lines and function bodies into an expression tree
 (`Expr` variant: numbers, texts with `{expr}` holes, names, calls, `.field`, unary and binary operators with the C#
 precedence, `if/then/else`, the subject of a `match`). `aipc ast <file>` prints a dump; `aip ast <file>` (C#, `AstDump.cs`)
 prints the same dump from the C# parser. `scripts\compare-ast.ps1` (run by `tests/checks/bootstrap-body-parser.ps1`)

@@ -1,12 +1,12 @@
-# Bootstrap check: the body parser written in AIP (examples\aipc, `aipc ast <file>`) must print exactly the
+# Bootstrap check: the body parser written in AIP (compiler\aipc, `aipc ast <file>`) must print exactly the
 # dump the C# parser prints (`aip ast`) for every .fn file the C# parser accepts. Files the C# parser rejects are skipped.
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 Set-Location $root
 $aip = Join-Path $PSScriptRoot 'aip.ps1'
-$build = (& $aip build examples\aipc | Out-String).Trim()
+$build = (& $aip build compiler\aipc | Out-String).Trim()
 if ($LASTEXITCODE -ne 0) { "FAIL  aipc: does not build`n$build"; exit 1 }
-$aipc = Join-Path $root 'examples\aipc\build\bin\windows-x64\aipc.exe'
+$aipc = Join-Path $root 'compiler\aipc\build\bin\windows-x64\aipc.exe'
 $cs = Join-Path $root 'compiler\Aip.Compiler\bin\Release\net10.0\aip.exe'
 $files = Get-ChildItem examples, tests, compiler\std -Recurse -Include *.fn | Where-Object { $_.FullName -notmatch '[\/]build[\/]' }
 $names = @($files | ForEach-Object FullName)

@@ -1,6 +1,6 @@
 # What else is needed to bootstrap the compiler (T-0954)
 
-Status today: `examples/aipc` has the lexer and the header parser, both checked against the C# compiler on every test run
+Status today: `compiler/aipc` has the lexer and the header parser, both checked against the C# compiler on every test run
 (`docs/design/bootstrapping.md`). The C# compiler is about 2,700 lines; the part that must be rewritten to compile itself is
 `Parser.cs` (592), `Checker.cs` (546), `CsBackend.cs` (469), `Project.cs` (102) and `Program.cs` (181). `Lint`, `Interp`, `Query`,
 `Fuzz` and `SourceCache` are not needed to bootstrap and stay in C# (or follow later).
@@ -154,6 +154,6 @@ design file and review it before any code generator, and decide the removal date
 
 ## G. Progress log
 
-- Iteration 4: gates F.1 partly met (A1 nested `match`, A4 recursive variant). Fixed the AIP header parser (`examples/aipc/parse/parseType.fn`) to read
+- Iteration 4: gates F.1 partly met (A1 nested `match`, A4 recursive variant). Fixed the AIP header parser (`compiler/aipc/parse/parseType.fn`) to read
   `SortedMap`/`SortedSet` types; `scripts\compare-index.ps1` had been failing on the standard library since T-0951 added them.
   Next: B (text/list/file std functions), then the body parser. Tag `seed-csharp` on the commit that is merged (Architect owns git, so it is left to the user).
