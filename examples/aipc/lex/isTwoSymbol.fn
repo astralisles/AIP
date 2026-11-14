@@ -2,6 +2,7 @@ fn isTwoSymbol(s Text) -> Bool
   "Whether s is one of the two character symbols."
   pure
   example isTwoSymbol("->")
+  example isTwoSymbol(">>")
   example not isTwoSymbol("(")
 body
-  s == "->" or s == "=>" or s == "==" or s == "!=" or s == "<=" or s == ">=" or s == ".."
+  s == "->" or s == "=>" or s == "==" or s == "!=" or s == "<=" or s == ">=" or s == "<<" or s == ">>" or s == ".."

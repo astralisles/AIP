@@ -1,0 +1,8 @@
+fn packPair(grid List<List<I64>>, row I64) -> I64
+  "Pack the two numbers of one row of grid into one number: the first in the high byte, the second in the low byte."
+  pure
+  fails
+  example packPair(listAppend(listEmpty(), listRange(1, 3)), 0) == 258
+body
+  let pair = listGet(grid, row)
+  listGet(pair, 0) << 8 | listGet(pair, 1)

@@ -7,13 +7,17 @@
 (a number literal) is not a type and keeps its name.
 
 ## Done for the bootstrap
-Examples `aipc`: lexer, header parser, body parser (flat dump), compared with the C# compiler by `scripts\compare-*.ps1`.
-Std added in this ticket (example `fileio`, check `tests/checks/fileio.ps1`): `dirList`, `fileExists`, `fileMakeFolder`,
-`fileReadBytes`, `fileWriteBytes`, `processExit`.
+- Examples `aipc`: lexer, header parser, body parser (flat dump), compared with the C# compiler by `scripts\compare-*.ps1`.
+- Std added in this ticket (example `fileio`, check `tests/checks/fileio.ps1`): `dirList`, `fileExists`, `fileMakeFolder`,
+  `processExit`. Byte file I/O is `fileRead`/`fileWrite` with `Bytes` (from master).
+- Function pointers (`&name`) with `listMap/Filter/Fold` arrived from master; `aipc` already parses `&name`.
+- Iteration 6: `aipc` knows the bit operators. The lexer reads `<<` and `>>`, the expression parser has the C# levels
+  (`|`, `^`, `&`, `<< >>` between comparisons and `+ -`) and unary `~`, and the type parser splits the `>>` that ends
+  `List<List<I64>>` the way the C# parser does. Example `bitlex` uses all of these outside text holes.
 
 ## Still needed, in order
-1. **Language gaps:** function pointers with `listMap/Filter/Fold/Sort` (A2), `Result<T,E>` / `Option<T>` (A3; generic
-   variants exist since T-0949, the std use is not written).
+1. **Language gaps:** `Result<T,E>` / `Option<T>` in std (generic variants exist since T-0949; no std type uses them yet),
+   `listSort` with a compare function.
 2. **Body parser leftovers (C1):** `.struct`, `.variant`, `.const` files, `native` line, signature in the tree, nested
    statement tree, parse errors with the `syntax` codes.
 3. **Project loader (C2), checker (C3), IR lowering (C4), code generator + linker (C5), driver (C6).**

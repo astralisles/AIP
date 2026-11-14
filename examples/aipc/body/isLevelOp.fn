@@ -2,7 +2,8 @@ fn isLevelOp(level I64, tok Text) -> Bool
   "Whether a token is an operator of the given operator level."
   pure
   fails
-  example isLevelOp(4, "Sym +")
+  example isLevelOp(8, "Sym +")
+  example isLevelOp(7, "Sym <<")
   example isLevelOp(1, "Ident or")
 body
   (tokKind(tok) == "Sym" or tokKind(tok) == "Ident") and listContains(levelOps(level), tokText(tok))

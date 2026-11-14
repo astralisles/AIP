@@ -1,7 +1,9 @@
 fn parseTypeArgs(toks List<Text>, pos I64, acc Text) -> Parsed
-  "Read the type arguments at pos up to and including `>`; acc is the type text read so far."
+  "Read the type arguments at pos up to and including `>`; acc is the type text read so far. `List<List<I64>>` lexes its end as one `>>` token: the inner list leaves it in place and the outer list consumes it."
   pure
   fails
 body
   let inner = parseType(toks, pos)
-  if tokAt(toks, inner.next) == "Sym ," then parseTypeArgs(toks, inner.next + 1, "{acc}{inner.text},") else Parsed("{acc}{inner.text}>", inner.next + 1)
+  let close = tokAt(toks, inner.next)
+  let leaveHalf = close == "Sym >>" and not textEndsWith(inner.text, ">")
+  if close == "Sym ," then parseTypeArgs(toks, inner.next + 1, "{acc}{inner.text},") else if leaveHalf then Parsed("{acc}{inner.text}>", inner.next) else Parsed("{acc}{inner.text}>", inner.next + 1)

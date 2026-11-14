@@ -3,4 +3,4 @@ fn parseBinary(toks List<Text>, pos I64, level I64) -> ExprParsed
   pure
   fails
 body
-  if level >= 6 then parseUnary(toks, pos) else parseBinaryRest(toks, level, parseBinary(toks, pos, level + 1))
+  if level >= 10 then parseUnary(toks, pos) else parseBinaryRest(toks, level, parseBinary(toks, pos, level + 1))
