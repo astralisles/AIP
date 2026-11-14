@@ -1,0 +1,4 @@
+fn mathPi() -> F64
+  "The constant pi."
+  pure
+extern

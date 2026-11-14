@@ -1,0 +1,10 @@
+sqrt 2 = 1.4142135623730951
+floor -1.5 = -2, ceil -1.5 = -1, round 2.5 = 3
+sin(pi/2) = 1
+atan2(1, 1) * 4 = 3.141592653589793
+pow 2^10 = 1024, lerp 10..20 at 0.25 = 12.5
+clamp 7 into 0..5 = 5, sqrt -1 is NaN: true
+parsed: 6.5
+dice: 2 2 1 1 5 1 2 3 
+same seed, same dice: 2 2 1 1 5 1 2 3 
+count to ten million without growing the stack: 10000000

@@ -1,0 +1,4 @@
+fn mathMin(a F64, b F64) -> F64
+  "The smaller of two floats."
+  pure
+extern
