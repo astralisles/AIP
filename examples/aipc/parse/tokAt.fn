@@ -1,4 +1,4 @@
-fn tokAt(toks List<Text>, pos Int) -> Text
+fn tokAt(toks List<Text>, pos I64) -> Text
   "The token at pos, or `End` past the last token."
   pure
   fails

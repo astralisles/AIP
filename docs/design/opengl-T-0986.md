@@ -10,7 +10,7 @@ Left out on purpose because WebGL lacks them: immediate mode (`glBegin`), client
 through a buffer), fixed-function state, `GL_QUADS`, reading/writing GL state by raw number.
 
 - **Handles:** `GfxWindow` is a built-in handle type (like `UdpSocket`); only `gfxOpen` creates one, so holding one proves
-  `gfx.window` was declared. Shader programs, buffers and textures are plain `Int` ids.
+  `gfx.window` was declared. Shader programs, buffers and textures are plain `I64` ids.
 - **Effects (security rule T-0936):** `gfx.window` (open/close/events/present), `gfx.draw` (anything that changes GPU state
   or draws), `gfx.read` (read pixels back). They show in the index; `aip test` refuses them.
 - **Shaders:** written once in GLSL ES 1.00 (the WebGL dialect). Text literals use `\{` and `\}` for GLSL braces. The desktop

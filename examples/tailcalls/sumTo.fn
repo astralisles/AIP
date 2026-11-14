@@ -1,4 +1,4 @@
-fn sumTo(n Int, acc Int) -> Int
+fn sumTo(n I64, acc I64) -> I64
   "Add 1..n by calling itself in tail position inside an if."
   pure
 body

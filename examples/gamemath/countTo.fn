@@ -1,4 +1,4 @@
-fn countTo(limit Int, n Int) -> Int
+fn countTo(limit I64, n I64) -> I64
   "Count up to limit by calling itself in tail position; it runs as a loop, so ten million steps use constant stack."
   pure
 body

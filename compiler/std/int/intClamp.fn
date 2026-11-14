@@ -1,4 +1,4 @@
-fn intClamp(value Int, low Int, high Int) -> Int
+fn intClamp(value I64, low I64, high I64) -> I64
   "The value limited to low..high; low must not be above high."
   pure
   fails

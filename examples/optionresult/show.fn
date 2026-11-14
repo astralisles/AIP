@@ -1,4 +1,4 @@
-fn show(r Result<Int,Text>) -> Text
+fn show(r Result<I64,Text>) -> Text
   "Print form of a division result."
   pure
 body

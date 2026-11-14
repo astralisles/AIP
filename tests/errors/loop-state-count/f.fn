@@ -1,4 +1,4 @@
-fn f() -> Int
+fn f() -> I64
   "Next gives too few values."
   pure
 body

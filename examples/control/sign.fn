@@ -1,4 +1,4 @@
-fn sign(n Int) -> Int
+fn sign(n I64) -> I64
   "-1, 0 or 1 by the sign of the number."
   pure
   example sign(-4) == -1

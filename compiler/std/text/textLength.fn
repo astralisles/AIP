@@ -1,4 +1,4 @@
-fn textLength(text Text) -> Int
+fn textLength(text Text) -> I64
   "Number of characters in a text."
   pure
 extern

@@ -1,4 +1,4 @@
-fn digitSum(n Int, total Int) -> Int
+fn digitSum(n I64, total I64) -> I64
   "Sum of the decimal digits of the absolute value of n; 0 gives 0."
   pure
   example digitSum(0, 0) == 0

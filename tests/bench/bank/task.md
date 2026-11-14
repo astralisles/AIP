@@ -1,6 +1,6 @@
 # bank
 
-Accounts with Int balances: alice 100, bob 50. A transaction is a variant: `Deposit(account, amount)`,
+Accounts with I64 balances: alice 100, bob 50. A transaction is a variant: `Deposit(account, amount)`,
 `Withdraw(account, amount)`, `Transfer(from, to, amount)`. Applying one gives either the new accounts or a
 rejection with a reason (a variant value, never a crash). A rejected transaction changes nothing.
 Rejections: `unknown account <name>` (checked first, `from` before `to`), then `insufficient funds`.

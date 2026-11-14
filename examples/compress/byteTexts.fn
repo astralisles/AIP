@@ -1,4 +1,4 @@
-fn byteTexts(data List<Int>, i Int, out List<Text>) -> List<Text>
+fn byteTexts(data List<I64>, i I64, out List<Text>) -> List<Text>
   "Each byte from i on as decimal text."
   pure
   fails

@@ -3,24 +3,24 @@
 First step of `game-gaps-T-0983.md` (items 1-3). All names follow one rule: group prefix + verb.
 
 ## Time (`std/time`)
-- `timeMonotonic() -> Int` and `timeNow() -> Int`: milliseconds, effect `time.read` (breaks replay, so it is an effect).
+- `timeMonotonic() -> I64` and `timeNow() -> I64`: milliseconds, effect `time.read` (breaks replay, so it is an effect).
   Use `timeMonotonic` for frame time (never goes backwards), `timeNow` for the date (since 1970 UTC).
-- `timeSleep(ms Int) -> Unit`: effect `time.sleep`, separate from `time.read` as decided in `sleep-T-0981.md`.
+- `timeSleep(ms I64) -> Unit`: effect `time.sleep`, separate from `time.read` as decided in `sleep-T-0981.md`.
   Zero or negative returns at once. Frame pacing: `timeSleep(16 - (timeMonotonic() - frameStart))`.
 - Not in `aip test` (effects). Tested by `examples/clock`.
 
 ## Float math (`std/math`, all pure, F64)
 `mathSqrt mathPow mathExp mathLog mathSin mathCos mathTan mathAtan2 mathFloor mathCeil mathRound mathAbs mathMin mathMax
 mathClamp mathLerp mathIsNaN mathPi` and `textToFloat`. `mathFloor/Ceil/Round` return F64; convert with `numFromF64` when an
-Int is needed. `mathRound` rounds halves away from zero. Bad input follows IEEE (`mathSqrt(-1.0)` is NaN, test with
+I64 is needed. `mathRound` rounds halves away from zero. Bad input follows IEEE (`mathSqrt(-1.0)` is NaN, test with
 `mathIsNaN`); `mathClamp` with low above high and an unparsable `textToFloat` fail as an `extern-failed` error.
 F32 is converted with `numF32ToF64` first (no F32 overloads: one spelling per function).
 
 ## Random (`std/random`)
 SplitMix64, written so a game can be replayed exactly:
-- `randomNext(state) -> Int` is the next state, `randomRange(state, bound) -> Int` is 0..bound-1, `randomFloat(state) -> F64` is 0..1 (never 1).
+- `randomNext(state) -> I64` is the next state, `randomRange(state, bound) -> I64` is 0..bound-1, `randomFloat(state) -> F64` is 0..1 (never 1).
   All pure. Idiom: `let s1 = randomNext(s0)`, draw from `s1`, pass `s1` on. Drawing twice from the same state gives the same number.
-- `randomSeed() -> Int`: effect `random.read`, from the operating system. Start from it for a different game each run, or from a
+- `randomSeed() -> I64`: effect `random.read`, from the operating system. Start from it for a different game each run, or from a
   constant for a reproducible one (tests, replays, lockstep networking).
 - Not cryptographic; use `hash` functions for that.
 

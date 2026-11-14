@@ -1,4 +1,4 @@
-fn numFromI32(value I32) -> Int
-  "Convert a I32 to Int (64-bit signed); a U64 above 9223372036854775807 is a run-time error."
+fn numFromI32(value I32) -> I64
+  "Convert a I32 to I64 (64-bit signed); a U64 above 9223372036854775807 is a run-time error."
   pure
 extern

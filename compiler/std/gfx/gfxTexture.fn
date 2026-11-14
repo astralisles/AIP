@@ -1,4 +1,4 @@
-fn gfxTexture(window GfxWindow, width Int, height Int, pixels List<U8>) -> Int
+fn gfxTexture(window GfxWindow, width I64, height I64, pixels List<U8>) -> I64
   "Create a 2D texture from width*height*4 bytes of RGBA; returns the texture id."
   effects gfx.draw
   fails

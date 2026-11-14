@@ -1,4 +1,4 @@
-Int:  42
+I64:  42
 Text: hello
 Bool: true
 Bool from a comparison (count > 40): true

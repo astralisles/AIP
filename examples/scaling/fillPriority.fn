@@ -1,4 +1,4 @@
-fn fillPriority(q PriorityQueue<Int>, i Int, n Int) -> PriorityQueue<Int>
+fn fillPriority(q PriorityQueue<I64>, i I64, n I64) -> PriorityQueue<I64>
   "Push the numbers i up to n - 1 with the highest number most urgent, one at a time."
   pure
 body

@@ -17,7 +17,7 @@ Any other file type (for example `.const`) is rejected with `unsupported-file`.
 
 ## Parts of a `.fn` file
 
-    fn grade(score Int) -> Text          1. signature: name, typed parameters, return type
+    fn grade(score I64) -> Text          1. signature: name, typed parameters, return type
       "A letter for a score."            2. doc: exactly one line, required (error `missing-doc`)
       pure                               3. effects: `pure` or `effects terminal.write, file.read`; required.
                                             A function may only call functions whose effects are in its own list.
@@ -27,7 +27,7 @@ Any other file type (for example `.const`) is rejected with `unsupported-file`.
       if score >= 90 then "A" else "F"      (std functions write `extern` here instead: header only)
 
 - Header lines (2-5) are indented 2 spaces; body statements are indented 2 spaces under `body`.
-- Types may carry a range, for example `Text 1..` (non-empty) or `Int 0..100`. Ranges, `requires` and `example` are type-checked
+- Types may carry a range, for example `Text 1..` (non-empty) or `I64 0..100`. Ranges, `requires` and `example` are type-checked
   and run by `aip test`; they are not proved.
 - The body is statements: `let x = expr`, calls, `if c then a else b`, `match`. The last expression is the return value.
   Text can embed expressions: `"total {a + b}"`. There are no loops (use recursion), no globals, no mutation.
@@ -36,8 +36,8 @@ Any other file type (for example `.const`) is rejected with `unsupported-file`.
 
     struct Point                 name (must equal the file name)
       "A position on a grid."    one-line doc, required
-      x Int                      one field per line: name, type
-      y Int
+      x I64                      one field per line: name, type
+      y I64
 
 Build with `Point(1, 2)`, read with `p.x`.
 
@@ -45,7 +45,7 @@ Build with `Point(1, 2)`, read with `p.x`.
 
     variant Shape
       "A shape: a circle, a rectangle, a dot, or nothing."
-      Circle(center Point, radius Int)     one case per line, with typed fields
+      Circle(center Point, radius I64)     one case per line, with typed fields
       Nothing                              or no fields (construct and match as `Nothing()`)
 
 Consume with `match`: one `Case(a, b) => expr` arm per line, and every case is required.

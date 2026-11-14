@@ -1,4 +1,4 @@
-fn intNot(a Int) -> Int
+fn intNot(a I64) -> I64
   "Bitwise not (every bit flipped)."
   pure
 extern

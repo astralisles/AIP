@@ -1,4 +1,4 @@
-fn listTryGet(items List<T>, index Int) -> Option<T>
+fn listTryGet(items List<T>, index I64) -> Option<T>
   "The item at an index as Some, or None when the index is outside the list."
   pure
 body

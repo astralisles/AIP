@@ -1,4 +1,4 @@
-fn parseEffectsAfterName(toks List<Text>, pos Int, acc List<Text>) -> List<Text>
+fn parseEffectsAfterName(toks List<Text>, pos I64, acc List<Text>) -> List<Text>
   "After one effect name, stop at the end of the line or read the next name after the comma at pos."
   pure
   fails

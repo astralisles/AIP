@@ -1,4 +1,4 @@
-fn textFromCode(code Int) -> Text
+fn textFromCode(code I64) -> Text
   "A one-character text for a character code."
   pure
 extern

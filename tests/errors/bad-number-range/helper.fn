@@ -1,4 +1,4 @@
-fn helper(n Int 0..99999999999999999999) -> Text
+fn helper(n I64 0..99999999999999999999) -> Text
   "A range bound that is too large."
   pure
 body

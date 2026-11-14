@@ -1,4 +1,4 @@
-fn bytesToText(data List<Int>) -> Text
+fn bytesToText(data List<I64>) -> Text
   "Text from UTF-8 bytes; invalid bytes become the replacement character."
   pure
 extern

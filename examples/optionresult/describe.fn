@@ -1,4 +1,4 @@
-fn describe(o Option<Int>) -> Text
+fn describe(o Option<I64>) -> Text
   "Say whether an Option holds a number."
   pure
 body

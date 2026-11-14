@@ -3,7 +3,7 @@ namespace Aip;
 /// <summary>Checks names, types, effects and completeness. Contracts are type-checked only; nothing is proved yet.</summary>
 sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
 {
-    /// <summary>Whole-number types with an exact size. `Int` is the 64-bit signed one.</summary>
+    /// <summary>Whole-number types with an exact size. `I64` is the 64-bit signed one.</summary>
     static readonly Dictionary<string, (System.Numerics.BigInteger Min, System.Numerics.BigInteger Max)> SizedInts = new()
     {
         ["I8"] = (sbyte.MinValue, sbyte.MaxValue), ["I16"] = (short.MinValue, short.MaxValue), ["I32"] = (int.MinValue, int.MaxValue),
@@ -11,14 +11,14 @@ sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
         ["U64"] = (0, ulong.MaxValue),
     };
 
-    static bool IsInt(string t) => t == "Int" || SizedInts.ContainsKey(t);
+    static bool IsInt(string t) => t == "I64" || SizedInts.ContainsKey(t);
     static bool IsFloat(string t) => t is "F32" or "F64";
     static bool IsNum(string t) => IsInt(t) || IsFloat(t);
     /// <summary>Types a bare literal gets when nothing else is wanted.</summary>
-    static bool IsDefaultLit(string t) => t is "Int" or "F64";
+    static bool IsDefaultLit(string t) => t is "I64" or "F64";
     static bool IsUnsigned(string t) => t.StartsWith('U') && SizedInts.ContainsKey(t);
 
-    static readonly HashSet<string> KnownTypes = new(new[] { "Int", "F32", "F64", "Text", "Bool", "Unit", "TcpListener", "TcpConn", "UdpSocket", "GfxWindow" }.Concat(SizedInts.Keys));
+    static readonly HashSet<string> KnownTypes = new(new[] { "I64", "F32", "F64", "Text", "Bool", "Unit", "TcpListener", "TcpConn", "UdpSocket", "GfxWindow" }.Concat(SizedInts.Keys));
 
     /// <summary>An integer literal (maybe negated) used where a sized integer is wanted takes that type if it fits.</summary>
     bool FitLiteral(Expr e, string want)
@@ -43,7 +43,7 @@ sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
         return true;
     }
 
-    /// <summary>Splits `Map<Text,List<Int>>` into its name and argument types; null for a plain type.</summary>
+    /// <summary>Splits `Map<Text,List<I64>>` into its name and argument types; null for a plain type.</summary>
     static (string Name, List<string> Args)? Split(string t)
     {
         int lt = t.IndexOf('<');
@@ -64,15 +64,15 @@ sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
     static string Join(string name, IEnumerable<string> args) => $"{name}<{string.Join(",", args)}>";
     static bool IsVar(string t) => t.Length == 1 && char.IsAsciiLetterUpper(t[0]);
 
-    /// <summary>Lossless widening: every value of `from` is a value of `to` (never Int to a float, never U64 to a signed type).</summary>
+    /// <summary>Lossless widening: every value of `from` is a value of `to` (never I64 to a float, never U64 to a signed type).</summary>
     static readonly Dictionary<string, string[]> WidensTo = new()
     {
-        ["I8"] = new[] { "I16", "I32", "Int" },
-        ["I16"] = new[] { "I32", "Int" },
-        ["I32"] = new[] { "Int" },
-        ["U8"] = new[] { "U16", "U32", "U64", "I16", "I32", "Int" },
-        ["U16"] = new[] { "U32", "U64", "I32", "Int" },
-        ["U32"] = new[] { "U64", "Int" },
+        ["I8"] = new[] { "I16", "I32", "I64" },
+        ["I16"] = new[] { "I32", "I64" },
+        ["I32"] = new[] { "I64" },
+        ["U8"] = new[] { "U16", "U32", "U64", "I16", "I32", "I64" },
+        ["U16"] = new[] { "U32", "U64", "I32", "I64" },
+        ["U32"] = new[] { "U64", "I64" },
         ["F32"] = new[] { "F64" },
     };
     static bool Widens(string from, string to) => WidensTo.TryGetValue(from, out var t) && t.Contains(to);
@@ -117,8 +117,8 @@ sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
         if (!fn.Effects.Any(e => e.StartsWith("native.", StringComparison.Ordinal)))
             Error(fn.EffectsLine, "native-effect", $"`{fn.Name}` calls native code but declares no `native.*` effect", $"declare `effects native.{System.Text.RegularExpressions.Regex.Replace(fn.NativeLib, "[^A-Za-z0-9_]", "_")}`");
         foreach (var t in fn.Params.Select(p => p.Type.Name).Append(fn.Ret.Name))
-            if (t is not ("Int" or "Bool" or "Text" or "Unit"))
-                Error(fn.Line, "native-type", $"native functions only take and return Int, Bool, Text (and Unit as result); `{t}` is not allowed", "convert in an AIP function around the native one");
+            if (t is not ("I64" or "Bool" or "Text" or "Unit"))
+                Error(fn.Line, "native-type", $"native functions only take and return I64, Bool, Text (and Unit as result); `{t}` is not allowed", "convert in an AIP function around the native one");
     }
 
     static bool Unify(string pattern, string actual, Dictionary<string, string> vars)
@@ -167,7 +167,7 @@ sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
         return program.Types.TryGetValue(s.Value.Name, out var g) && g.Params.Count == s.Value.Args.Count;
     }
 
-    /// <summary>The struct or variant a type names (`Point` or `Pair<Int,Text>`), with its type parameters bound to the arguments.</summary>
+    /// <summary>The struct or variant a type names (`Point` or `Pair<I64,Text>`), with its type parameters bound to the arguments.</summary>
     (TypeDef Def, Dictionary<string, string> Vars)? UserType(string t)
     {
         var s = Split(t);
@@ -229,7 +229,7 @@ sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
             if (IsConstName(p.Name)) Error(fn.Line, "duplicate-name", $"parameter `{p.Name}` has the name of a constant ({Path.GetFileName(program.Fns[p.Name].File)})", "choose a different name");
             else if (!env.TryAdd(p.Name, p.Type.Name)) Error(fn.Line, "duplicate-name", $"parameter `{p.Name}` is declared twice");
         }
-        if (fn.IsConst && fn.Ret.Name == "Unit") Error(fn.Line, "type-mismatch", "a constant cannot be Unit", "give it a value type such as Int, Text, Bool or a struct");
+        if (fn.IsConst && fn.Ret.Name == "Unit") Error(fn.Line, "type-mismatch", "a constant cannot be Unit", "give it a value type such as I64, Text, Bool or a struct");
         else CheckType(fn.Ret, allowUnit: true);
         if (!fn.IsStd)
         {
@@ -337,7 +337,7 @@ sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
                 foreach (var f in c.Fields)
                 {
                     if (!seen.Add(f.Name)) Err(c.Line, "duplicate-name", $"field `{f.Name}` is declared twice in `{c.Name}`");
-                    if (!IsKnown(f.Type.Name)) Err(c.Line, "unknown-type", $"unknown type `{f.Type.Name}` for field `{f.Name}`", "types: Int, I8, I16, I32, U8, U16, U32, U64, F32, F64, Text, Bool, List<T>, and your structs and variants");
+                    if (!IsKnown(f.Type.Name)) Err(c.Line, "unknown-type", $"unknown type `{f.Type.Name}` for field `{f.Name}`", "types: I64, I8, I16, I32, U8, U16, U32, U64, F32, F64, Text, Bool, List<T>, and your structs and variants");
                     else if (f.Type.Name == "Unit") Err(c.Line, "type-mismatch", $"field `{f.Name}` cannot be Unit");
                 }
             }
@@ -348,7 +348,7 @@ sealed partial class Checker(ProgramModel program, List<Diagnostic> diags)
     void CheckType(TypeRef t, bool allowUnit)
     {
         if (!IsKnown(t.Name))
-            Error(_fn.Line, "unknown-type", $"unknown type `{t.Name}`", "types supported so far: Int (64-bit signed), I8, I16, I32, U8, U16, U32, U64, F32, F64, Text, Bool, Unit, List<T>, Set<T>, Map<K,V>, structs and variants");
+            Error(_fn.Line, "unknown-type", $"unknown type `{t.Name}`", t.Name == "Int" ? "`Int` was renamed `I64` (64-bit signed); name the bit size: I8, I16, I32, I64, U8, U16, U32, U64" : "types supported so far: I64 (64-bit signed), I8, I16, I32, U8, U16, U32, U64, F32, F64, Text, Bool, Unit, List<T>, Set<T>, Map<K,V>, structs and variants");
         else if (t.Name == "Unit" && !allowUnit)
             Error(_fn.Line, "type-mismatch", "a parameter cannot be Unit");
         else if (t.Range != "" && !IsInt(t.Name) && t.Name != "Text" && !IsList(t.Name))

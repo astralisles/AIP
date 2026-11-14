@@ -1,4 +1,4 @@
-fn parseCall(toks List<Text>, name Text, pos Int) -> ExprParsed
+fn parseCall(toks List<Text>, name Text, pos I64) -> ExprParsed
   "Read the arguments of a call to name; pos is just after the `(`."
   pure
   fails

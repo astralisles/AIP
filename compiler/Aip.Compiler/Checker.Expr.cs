@@ -8,8 +8,8 @@ sealed partial class Checker
     {
         e.Type = e switch
         {
-            IntLit { Value: > long.MaxValue } => "U64", // too big for Int, so it can only be a U64
-            IntLit => "Int",
+            IntLit { Value: > long.MaxValue } => "U64", // too big for I64, so it can only be a U64
+            IntLit => "I64",
             FloatLit => "F64",
             BoolLit => "Bool",
             TextLit t => TextType(t, env, used),
@@ -248,27 +248,27 @@ sealed partial class Checker
         var t = TypeOf(u.Operand, env, used);
         if (u.Op == "~")
         {
-            if (t != "" && !IsInt(t)) Error(u.Line, "type-mismatch", $"`~` needs a whole number (Int, I8..I32, U8..U64), found {t}");
-            return IsInt(t) ? t : "Int";
+            if (t != "" && !IsInt(t)) Error(u.Line, "type-mismatch", $"`~` needs a whole number (I64, I8..I32, U8..U64), found {t}");
+            return IsInt(t) ? t : "I64";
         }
         if (u.Op != "-")
         {
             if (t != "" && t != "Bool") Error(u.Line, "type-mismatch", $"`{u.Op}` needs Bool, found {t}");
             return "Bool";
         }
-        if (t != "" && (!IsNum(t) || IsUnsigned(t))) Error(u.Line, "type-mismatch", $"`-` needs a signed number (Int, I8, I16, I32, F32, F64), found {t}");
-        return IsNum(t) && !IsUnsigned(t) ? t : "Int";
+        if (t != "" && (!IsNum(t) || IsUnsigned(t))) Error(u.Line, "type-mismatch", $"`-` needs a signed number (I64, I8, I16, I32, F32, F64), found {t}");
+        return IsNum(t) && !IsUnsigned(t) ? t : "I64";
     }
 
     string BinaryType(Binary b, Dictionary<string, string> env, HashSet<string> used)
     {
         var l = TypeOf(b.Left, env, used);
         var r = TypeOf(b.Right, env, used);
-        if (b.Op is "<<" or ">>") // the count is always Int, whatever the type of the number being shifted
+        if (b.Op is "<<" or ">>") // the count is always I64, whatever the type of the number being shifted
         {
-            if (l != "" && !IsInt(l)) Error(b.Line, "type-mismatch", $"`{b.Op}` needs a whole number on the left (Int, I8..I32, U8..U64), found {l}");
-            if (r != "" && r != "Int") Error(b.Line, "type-mismatch", $"the shift count of `{b.Op}` must be Int, found {r}", "convert the count first, for example with numFromU8");
-            return l == "" ? "Int" : l;
+            if (l != "" && !IsInt(l)) Error(b.Line, "type-mismatch", $"`{b.Op}` needs a whole number on the left (I64, I8..I32, U8..U64), found {l}");
+            if (r != "" && r != "I64") Error(b.Line, "type-mismatch", $"the shift count of `{b.Op}` must be I64, found {r}", "convert the count first, for example with numFromU8");
+            return l == "" ? "I64" : l;
         }
         if (IsDefaultLit(l) && l != r && FitLiteral(b.Left, r)) l = r;
         else if (IsDefaultLit(r) && l != r && FitLiteral(b.Right, l)) r = l;
@@ -284,7 +284,7 @@ sealed partial class Checker
                     Error(b.Line, "type-mismatch", $"`{b.Op}` needs the same number type on both sides, found {l} and {r}",
                         b.Op == "+" && (l == "Text" || r == "Text") ? "to join texts, write one text with `{...}` parts"
                         : IsNum(l) && IsNum(r) ? "neither type fits in the other; convert one side first, for example with numFromI32 / numToF64" : null);
-                return IsNum(l) ? l : IsNum(r) ? r : "Int";
+                return IsNum(l) ? l : IsNum(r) ? r : "I64";
             case "<" or "<=" or ">" or ">=":
                 if (known && (!IsNum(l) || l != r)) Error(b.Line, "type-mismatch", $"`{b.Op}` needs the same number type on both sides, found {l} and {r}",
                     IsNum(l) && IsNum(r) ? "neither type fits in the other; convert one side first, for example with numFromI32 / numToF64" : null);
@@ -296,9 +296,9 @@ sealed partial class Checker
                 return "Bool";
             case "&" or "|" or "^":
                 if (known && (!IsInt(l) || l != r))
-                    Error(b.Line, "type-mismatch", $"`{b.Op}` needs the same whole-number type on both sides (Int, I8..I32, U8..U64), found {l} and {r}",
+                    Error(b.Line, "type-mismatch", $"`{b.Op}` needs the same whole-number type on both sides (I64, I8..I32, U8..U64), found {l} and {r}",
                         IsInt(l) && IsInt(r) ? "convert one side first, for example with numFromU8 / numToU8" : null);
-                return IsInt(l) ? l : IsInt(r) ? r : "Int";
+                return IsInt(l) ? l : IsInt(r) ? r : "I64";
             default: // and, or, =>
                 if (known && (l != "Bool" || r != "Bool")) Error(b.Line, "type-mismatch", $"`{b.Op}` needs Bool on both sides, found {l} and {r}");
                 return "Bool";

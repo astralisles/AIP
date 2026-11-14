@@ -1,4 +1,4 @@
-fn tcpConnect(host Text, port Int) -> TcpConn
+fn tcpConnect(host Text, port I64) -> TcpConn
   "Open a connection to a TCP server; it stays open until closed."
   effects tcp.connect
 extern

@@ -1,4 +1,4 @@
-fn parseMatchStart(toks List<Text>, pos Int) -> ExprParsed
+fn parseMatchStart(toks List<Text>, pos I64) -> ExprParsed
   "Read the subject of a `match` at pos (the arms are separate lines)."
   pure
   fails

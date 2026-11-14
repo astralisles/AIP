@@ -29,7 +29,7 @@ No code was changed; this is a design decision. Recommend merging the note.
 ## Tail-call lowering, explained (step 1 above)
 A loop written as recursion looks like this:
 
-    fn sumTo(n Int, total Int) -> Int
+    fn sumTo(n I64, total I64) -> I64
       if n == 0 then total else sumTo(n - 1, total + n)
 
 The last thing `sumTo` does is call itself and return that result unchanged: a call in *tail position*.

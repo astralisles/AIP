@@ -1,4 +1,4 @@
-fn timeSleep(ms Int) -> Unit
+fn timeSleep(ms I64) -> Unit
   "Wait at least ms milliseconds; zero or negative returns at once. Use for frame pacing, backoff and rate limiting."
   effects time.sleep
 extern

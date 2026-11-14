@@ -1,4 +1,4 @@
-fn binaryStep(toks List<Text>, level Int, left ExprParsed) -> ExprParsed
+fn binaryStep(toks List<Text>, level I64, left ExprParsed) -> ExprParsed
   "Read the operator after left and the operand on its right, and join them."
   pure
   fails

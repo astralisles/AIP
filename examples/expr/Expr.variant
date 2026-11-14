@@ -1,6 +1,6 @@
 variant Expr
   "An arithmetic expression tree: a recursive variant that also holds a list of itself."
-  Num(value Int)
+  Num(value I64)
   Neg(inner Expr)
   Add(left Expr, right Expr)
   Sum(items List<Expr>)

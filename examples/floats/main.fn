@@ -4,6 +4,6 @@ fn main() -> Unit
 body
   printLine("F64 math: {half(5.0)}")
   printLine("F32 math: {numF32ToF64(third(1.0))}")
-  printLine("Int to F64: {numToF64(7) / 2.0}")
-  printLine("F64 to Int drops the fraction: {numFromF64(-2.75)}")
+  printLine("I64 to F64: {numToF64(7) / 2.0}")
+  printLine("F64 to I64 drops the fraction: {numFromF64(-2.75)}")
   printLine("negative: {-1.5}")

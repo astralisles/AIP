@@ -1,4 +1,4 @@
-fn printBody(lines List<Text>, i Int, pending List<Int>, openIf Bool) -> Unit
+fn printBody(lines List<Text>, i I64, pending List<I64>, openIf Bool) -> Unit
   "Print the dump of every body line from index i, in order."
   effects terminal.write
   fails

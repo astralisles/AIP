@@ -1,3 +1,3 @@
-const smallPrimes List<Int>
+const smallPrimes List<I64>
   "The first primes; a constant may call pure functions such as listAppend."
   value listAppend(listAppend(listAppend(listEmpty(), 2), 3), 5)

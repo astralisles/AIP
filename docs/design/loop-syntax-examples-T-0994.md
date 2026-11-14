@@ -4,12 +4,12 @@ None of the syntax below exists in the compiler yet; only style 1 runs today. Sa
 Tasks: (a) sum 1..n, (b) count evens with a condition, (c) nested: sum of the r*c table, (d) nested with an effect: print the table.
 
 ## 1. Recursion (today, `examples/control`, `examples/nested-loops`)
-    fn sumTo(n Int, total Int) -> Int
+    fn sumTo(n I64, total I64) -> I64
       if n == 0 then total else sumTo(n - 1, total + n)
 
-    fn rowSum(r Int, c Int, cols Int, total Int) -> Int
+    fn rowSum(r I64, c I64, cols I64, total I64) -> I64
       if c > cols then total else rowSum(r, c + 1, cols, total + r * c)
-    fn tableSum(r Int, rows Int, cols Int, total Int) -> Int
+    fn tableSum(r I64, rows I64, cols I64, total I64) -> I64
       if r > rows then total else tableSum(r + 1, rows, cols, rowSum(r, 1, cols, total))
 Pro: nothing new. Con: nested loop = two functions, state passed by hand, loop shape hidden in an `if`.
 

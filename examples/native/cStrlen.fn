@@ -1,4 +1,4 @@
-fn cStrlen(s Text) -> Int
+fn cStrlen(s Text) -> I64
   "Length in bytes of a text, computed by the C runtime library (`strlen`)."
   effects native.ucrtbase
   native "ucrtbase" "strlen"

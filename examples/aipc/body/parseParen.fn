@@ -1,4 +1,4 @@
-fn parseParen(toks List<Text>, pos Int) -> ExprParsed
+fn parseParen(toks List<Text>, pos I64) -> ExprParsed
   "Read `expr )` after an opening parenthesis."
   pure
   fails

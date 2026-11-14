@@ -1,4 +1,4 @@
-fn tlsServe(port Int, pfx Text, password Text) -> Unit
+fn tlsServe(port I64, pfx Text, password Text) -> Unit
   "Accept one client, upgrade it to TLS, read one chunk and answer `secure:` plus the same bytes."
   effects tcp.listen, tcp.accept, tcp.send, tcp.receive, tcp.close, file.read, terminal.write
 body

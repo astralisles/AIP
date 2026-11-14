@@ -1,5 +1,5 @@
-fn f() -> Int
-  "next gives Text for an Int name."
+fn f() -> I64
+  "next gives Text for an I64 name."
   pure
 body
   loop

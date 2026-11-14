@@ -1,4 +1,4 @@
-fn repeatByte(out List<Int>, value Int, n Int) -> List<Int>
+fn repeatByte(out List<I64>, value I64, n I64) -> List<I64>
   "The list with value added n times at the end."
   pure
   example listLength(repeatByte(listEmpty(), 7, 3)) == 3

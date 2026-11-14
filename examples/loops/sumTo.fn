@@ -1,4 +1,4 @@
-fn sumTo(n Int) -> Int
+fn sumTo(n I64) -> I64
   "Add 1 + 2 + ... + n with one loop."
   pure
 body

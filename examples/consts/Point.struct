@@ -1,4 +1,4 @@
 struct Point
   "A position on a grid."
-  x Int
-  y Int
+  x I64
+  y I64

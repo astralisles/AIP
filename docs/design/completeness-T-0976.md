@@ -4,7 +4,7 @@
 alone, and the AIP compiler can compile itself. Checked against the repo on 2026-11-13. Ordered by how much each blocks.
 
 ## Already there
-Int/sized ints/floats/bits, Text, Bytes, List/Set/Map/SortedMap/SortedSet/Queue/PriorityQueue, structs, variants, generics,
+I64/sized ints/floats/bits, Text, Bytes, List/Set/Map/SortedMap/SortedSet/Queue/PriorityQueue, structs, variants, generics,
 `match`, consts, contracts (`requires`/`ensures`/`example` run by `aip test`), lint, fuzz, logging, profiling, tcp/udp,
 native libraries, hash, `aip query/find/spec`, partial self-hosting (lexer, header and body parser in `examples/aipc`).
 

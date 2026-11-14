@@ -1,4 +1,4 @@
-fn average(a Int, b Int) -> Int
+fn average(a I64, b I64) -> I64
   "The average of two numbers, rounded toward zero."
   pure
   example average(4, 10) == 7

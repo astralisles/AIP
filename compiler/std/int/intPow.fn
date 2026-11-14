@@ -1,5 +1,5 @@
-fn intPow(base Int, exponent Int) -> Int
-  "base to the power exponent; exponent must not be negative and the result must fit in Int."
+fn intPow(base I64, exponent I64) -> I64
+  "base to the power exponent; exponent must not be negative and the result must fit in I64."
   pure
   fails
 extern

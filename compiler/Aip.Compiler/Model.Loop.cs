@@ -14,7 +14,7 @@ sealed class LoopExpr : Expr
     public IEnumerable<Expr> Parts => Inits.Concat(Body.Select(s => s.Value));
 }
 
-/// <summary>`for name in from..to`: runs the indented Unit statements for name = from, from+1, ... to-1 (Int only).</summary>
+/// <summary>`for name in from..to`: runs the indented Unit statements for name = from, from+1, ... to-1 (I64 only).</summary>
 sealed class ForExpr : Expr
 {
     public string Var = "";

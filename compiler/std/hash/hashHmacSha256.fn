@@ -1,4 +1,4 @@
-fn hashHmacSha256(key List<Int>, data List<Int>) -> List<Int>
+fn hashHmacSha256(key List<I64>, data List<I64>) -> List<I64>
   "HMAC-SHA-256 of data under key, 32 bytes."
   pure
 extern

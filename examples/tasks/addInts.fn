@@ -1,4 +1,4 @@
-fn addInts(a Int, b Int) -> Int
+fn addInts(a I64, b I64) -> I64
   "The sum of a and b."
   pure
   cannot-fail

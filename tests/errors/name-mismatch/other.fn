@@ -1,4 +1,4 @@
-fn helper() -> Int
+fn helper() -> I64
   "File name differs from function name."
   pure
 body

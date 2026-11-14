@@ -1,4 +1,4 @@
-fn numToF32(value Int) -> F32
-  "Convert an Int to F32 (32-bit float); large values lose low digits."
+fn numToF32(value I64) -> F32
+  "Convert an I64 to F32 (32-bit float); large values lose low digits."
   pure
 extern

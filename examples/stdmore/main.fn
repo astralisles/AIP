@@ -1,5 +1,5 @@
 fn main() -> Unit
-  "Show the text, Int and List helpers added in T-0957."
+  "Show the text, I64 and List helpers added in T-0957."
   effects terminal.write
   fails
 body

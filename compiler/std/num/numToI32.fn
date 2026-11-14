@@ -1,5 +1,5 @@
-fn numToI32(value Int) -> I32
-  "Convert an Int to I32 (32-bit signed, -2147483648 to 2147483647); a value outside that range is a run-time error."
+fn numToI32(value I64) -> I32
+  "Convert an I64 to I32 (32-bit signed, -2147483648 to 2147483647); a value outside that range is a run-time error."
   pure
   fails
 extern

@@ -1,4 +1,4 @@
-fn isEven(n Int) -> Bool
+fn isEven(n I64) -> Bool
   "True when n is even."
   pure
   cannot-fail

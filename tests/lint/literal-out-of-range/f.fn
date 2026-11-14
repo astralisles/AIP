@@ -1,4 +1,4 @@
-fn f(a Int 0..10) -> Int
+fn f(a I64 0..10) -> I64
   "Take a small number."
   pure
   example f(5) == 5

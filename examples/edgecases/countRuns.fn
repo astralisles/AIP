@@ -1,4 +1,4 @@
-fn countRuns(text Text, i Int, runs Int) -> Int
+fn countRuns(text Text, i I64, runs I64) -> I64
   "Number of runs of equal characters; empty text has 0 runs, 'aabaa' has 3."
   pure
   example countRuns("", 0, 0) == 0

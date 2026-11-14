@@ -1,4 +1,4 @@
-fn firstSquareAbove(limit Int) -> Int
+fn firstSquareAbove(limit I64) -> I64
   "The first square number greater than limit: the loop leaves early with `done`."
   pure
 body

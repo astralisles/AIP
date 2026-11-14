@@ -1,4 +1,4 @@
-fn hashSha256(data List<Int>) -> List<Int>
+fn hashSha256(data List<I64>) -> List<I64>
   "SHA-256 digest, 32 bytes."
   pure
 extern

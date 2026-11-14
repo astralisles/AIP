@@ -1,4 +1,4 @@
-fn textCode(text Text, index Int) -> Int
+fn textCode(text Text, index I64) -> I64
   "Character code at an index; the index must be inside the text."
   pure
   fails

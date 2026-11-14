@@ -1,4 +1,4 @@
-fn sumMatch(n Int, acc Int, step Step) -> Int
+fn sumMatch(n I64, acc I64, step Step) -> I64
   "Add 1..n; the self-call is the body of a match arm, still a tail call."
   pure
 body

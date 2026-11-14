@@ -1,4 +1,4 @@
-fn printIndex(i Int) -> Unit
+fn printIndex(i I64) -> Unit
   "Print the index line of each file named by the command line arguments from position i on."
   effects file.read, process.args, terminal.write
   fails

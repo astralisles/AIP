@@ -1,4 +1,4 @@
-fn compressRun(data List<Int>, i Int, out List<Int>, run Int) -> List<Int>
+fn compressRun(data List<I64>, i I64, out List<I64>, run I64) -> List<I64>
   "Add one (count, byte) pair for the run of length run at i, then go on with the rest."
   pure
   fails

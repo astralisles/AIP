@@ -129,7 +129,7 @@ sealed partial class CsBackend : IBackend
     // Lists are type-erased at run time (List<object>); reads cast back to the element type.
     static string CsType(string t) => t switch
     {
-        "Int" => "long", "F32" => "float", "F64" => "double", "I8" => "sbyte", "I16" => "short", "I32" => "int",
+        "I64" => "long", "F32" => "float", "F64" => "double", "I8" => "sbyte", "I16" => "short", "I32" => "int",
         "U8" => "byte", "U16" => "ushort", "U32" => "uint", "U64" => "ulong", "Text" => "string", "Bool" => "bool", "_" => "object",
         _ when t.StartsWith("Fn<", StringComparison.Ordinal) => "System.Func<object[], object>", // a function value: arguments in an array, result boxed
         _ when t.StartsWith("Task<", StringComparison.Ordinal) => "object", // a started task, only ever passed to Rt.TaskAwait
@@ -175,12 +175,12 @@ sealed partial class CsBackend : IBackend
     static string Pattern(Arm a) => a.Binds.Count == 0 ? $"{a.Path} _" : $"{a.Path}({string.Join(", ", a.Binds.Select(b => $"var @{b}"))})";
 
     /// <summary>A `native "lib" "symbol"` function: a P/Invoke into a shared library (dll / so / dylib), loaded on first call.
-    /// Int is a 64-bit integer, Bool one byte, Text a UTF-8 C string; a returned string stays owned by the library.</summary>
+    /// I64 is a 64-bit integer, Bool one byte, Text a UTF-8 C string; a returned string stays owned by the library.</summary>
     static string EmitNative(Fn fn)
     {
         string Raw(string t, bool ret) => t switch
         {
-            "Int" => "long", "Bool" => "bool", "Unit" => "void", _ => ret ? "System.IntPtr" : "string",
+            "I64" => "long", "Bool" => "bool", "Unit" => "void", _ => ret ? "System.IntPtr" : "string",
         };
         string Attr(string t) => t switch
         {
@@ -295,10 +295,10 @@ sealed partial class CsBackend : IBackend
     static string Emit(Expr e) => e switch
     {
         IntLit { Type: "U64" } i => i.Value + "UL",
-        IntLit { Type: "Int" or "" } i => i.Value + "L",
+        IntLit { Type: "I64" or "" } i => i.Value + "L",
         IntLit i => $"(({CsType(i.Type)}){i.Value})",
-        Unary { Op: "-", Type: not ("Int" or "" or "F32" or "F64") } u when u.Operand is IntLit n => $"(({CsType(u.Type)})(-{n.Value}))",
-        Unary { Op: "-", Type: not ("Int" or "" or "F32" or "F64") } u => $"checked(({CsType(u.Type)})(-{Emit(u.Operand)}))",
+        Unary { Op: "-", Type: not ("I64" or "" or "F32" or "F64") } u when u.Operand is IntLit n => $"(({CsType(u.Type)})(-{n.Value}))",
+        Unary { Op: "-", Type: not ("I64" or "" or "F32" or "F64") } u => $"checked(({CsType(u.Type)})(-{Emit(u.Operand)}))",
         FloatLit { Type: "F32" } f => f.Value.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + "F",
         FloatLit f => f.Value.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + "D",
         BoolLit b => b.Value ? "true" : "false",
@@ -324,7 +324,7 @@ sealed partial class CsBackend : IBackend
             "&" or "|" or "^" => $"unchecked(({CsType(b.Type)})({Emit(b.Left)} {b.Op} {Emit(b.Right)}))",
             "<<" or ">>" => $"unchecked(({CsType(b.Type)})({Emit(b.Left)} {b.Op} Rt.Shift({Emit(b.Right)}, sizeof({CsType(b.Type)}) * 8)))",
             // Sized integers: C# widens to int, so cast back; `checked` makes overflow a run-time error, never a silent wrap.
-            "+" or "-" or "*" or "/" or "%" when b.Type is not ("Int" or "" or "F32" or "F64") =>
+            "+" or "-" or "*" or "/" or "%" when b.Type is not ("I64" or "" or "F32" or "F64") =>
                 $"checked(({CsType(b.Type)})({Emit(b.Left)} {b.Op} {Emit(b.Right)}))",
             _ => $"({Emit(b.Left)} {b.Op} {Emit(b.Right)})",
         },

@@ -42,7 +42,7 @@ sealed partial class Interp
         var to = Big(Eval(f.To, env)!);
         for (BigInteger k = from; k < to; k++)
         {
-            var inner = new Dictionary<string, object?>(env) { [f.Var] = Coerce(k, "Int") };
+            var inner = new Dictionary<string, object?>(env) { [f.Var] = Coerce(k, "I64") };
             foreach (var s in f.Body)
             {
                 var v = Eval(s.Value, inner);

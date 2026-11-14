@@ -1,4 +1,4 @@
-fn showBytes(data List<Int>) -> Text
+fn showBytes(data List<I64>) -> Text
   "The byte values as decimal numbers separated by spaces, such as: 104 105."
   pure
   fails

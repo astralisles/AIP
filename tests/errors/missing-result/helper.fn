@@ -1,4 +1,4 @@
-fn helper() -> Int
+fn helper() -> I64
   "Ends with let."
   pure
 body

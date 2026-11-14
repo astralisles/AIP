@@ -22,7 +22,7 @@ sealed partial class Parser
         _pos++;
     }
 
-    /// <summary>Closes a type argument list. `List<List<Int>>` lexes as `>>`; the first `>` is consumed and one stays.</summary>
+    /// <summary>Closes a type argument list. `List<List<I64>>` lexes as `>>`; the first `>` is consumed and one stays.</summary>
     void ExpectCloseAngle()
     {
         if (IsSym(">>")) { _toks[_pos] = new Tok(T.Sym, ">"); return; }

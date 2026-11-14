@@ -1,4 +1,4 @@
-fn gfxDraw(window GfxWindow, mode Text, first Int, count Int) -> Unit
+fn gfxDraw(window GfxWindow, mode Text, first I64, count I64) -> Unit
   "Draw count vertices; mode is points, lines, lineStrip, triangles, triangleStrip or triangleFan."
   effects gfx.draw
   fails

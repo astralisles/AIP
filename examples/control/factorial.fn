@@ -1,4 +1,4 @@
-fn factorial(n Int) -> Int
+fn factorial(n I64) -> I64
   "n * (n-1) * ... * 1."
   pure
   example factorial(5) == 120

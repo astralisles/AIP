@@ -1,4 +1,4 @@
-fn decompress(data List<Int>, i Int, out List<Int>) -> List<Int>
+fn decompress(data List<I64>, i I64, out List<I64>) -> List<I64>
   "Undo compress: expand each (count, byte) pair."
   pure
   fails

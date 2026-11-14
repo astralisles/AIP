@@ -1,4 +1,4 @@
-fn drainQueue(q Queue<Int>, sum Int) -> Int
+fn drainQueue(q Queue<I64>, sum I64) -> I64
   "Pop every item and add up what came out."
   pure
   fails

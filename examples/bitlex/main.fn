@@ -1,0 +1,15 @@
+fn main() -> Unit
+  "Use shift operators outside text and a nested list type, so the AIP lexer and parser in examples/aipc meet `<<`, `>>` and `~` as tokens."
+  effects terminal.write
+  fails
+body
+  let grid = listAppend(listAppend(listEmpty(), listRange(1, 3)), listRange(3, 5))
+  let packed = packPair(grid, 1)
+  let high = packed >> 8
+  let low = packed & 255
+  let flipped = ~numToU8(low)
+  printLine("packed: {packed}")
+  printLine("high: {high}")
+  printLine("low: {low}")
+  printLine("flipped: {flipped}")
+  printLine("mixed: {1 | 2 ^ 7 & 12 << 1 + 1}")

@@ -1,4 +1,4 @@
-fn addLine(a Int, b Int) -> Text
+fn addLine(a I64, b I64) -> Text
   "A sentence that shows a sum, such as: 2 + 3 = 5."
   pure
   example addLine(2, 3) == "2 + 3 = 5"

@@ -1,4 +1,4 @@
-fn textPartsHole(raw Text, i Int, rel Int, cur Text, parts List<Expr>) -> List<Expr>
+fn textPartsHole(raw Text, i I64, rel I64, cur Text, parts List<Expr>) -> List<Expr>
   "A `{` at i whose `}` is rel characters later (-1: none, which is an error in the C# parser)."
   pure
   fails

@@ -1,4 +1,4 @@
-fn f(n Int) -> Int
+fn f(n I64) -> I64
   "Divide by a value that is zero."
   pure
   example f(1) == 0

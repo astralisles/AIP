@@ -9,4 +9,4 @@ Question: where is `Bytes` defined, and shouldn't it be a composite of existing 
   `numFromU8(listGet(..))`, `listSlice`, `listConcat`.
 - Cost: a byte list is a persistent list of boxed bytes, so large files use more memory and I/O copies. If that matters later,
   pack `List<U8>` inside the back end without changing the language (the earlier option 2).
-- The older `bytesFromText`/`bytesToText`/`bytesToHex`/`bytesFromHex` still use `List<Int>` (see `nested-collections-T-0964.md`).
+- The older `bytesFromText`/`bytesToText`/`bytesToHex`/`bytesFromHex` still use `List<I64>` (see `nested-collections-T-0964.md`).

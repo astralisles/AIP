@@ -1,4 +1,4 @@
-fn intXor(a Int, b Int) -> Int
+fn intXor(a I64, b I64) -> I64
   "Bitwise exclusive or."
   pure
 extern

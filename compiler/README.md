@@ -19,7 +19,7 @@ Standard library: `std/<group>/*.fn` are header-only `extern` functions, grouped
 (`text`, `list`, `map`, `set`, `file`, `terminal`, `log`, `process`, `core`; see `std/README.md`).
 `scripts\aip.ps1 std` lists them. Each back end supplies the implementation (see `CsBackend.Externs.*.cs`).
 
-Supported so far: `.fn` files; Int (64-bit signed), I8 I16 I32 U8 U16 U32 U64, F32 F64 (floats), bit operations `& | ^ ~ << >>` (exact size, see `docs/design/data-types-T-0945.md` and `examples/ints`, `examples/floats`, `examples/bits`), Text, Bool, Unit; `List<T>`, `Set<T>`, `Map<K,V>` (immutable: every change returns a new value; see `examples/collections`); `let`, calls, operators,
+Supported so far: `.fn` files; I64 (64-bit signed), I8 I16 I32 U8 U16 U32 U64, F32 F64 (floats), bit operations `& | ^ ~ << >>` (exact size, see `docs/design/data-types-T-0945.md` and `examples/ints`, `examples/floats`, `examples/bits`), Text, Bool, Unit; `List<T>`, `Set<T>`, `Map<K,V>` (immutable: every change returns a new value; see `examples/collections`); `let`, calls, operators,
 `if/then/else`, text with `{expr}` parts; `.struct` and `.variant` files (constructors `Point(1, 2)`,
 `.field` reads; generic ones such as `variant Option<T>`, and generic functions such as `fn firstOf(items List<T>) -> Option<T>`, see `examples/generics`) and statement-level `match` (`let x = match v` or a Unit `match v`, one `Case(a, b) => expr` arm
 per line, every case required). See `examples/shapes`. `.const` files (`docs/design/consts-T-0941.md`, `examples/consts`). Ranges, `requires`, `ensures` and
@@ -30,7 +30,7 @@ per line, every case required). See `examples/shapes`. `.const` files (`docs/des
     scripts\aip.ps1 lint <project>   warnings: unused-param, self-comparison, constant-condition,
                                      division-by-zero, literal-out-of-range, requires-always-false, unbounded-recursion (Lint.cs)
     scripts\aip.ps1 test <project>   runs every `example` line of pure functions in an interpreter
-                                     (Interp.cs), checking requires / ensures / Int ranges on every call
+                                     (Interp.cs), checking requires / ensures / I64 ranges on every call
     scripts\aip.ps1 fuzz <project>   damages each source file many ways; the compiler must report
                                      errors, never crash (Fuzz.cs)
     scripts\aip.ps1 emit <project>   writes the generated C# and index without building

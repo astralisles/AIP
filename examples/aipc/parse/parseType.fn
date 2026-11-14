@@ -1,4 +1,4 @@
-fn parseType(toks List<Text>, pos Int) -> Parsed
+fn parseType(toks List<Text>, pos I64) -> Parsed
   "Read a type at pos: a name, optionally with type arguments such as `List<..>`, `Map<..,..>` or `Option<..>`, then an optional range such as `0..150`."
   pure
   fails

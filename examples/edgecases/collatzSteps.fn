@@ -1,4 +1,4 @@
-fn collatzSteps(n Int, steps Int) -> Int
+fn collatzSteps(n I64, steps I64) -> I64
   "Steps for n to reach 1 (halve if even, else 3n+1); 1 takes 0 steps."
   pure
   example collatzSteps(1, 0) == 0

@@ -1,4 +1,4 @@
-fn applyTwice(f Fn<Int,Int>, n Int) -> Int
+fn applyTwice(f Fn<I64,I64>, n I64) -> I64
   "Applies f to n, then to the result."
   pure
 body

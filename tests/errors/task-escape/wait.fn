@@ -1,4 +1,4 @@
-fn wait(t Task<Int>) -> Int
+fn wait(t Task<I64>) -> I64
   "Awaits a task."
   effects parallel
   fails

@@ -1,4 +1,4 @@
-fn priorityQueueSize(q PriorityQueue<T>) -> Int
+fn priorityQueueSize(q PriorityQueue<T>) -> I64
   "How many items the queue has."
   pure
 extern

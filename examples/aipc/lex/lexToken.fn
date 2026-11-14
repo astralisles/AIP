@@ -1,4 +1,4 @@
-fn lexToken(src Text, start Int, end Int, kind Text, acc List<Text>) -> List<Text>
+fn lexToken(src Text, start I64, end I64, kind Text, acc List<Text>) -> List<Text>
   "Add the token src[start..end] of the given kind, then lex on from end."
   pure
   fails

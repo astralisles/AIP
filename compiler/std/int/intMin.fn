@@ -1,4 +1,4 @@
-fn intMin(a Int, b Int) -> Int
+fn intMin(a I64, b I64) -> I64
   "The smaller of two numbers."
   pure
 extern

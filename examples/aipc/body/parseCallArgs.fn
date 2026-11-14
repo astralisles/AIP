@@ -1,4 +1,4 @@
-fn parseCallArgs(toks List<Text>, pos Int, found List<Expr>) -> ExprsParsed
+fn parseCallArgs(toks List<Text>, pos I64, found List<Expr>) -> ExprsParsed
   "Read comma separated arguments up to and including the `)`."
   pure
   fails

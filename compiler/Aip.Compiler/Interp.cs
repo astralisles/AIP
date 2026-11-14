@@ -108,7 +108,7 @@ sealed partial class Interp(ProgramModel program)
     {
         switch (e)
         {
-            case IntLit i: return Coerce((BigInteger)i.Value, i.Type == "" ? "Int" : i.Type);
+            case IntLit i: return Coerce((BigInteger)i.Value, i.Type == "" ? "I64" : i.Type);
             case FloatLit fl: return fl.Type == "F32" ? (object)(float)fl.Value : fl.Value;
             case BoolLit b: return b.Value;
             case NameRef { Const: true } k: return CallFn(program.Fns[k.Name], new List<object?>());
@@ -144,11 +144,11 @@ sealed partial class Interp(ProgramModel program)
             case Unary u:
                 {
                     var v = Eval(u.Operand, env);
-                    if (u.Op == "~") return BitOp("~", Big(v!), 0, u.Type == "" ? "Int" : u.Type);
+                    if (u.Op == "~") return BitOp("~", Big(v!), 0, u.Type == "" ? "I64" : u.Type);
                     if (u.Op != "-") return !(bool)v!;
                     if (v is double dv) return -dv;
                     if (v is float fv) return -fv;
-                    return Fit(-Big(v!), u.Type == "" ? "Int" : u.Type, "negation");
+                    return Fit(-Big(v!), u.Type == "" ? "I64" : u.Type, "negation");
                 }
             case BlockExpr k:
                 foreach (var s in k.Stmts) Eval(s, env);
@@ -179,10 +179,10 @@ sealed partial class Interp(ProgramModel program)
                         return b.Type == "F32" ? (object)(float)res : res;
                     }
                     BigInteger x = Big(l!), y = Big(r!);
-                    if (b.Op is "&" or "|" or "^" or "<<" or ">>") return BitOp(b.Op, x, y, b.Type == "" ? "Int" : b.Type);
+                    if (b.Op is "&" or "|" or "^" or "<<" or ">>") return BitOp(b.Op, x, y, b.Type == "" ? "I64" : b.Type);
                     if (b.Op is "/" or "%" && y.IsZero) throw new Failed("arithmetic", $"`{x} {b.Op} {y}`: division by zero");
                     BigInteger z = b.Op switch { "+" => x + y, "-" => x - y, "*" => x * y, "/" => BigInteger.Divide(x, y), "%" => BigInteger.Remainder(x, y), _ => throw new Unsupported($"operator {b.Op}") };
-                    return Fit(z, b.Type == "" ? "Int" : b.Type, $"`{x} {b.Op} {y}`");
+                    return Fit(z, b.Type == "" ? "I64" : b.Type, $"`{x} {b.Op} {y}`");
                 }
         }
         throw new Unsupported("expression " + e.GetType().Name);
@@ -192,7 +192,7 @@ sealed partial class Interp(ProgramModel program)
     static object BitOp(string op, BigInteger x, BigInteger y, string ty)
     {
         var (_, max) = Limits[ty];
-        int width = ty switch { "Int" or "U64" => 64, "I32" or "U32" => 32, "I16" or "U16" => 16, _ => 8 };
+        int width = ty switch { "I64" or "U64" => 64, "I32" or "U32" => 32, "I16" or "U16" => 16, _ => 8 };
         BigInteger mod = BigInteger.One << width;
         BigInteger Wrap(BigInteger v) { v = ((v % mod) + mod) % mod; return v > max ? v - mod : v; }
         BigInteger res;
@@ -228,7 +228,7 @@ sealed partial class Interp(ProgramModel program)
 
     static readonly Dictionary<string, (BigInteger Min, BigInteger Max)> Limits = new()
     {
-        ["Int"] = (long.MinValue, long.MaxValue), ["I8"] = (sbyte.MinValue, sbyte.MaxValue), ["I16"] = (short.MinValue, short.MaxValue),
+        ["I64"] = (long.MinValue, long.MaxValue), ["I8"] = (sbyte.MinValue, sbyte.MaxValue), ["I16"] = (short.MinValue, short.MaxValue),
         ["I32"] = (int.MinValue, int.MaxValue), ["U8"] = (0, byte.MaxValue), ["U16"] = (0, ushort.MaxValue),
         ["U32"] = (0, uint.MaxValue), ["U64"] = (0, ulong.MaxValue),
     };
@@ -240,7 +240,7 @@ sealed partial class Interp(ProgramModel program)
         if (v < min || v > max) throw new Failed("arithmetic", $"{what}: {v} does not fit in {type}");
         return type switch
         {
-            "Int" => (long)v, "I8" => (sbyte)v, "I16" => (short)v, "I32" => (int)v,
+            "I64" => (long)v, "I8" => (sbyte)v, "I16" => (short)v, "I32" => (int)v,
             "U8" => (byte)v, "U16" => (ushort)v, "U32" => (uint)v, _ => (ulong)v,
         };
     }

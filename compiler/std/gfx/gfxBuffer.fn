@@ -1,4 +1,4 @@
-fn gfxBuffer(window GfxWindow, values List<F64>) -> Int
+fn gfxBuffer(window GfxWindow, values List<F64>) -> I64
   "Upload floats (vertex data, stored as 32-bit floats) to the graphics card; returns the buffer id."
   effects gfx.draw
 extern

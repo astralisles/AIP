@@ -7,7 +7,7 @@ construction, and keep the rest small, visible and checkable. Today's state, by 
 - Memory corruption (buffer overflow, use-after-free, uninitialised reads): the language has no
   pointers, no manual memory, no `unsafe`, no FFI, no `DllImport`. Generated code is managed C#;
   `listGet`, `textCode` and `mapGet` throw on a bad index/key instead of reading past the end.
-- Integer overflow: the generated project sets `CheckForOverflowUnderflow`, so `Int` (64-bit) arithmetic
+- Integer overflow: the generated project sets `CheckForOverflowUnderflow`, so `I64` (64-bit) arithmetic
   throws instead of wrapping. `textSlice` clamps.
 - Eval/RCE from data: there is no `eval`, no reflection, no dynamic code loading, no string-to-code path.
   Programs cannot start processes or open sockets: the only effects are `terminal.write`, `file.read`, `file.write`.

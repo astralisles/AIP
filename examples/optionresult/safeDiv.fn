@@ -1,4 +1,4 @@
-fn safeDiv(a Int, b Int) -> Result<Int,Text>
+fn safeDiv(a I64, b I64) -> Result<I64,Text>
   "Divide, or give an error text when b is zero."
   pure
 body

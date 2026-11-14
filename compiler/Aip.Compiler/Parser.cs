@@ -268,7 +268,7 @@ sealed partial class Parser
         var sign = "";
         if (IsSym("-")) { _pos++; sign = "-"; }
         var digits = Expect(T.Int, "a number").Text;
-        if (!long.TryParse(sign + digits, out _)) throw Err("bad-number", $"`{sign}{digits}` is too large for Int");
+        if (!long.TryParse(sign + digits, out _)) throw Err("bad-number", $"`{sign}{digits}` is too large for I64");
         return sign + digits;
     }
 

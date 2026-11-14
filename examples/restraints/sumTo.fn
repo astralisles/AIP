@@ -1,4 +1,4 @@
-fn sumTo(n Int 0..) -> Int
+fn sumTo(n I64 0..) -> I64
   "Add 1 + 2 + ... + n."
   pure
   cannot-fail

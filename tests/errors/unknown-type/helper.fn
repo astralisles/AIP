@@ -1,4 +1,4 @@
-fn helper(x Foo) -> Int
+fn helper(x Foo) -> I64
   "Unknown parameter type."
   pure
 body

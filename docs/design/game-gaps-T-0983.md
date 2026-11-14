@@ -1,6 +1,6 @@
 # What games need that AIP is missing (T-0983)
 
-Checked against `compiler/std/` and the design notes on this branch. Already present and useful for games: `Int`/`F32`/`F64`
+Checked against `compiler/std/` and the design notes on this branch. Already present and useful for games: `I64`/`F32`/`F64`
 and sized ints, bit ops, `List`/`Map`/`Set`/`Queue`/`PriorityQueue` (A*), sorted collections, `Bytes`, `hash`, `tcp`/`udp`,
 `file`, `log`, profiling, `native "lib" "symbol"` calls, deterministic emit.
 
@@ -13,7 +13,7 @@ and sized ints, bit ops, `List`/`Map`/`Set`/`Queue`/`PriorityQueue` (A*), sorted
 4. **Input.** Only blocking `readLine`. Need non-blocking key/mouse/gamepad state per frame (effect `input.read`), and raw terminal mode.
 5. **Window, rendering, audio.** Nothing. Fastest route: a std `window`/`draw`/`audio` family backed by SDL or raylib through the
    existing native mechanism, effects `window`, `graphics`, `audio`. Needs item 6 first.
-6. **Richer native interop.** Native types are only `Int`/`Bool`/`Text`. Graphics libraries need an opaque handle type,
+6. **Richer native interop.** Native types are only `I64`/`Bool`/`Text`. Graphics libraries need an opaque handle type,
    `Bytes`/pixel buffers passed by pointer, `Float`, small structs by value and callbacks (function pointers).
 
 ## Performance (needed for anything beyond a toy)

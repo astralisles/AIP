@@ -1,4 +1,4 @@
-fn unaryStep(toks List<Text>, pos Int) -> ExprParsed
+fn unaryStep(toks List<Text>, pos I64) -> ExprParsed
   "Read the operator at pos and the operand after it."
   pure
   fails

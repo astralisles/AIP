@@ -1,4 +1,4 @@
-fn evalItems(items List<Expr>, i Int, total Int) -> Int
+fn evalItems(items List<Expr>, i I64, total I64) -> I64
   "The total of the items from position i on, added to total."
   pure
   fails

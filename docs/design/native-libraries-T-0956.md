@@ -6,7 +6,7 @@ Programs can call functions in shared libraries: `.dll` on Windows, `.so` on Lin
 
 A project function (never `std/`) gets a `native "library" "symbol"` header line and ends with `extern`:
 
-    fn absolute(n Int) -> Int
+    fn absolute(n I64) -> I64
       "Absolute value, computed by the C runtime library."
       effects native.ucrtbase
       native "ucrtbase" "_abs64"
@@ -16,7 +16,7 @@ A project function (never `std/`) gets a `native "library" "symbol"` header line
   platform prefix and suffix (`sqlite3.dll`, `libsqlite3.so`, `libsqlite3.dylib`) and looks next to the program first.
   The name may differ per OS (Windows `ucrtbase`, Linux `c`); a per-OS choice is a possible follow-up.
 - `symbol` is the exported C name; the calling convention is cdecl.
-- Types are limited to `Int` (C `int64_t`), `Bool` (one byte), `Text` (UTF-8, NUL-terminated, copied for the call);
+- Types are limited to `I64` (C `int64_t`), `Bool` (one byte), `Text` (UTF-8, NUL-terminated, copied for the call);
   `Unit` as result (`void`). A returned `Text` is copied; the library keeps ownership and AIP never frees it.
   Anything richer is converted by an AIP function wrapped around the native one.
 

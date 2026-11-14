@@ -1,0 +1,5 @@
+packed: 772
+high: 3
+low: 4
+flipped: 251
+mixed: 3

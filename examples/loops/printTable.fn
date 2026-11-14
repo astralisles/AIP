@@ -1,4 +1,4 @@
-fn printTable(rows Int, cols Int) -> Unit
+fn printTable(rows I64, cols I64) -> Unit
   "Print a multiplication table: a `for` for the rows, with a `loop` inside that builds each row's text."
   effects terminal.write
 body

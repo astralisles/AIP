@@ -1,4 +1,4 @@
-fn f() -> Int
+fn f() -> I64
   "The loop has no done."
   pure
 body

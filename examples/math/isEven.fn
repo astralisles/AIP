@@ -1,4 +1,4 @@
-fn isEven(n Int) -> Bool
+fn isEven(n I64) -> Bool
   "True when the number divides by 2 without a rest."
   pure
   example isEven(10)

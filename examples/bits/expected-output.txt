@@ -5,4 +5,4 @@ not U8: 243
 shl: 192
 shr signed keeps sign: -4
 shl U32: 2147483648
-mask Int: 255
+mask I64: 255

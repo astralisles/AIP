@@ -1,4 +1,4 @@
-fn stepBlockStmt(text Text, pending List<Int>) -> BodyStep
+fn stepBlockStmt(text Text, pending List<I64>) -> BodyStep
   "A statement inside a multi-line `if` branch."
   pure
   fails

@@ -1,4 +1,4 @@
-fn scanIdent(src Text, pos Int) -> Int
+fn scanIdent(src Text, pos I64) -> I64
   "The position after the run of name characters that starts at pos."
   pure
   fails

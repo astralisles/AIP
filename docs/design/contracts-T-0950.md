@@ -4,8 +4,8 @@ Question: should we define function contracts, use them statically to verify cod
 
 ## Where we are
 
-Contracts already exist: `requires` (precondition), `ensures` (postcondition), `example`, and Int/Text ranges
-(`Int 0..100`). They are type-checked and **run** by `aip test` and by the interpreter on every call
+Contracts already exist: `requires` (precondition), `ensures` (postcondition), `example`, and I64/Text ranges
+(`I64 0..100`). They are type-checked and **run** by `aip test` and by the interpreter on every call
 (`tests/contracts`). They are **not proved**; the index says "checked, not proved". `aip lint` adds a few
 syntactic checks (division-by-zero literal, unbounded recursion, ...).
 
@@ -37,7 +37,7 @@ Costs and risks:
 1. **Constant call-site check (cheap, do first). DONE in T-0950 #3 (`aip lint`, `Interp.FirstBrokenRequires`).** If all arguments of a call to a pure function are literals/constants,
    evaluate `requires` and ranges with the existing interpreter at check time. Failure is the warning
    `requires-always-false`. Needs no new theory.
-2. **Facts from conditions (own small analysis, no dependency).** Interval + simple comparison facts for Int,
+2. **Facts from conditions (own small analysis, no dependency).** Interval + simple comparison facts for I64,
    propagated through `let`, `if c then ... else ...` (inside `then`, `c` is known) and `match`. Used to discharge
    `requires`, ranges, `/` and `%` by zero, and `ensures` of the form `result >= 0` / `result <= n`.
    Output per call site: proved / unproved (warning) / disproved (error). The index shows "proved" only when all
@@ -65,7 +65,7 @@ Adopt steps 1 and 2 as the next tickets (about 300-500 lines in `Lint.cs`/a new 
 
 Contract syntax does not change. A function with all three kinds of contract:
 
-    fn safeDiv(a Int, b Int 1..) -> Int
+    fn safeDiv(a I64, b I64 1..) -> I64
       "Divide a by b; b must be at least 1."
       pure
       requires a >= 0
@@ -90,7 +90,7 @@ Anything not a literal only fails when the program runs.
 
 The index line gains a status instead of "checked, not proved":
 
-    safeDiv(a Int, b Int 1..) -> Int | pure | requires a >= 0 | ensures result <= a | proved
-    average(a Int, b Int) -> Int     | pure | example x2                              | tested
+    safeDiv(a I64, b I64 1..) -> I64 | pure | requires a >= 0 | ensures result <= a | proved
+    average(a I64, b I64) -> I64     | pure | example x2                              | tested
 
 Unproved never blocks `build`; only a disproved contract (a call that must fail) is an error.

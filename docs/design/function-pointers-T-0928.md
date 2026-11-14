@@ -6,7 +6,7 @@ Yes, but as a restricted feature, and not yet. Higher-order operations (`map`, `
 `fold`, sort by key, callbacks in a compiler pass) are needed for the bootstrapped
 compiler; without them every loop is hand-written recursion.
 
-Shape: a function type `Fn<(A, B), R>` (effects part of the type, e.g. `Fn<(Int), Int> !file.read`).
+Shape: a function type `Fn<(A, B), R>` (effects part of the type, e.g. `Fn<(I64), I64> !file.read`).
 A value of that type can only be a reference to a named top-level function (`&name`). That
 keeps the promises of the language:
 - No closures, so no captured hidden state (consistent with the no-global-state decision).

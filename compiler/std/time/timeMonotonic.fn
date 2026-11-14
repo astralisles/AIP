@@ -1,4 +1,4 @@
-fn timeMonotonic() -> Int
+fn timeMonotonic() -> I64
   "Milliseconds on a clock that only goes forward (not the date); use it to measure frame time and durations."
   effects time.read
 extern

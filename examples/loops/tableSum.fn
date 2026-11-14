@@ -1,4 +1,4 @@
-fn tableSum(rows Int, cols Int) -> Int
+fn tableSum(rows I64, cols I64) -> I64
   "Sum r * c over a rows x cols table: an outer loop whose body holds an inner loop."
   pure
 body

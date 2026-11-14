@@ -1,4 +1,4 @@
-fn parseWord(toks List<Text>, pos Int) -> ExprParsed
+fn parseWord(toks List<Text>, pos I64) -> ExprParsed
   "Read a name, `true`, `false` or a call (a name followed by `(`) at pos."
   pure
   fails

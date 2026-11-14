@@ -1,4 +1,4 @@
-fn runLength(data List<Int>, start Int, value Int, n Int) -> Int
+fn runLength(data List<I64>, start I64, value I64, n I64) -> I64
   "How many times value repeats in data from start on, at most 255."
   pure
   fails

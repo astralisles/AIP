@@ -1,4 +1,4 @@
-fn printRow(r Int, c Int, cols Int, line Text) -> Unit
+fn printRow(r I64, c I64, cols I64, line Text) -> Unit
   "Inner loop with an effect: print one row of the multiplication table."
   effects terminal.write
 body

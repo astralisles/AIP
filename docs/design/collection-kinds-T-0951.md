@@ -11,12 +11,12 @@ not offer both as separate types. A kind exists only when it changes what a prog
 | Need | Type | Status |
 |---|---|---|
 | Lookup by key, keep insertion order | `Map<K,V>`, `Set<T>` (hash) | done |
-| Lookup by key, keys always in ascending order (tree) | `SortedMap<K,V>`, `SortedSet<T>` | done (T-0951): Int or Text keys |
+| Lookup by key, keys always in ascending order (tree) | `SortedMap<K,V>`, `SortedSet<T>` | done (T-0951): I64 or Text keys |
 | Indexed sequence | `List<T>` | done |
 | First-in-first-out / double ended | `Queue<T>`, `Deque<T>` | proposed: `queuePush`, `queuePop` return a new queue; amortized O(1) |
 | Always take the smallest item | `Heap<T>` (priority queue) | proposed |
-| Count duplicates | `Bag<T>` (Map<T,Int> wrapper) | proposed; can be plain std functions |
-| Dense Int flags | `Bits` | proposed, needs the numbers decision (open question 9) |
+| Count duplicates | `Bag<T>` (Map<T,I64> wrapper) | proposed; can be plain std functions |
+| Dense I64 flags | `Bits` | proposed, needs the numbers decision (open question 9) |
 | Keys of structs/variants in a sorted kind | needs an `order` rule for user types | open |
 
 Linked vs array list: not a type. The compiler (back end) may use whichever representation it measures as faster
@@ -28,5 +28,5 @@ O(log n) per change and may not be replaced by a hash by the back end, because i
 `SortedMap<K,V>` and `SortedSet<T>` with std groups `sortedMap/` and `sortedSet/` (`sortedMapSet`, `sortedMapGet`, `sortedMapHas`,
 `sortedMapRemove`, `sortedMapSize`, `sortedMapKeys`, and the `sortedSet*` equivalents). Backed by a C# `SortedDictionary` with an ordinal
 comparer; every change copies, like `Map`. Example: `examples/sorted`.
-Known limit: keys must be Int or Text. The checker does not yet reject other key types (a struct key would crash at run time);
+Known limit: keys must be I64 or Text. The checker does not yet reject other key types (a struct key would crash at run time);
 rejecting them is the first follow-up.

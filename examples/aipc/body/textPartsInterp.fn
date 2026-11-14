@@ -1,4 +1,4 @@
-fn textPartsInterp(raw Text, close Int, hole Expr, cur Text, parts List<Expr>) -> List<Expr>
+fn textPartsInterp(raw Text, close I64, hole Expr, cur Text, parts List<Expr>) -> List<Expr>
   "Add the literal text so far (if any) and the hole, then go on after the `}` at index close."
   pure
   fails

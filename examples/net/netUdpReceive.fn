@@ -1,4 +1,4 @@
-fn netUdpReceive(port Int) -> Unit
+fn netUdpReceive(port I64) -> Unit
   "Wait up to 10 seconds for one datagram and print its text."
   effects udp.open, udp.receive, udp.close, terminal.write
 body

@@ -1,4 +1,4 @@
-fn lexSymbol(src Text, pos Int, acc List<Text>) -> List<Text>
+fn lexSymbol(src Text, pos I64, acc List<Text>) -> List<Text>
   "Lex a one or two character symbol at pos."
   pure
   fails

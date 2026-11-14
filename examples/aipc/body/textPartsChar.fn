@@ -1,4 +1,4 @@
-fn textPartsChar(raw Text, i Int, code Int, cur Text, parts List<Expr>) -> List<Expr>
+fn textPartsChar(raw Text, i I64, code I64, cur Text, parts List<Expr>) -> List<Expr>
   "Handle the character at i: an escape (92), the start of a hole (123) or an ordinary character."
   pure
   fails

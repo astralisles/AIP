@@ -1,4 +1,4 @@
-fn parsePrimary(toks List<Text>, pos Int) -> ExprParsed
+fn parsePrimary(toks List<Text>, pos I64) -> ExprParsed
   "Read a number, text, name, call or parenthesised expression at pos."
   pure
   fails

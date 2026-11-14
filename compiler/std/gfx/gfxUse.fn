@@ -1,4 +1,4 @@
-fn gfxUse(window GfxWindow, program Int) -> Unit
+fn gfxUse(window GfxWindow, program I64) -> Unit
   "Make a compiled shader program the one used by later draws."
   effects gfx.draw
 extern

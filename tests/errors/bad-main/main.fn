@@ -1,4 +1,4 @@
-fn main(x Int) -> Unit
+fn main(x I64) -> Unit
   "Print a greeting."
   effects terminal.write
 body

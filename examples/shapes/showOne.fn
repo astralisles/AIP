@@ -1,4 +1,4 @@
-fn showOne(shapes List<Shape>, i Int) -> Unit
+fn showOne(shapes List<Shape>, i I64) -> Unit
   "Print shape i, then the rest."
   effects terminal.write
   fails

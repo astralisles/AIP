@@ -11,4 +11,4 @@ body
   printLine("shl: {flags << 4}")
   printLine("shr signed keeps sign: {numToI8(-16) >> 2}")
   printLine("shl U32: {numToU32(1) << 31}")
-  printLine("mask Int: {255 & 4095}")
+  printLine("mask I64: {255 & 4095}")

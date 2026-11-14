@@ -1,4 +1,4 @@
-fn lexString(src Text, pos Int, acc List<Text>) -> List<Text>
+fn lexString(src Text, pos I64, acc List<Text>) -> List<Text>
   "Lex a double-quoted text that starts at pos; the token keeps the raw characters between the quotes."
   pure
   fails

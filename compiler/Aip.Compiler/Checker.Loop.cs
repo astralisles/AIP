@@ -139,9 +139,9 @@ sealed partial class Checker
         var from = TypeOf(f.From, env, used);
         var to = TypeOf(f.To, env, used);
         foreach (var (t, what) in new[] { (from, "start"), (to, "end") })
-            if (t != "" && t != "Int") Error(f.Line, "type-mismatch", $"the {what} of a `for` range must be Int, found {t}");
+            if (t != "" && t != "I64") Error(f.Line, "type-mismatch", $"the {what} of a `for` range must be I64, found {t}");
         var inner = new Dictionary<string, string>(env);
-        DeclareLoopName(f.Var, f.Line, "Int", inner, "loop name");
+        DeclareLoopName(f.Var, f.Line, "I64", inner, "loop name");
         ReportUnused(CheckLoopStmts(f.Body, f.Body.Count, inner, used), used);
         return "Unit";
     }

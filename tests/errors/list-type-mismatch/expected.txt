@@ -1,1 +1,1 @@
-argument `item` of `listAppend` must be Int, found Text
+argument `item` of `listAppend` must be I64, found Text

@@ -20,7 +20,7 @@ for n in sizes:
     for i in range(n):
         calls = ["printLine(\"hi\")"] if i == 0 else [f"f{i-1}(x)"] + [f"f{random.randrange(i)}(x)" for _ in range(2) if i > 2]
         with open(os.path.join(d, f"f{i}.fn"), "w", newline="\n") as f:
-            f.write(f'fn f{i}(x Int) -> Unit\n  "Generated function {i}."\n  effects terminal.write\nbody\n  ' + "\n  ".join(calls) + "\n")
+            f.write(f'fn f{i}(x I64) -> Unit\n  "Generated function {i}."\n  effects terminal.write\nbody\n  ' + "\n  ".join(calls) + "\n")
     with open(os.path.join(d, "main.fn"), "w", newline="\n") as f:
         f.write(f'fn main() -> Unit\n  "Entry."\n  effects terminal.write\nbody\n  f{n-1}(1)\n')
     mb = sum(os.path.getsize(os.path.join(d, x)) for x in os.listdir(d) if x.endswith(".fn")) / 1e6
@@ -33,7 +33,7 @@ for n in sizes:
     edits = iter(range(10**6))
     def edited():
         k = next(edits); p = os.path.join(d, "f1.fn")  # change the purpose text, as an LLM edit would
-        with open(p, "w", newline="\n") as f: f.write(f'fn f1(x Int) -> Unit\n  "Edited {k}."\n  effects terminal.write\nbody\n  f0(x)\n')
+        with open(p, "w", newline="\n") as f: f.write(f'fn f1(x I64) -> Unit\n  "Edited {k}."\n  effects terminal.write\nbody\n  f0(x)\n')
         return run("query", d, "callers", "f0")[0]
     t_no = med(nocache); run("query", d, "list")
     t_cached = med(lambda: run("query", d, "callers", "f0")[0])

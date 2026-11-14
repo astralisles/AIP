@@ -1,4 +1,4 @@
-fn countdown(n Int) -> Unit
+fn countdown(n I64) -> Unit
   "Loop with an effect: print n down to 1, then Liftoff."
   effects terminal.write
 body

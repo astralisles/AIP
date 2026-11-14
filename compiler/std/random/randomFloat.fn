@@ -1,4 +1,4 @@
-fn randomFloat(state Int) -> F64
+fn randomFloat(state I64) -> F64
   "A float from 0 up to but not including 1, taken from the state."
   pure
 extern

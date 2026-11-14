@@ -1,4 +1,4 @@
-fn flip(e Expr) -> Int
+fn flip(e Expr) -> I64
   "Negate a number; the inner match forgets Sum."
   pure
 body

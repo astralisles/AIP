@@ -1,4 +1,4 @@
-fn spaceAt(t Text, pos Int) -> Int
+fn spaceAt(t Text, pos I64) -> I64
   "The position of the first space in t at or after pos, or the length of t if there is none."
   pure
   fails

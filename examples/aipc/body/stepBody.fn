@@ -1,4 +1,4 @@
-fn stepBody(indent Int, text Text, pending List<Int>, openIf Bool) -> BodyStep
+fn stepBody(indent I64, text Text, pending List<I64>, openIf Bool) -> BodyStep
   "Read one body line (indent and trimmed text) given the open matches and whether an `if` block is open."
   pure
   fails

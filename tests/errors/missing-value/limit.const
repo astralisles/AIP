@@ -1,2 +1,2 @@
-const limit Int
+const limit I64
   "The limit."

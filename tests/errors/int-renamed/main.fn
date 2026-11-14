@@ -1,0 +1,5 @@
+fn main() -> Unit
+  "Use the removed type name Int."
+  effects terminal.write
+body
+  printLine(textFromInt(double(2)))

@@ -1,4 +1,4 @@
-fn randomSeed() -> Int
+fn randomSeed() -> I64
   "A fresh unpredictable seed from the operating system; differs on every run. Start the pure generator from it."
   effects random.read
 extern

@@ -1,4 +1,4 @@
-fn grade(score Int) -> Text
+fn grade(score I64) -> Text
   "A letter for a score: A from 90, B from 80, C from 70, else F."
   pure
   example grade(95) == "A"

@@ -1,6 +1,6 @@
 # Do we need a sleep? (T-0981)
 
-**Answer: yes, a minimal one, but not yet urgent.** Add `timeSleep(ms Int) -> Unit` with effect `time.sleep`.
+**Answer: yes, a minimal one, but not yet urgent.** Add `timeSleep(ms I64) -> Unit` with effect `time.sleep`.
 
 Why:
 - Programs that poll, retry (network, files) or rate-limit cannot do it otherwise. A busy loop burns CPU and

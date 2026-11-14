@@ -1,4 +1,4 @@
-fn compress(data List<Int>, i Int, out List<Int>) -> List<Int>
+fn compress(data List<I64>, i I64, out List<I64>) -> List<I64>
   "Run-length encode bytes as pairs: how many times, then the byte value."
   pure
   fails

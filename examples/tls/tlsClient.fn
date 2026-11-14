@@ -1,4 +1,4 @@
-fn tlsClient(host Text, port Int) -> Unit
+fn tlsClient(host Text, port I64) -> Unit
   "Connect with TLS (the certificate is checked), send `hello` and print the answer."
   effects tcp.connect, tcp.send, tcp.receive, tcp.close, terminal.write
 body

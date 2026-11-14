@@ -67,6 +67,7 @@ sealed partial class CsBackend
                 return r;
             }
             public static void Nop() { }
+            public static void MakeFolder(string p) => System.IO.Directory.CreateDirectory(p);
             public static void Write(string path, byte[] content) => System.IO.File.WriteAllBytes(path, content);
             public static string Text(string v) => v;
             public static string Text(double v) => v.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
@@ -74,7 +75,7 @@ sealed partial class CsBackend
             public static string Text(int v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
             public static string Text(uint v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
             public static int Shift(long count, int width) => count >= 0 && count < width ? (int)count : throw new System.ArgumentOutOfRangeException("count", $"shift count {count} must be 0 to {width - 1}");
-            public static long ToInt(double v) => double.IsNaN(v) || v >= 9223372036854775808.0 || v < -9223372036854775808.0 ? throw new System.OverflowException($"{v} does not fit in Int") : (long)v;
+            public static long ToInt(double v) => double.IsNaN(v) || v >= 9223372036854775808.0 || v < -9223372036854775808.0 ? throw new System.OverflowException($"{v} does not fit in I64") : (long)v;
             public static string Text(ulong v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
             public static string Text(long v) => v.ToString(System.Globalization.CultureInfo.InvariantCulture);
             public static string Text(bool v) => v ? "true" : "false";
@@ -92,7 +93,7 @@ sealed partial class CsBackend
     const string RtSorted = """
         public static partial class Rt
         {
-            // Sorted maps and sets are balanced trees: keys come back in ascending order (Int by value, Text by ordinal).
+            // Sorted maps and sets are balanced trees: keys come back in ascending order (I64 by value, Text by ordinal).
             sealed class OrderCmp : System.Collections.Generic.IComparer<object>
             {
                 public int Compare(object? a, object? b) => a is string s ? string.CompareOrdinal(s, (string)b!) : ((long)a!).CompareTo((long)b!);

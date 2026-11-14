@@ -21,7 +21,7 @@ for r in 1..rows          r runs from 1 up to rows - 1; the body is Unit stateme
 - Nesting is by indentation: `let x = loop` or `for` inside a body. No labels, no `break`/`continue`.
 - `done` and `next` are keywords only inside a loop body (`next` is still a normal name elsewhere, e.g. `examples/aipc`).
 - Loop names and `for` variables cannot be reused by a later `let` in the function (the C# back end declares them in one scope).
-- `for` bounds are Int; the end is exclusive. The body may only hold Unit statements and `let`s.
+- `for` bounds are I64; the end is exclusive. The body may only hold Unit statements and `let`s.
 
 ## Errors
 `loop-no-body`, `loop-no-state`, `empty-body`, `loop-state-count`, `loop-no-exit`, `loop-misplaced`, plus the existing

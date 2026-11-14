@@ -33,12 +33,12 @@ compiler source needs, or a compiler stage still to write. Items are ordered by 
 |---|---|---|
 | Join many texts | the emitter builds large outputs; repeated `+` is quadratic | `textJoin(parts List<Text>, separator Text)` |
 | Split / search text | line splitting, finding `->`, `:` in headers | `textSplit`, `textIndexOf`, `textStartsWith`, `textTrim` |
-| Int to Text and back | positions, error messages (`{n}` interpolation covers Int to Text; `textToInt` exists) | none |
+| I64 to Text and back | positions, error messages (`{n}` interpolation covers I64 to Text; `textToInt` exists) | none |
 | More list operations | symbol tables, token windows | `listSet`, `listSlice`, `listConcat`, `listReverse` |
 | Write many files, make folders | the cache holds one object file per function | `fileMakeFolder`, `fileExists` (`file.write`, `file.read`) |
 | List a folder | project loader finds every `.fn`, `.struct`, `.variant`, `.const` | `fileList(folder Text) -> List<Text>` (`file.read`) |
-| Bytes and binary files | IR, object code and the exe are not text | `Bytes` type, `fileReadBytes`, `fileWriteBytes`, `bytesGet/Set/Append/Slice`, Int bit operations (`and`/`or`/`xor`/shift on Int) |
-| Exit code | `aip check` returns non-zero on errors | `processExit(code Int)` (`process.exit`) |
+| Bytes and binary files | IR, object code and the exe are not text | `Bytes` type, `fileReadBytes`, `fileWriteBytes`, `bytesGet/Set/Append/Slice`, I64 bit operations (`and`/`or`/`xor`/shift on I64) |
+| Exit code | `aip check` returns non-zero on errors | `processExit(code I64)` (`process.exit`) |
 | Std implementations | `Externs` in `CsBackend.cs` are C# text | each std function gets a native implementation in the runtime (section E) and an IR-level definition; `check-externs.ps1` compares header, IR definition and interpreter |
 
 ## C. Compiler stages still to write in AIP (in order, each with a compare script like the lexer and header parser)

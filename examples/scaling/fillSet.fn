@@ -1,4 +1,4 @@
-fn fillSet(s Set<Int>, i Int, n Int) -> Set<Int>
+fn fillSet(s Set<I64>, i I64, n I64) -> Set<I64>
   "Add the numbers i up to n - 1 to the set, one at a time."
   pure
 body

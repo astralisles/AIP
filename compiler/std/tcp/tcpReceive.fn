@@ -1,4 +1,4 @@
-fn tcpReceive(conn TcpConn, max Int) -> List<U8>
+fn tcpReceive(conn TcpConn, max I64) -> List<U8>
   "Wait for data and return 1 to max bytes; empty bytes mean the other side closed."
   effects tcp.receive
 extern

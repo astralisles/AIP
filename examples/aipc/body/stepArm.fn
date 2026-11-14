@@ -1,4 +1,4 @@
-fn stepArm(indent Int, text Text, pending List<Int>, openIf Bool) -> BodyStep
+fn stepArm(indent I64, text Text, pending List<I64>, openIf Bool) -> BodyStep
   "Read a `Case(a, b) => value` line; a value that is a `match` opens arms two spaces deeper."
   pure
   fails

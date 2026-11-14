@@ -1,4 +1,4 @@
-fn showAll(shapes List<Shape>, i Int) -> Unit
+fn showAll(shapes List<Shape>, i I64) -> Unit
   "Print a line for each shape from position i on."
   effects terminal.write
   fails

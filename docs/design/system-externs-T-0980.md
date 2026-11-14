@@ -4,12 +4,12 @@ All are `extern` std functions with an effect, so they show in the signature and
 
 | Function | Effect | Notes |
 |---|---|---|
-| `processExit(code Int) -> Unit` | `process.exit` | Writes profile/call logs, then exits with the code. |
+| `processExit(code I64) -> Unit` | `process.exit` | Writes profile/call logs, then exits with the code. |
 | `fileExists(path Text) -> Bool` | `file.read` | True for files and folders. |
 | `fileAppend(path Text, content Text) -> Unit` | `file.write` | `fails`; creates the file. |
 | `dirList(path Text) -> List<Text>` | `file.read` | `fails`; names only, sorted by ordinal text order. |
-| `timeNow() -> Int` | `time.read` | Milliseconds since 1970 UTC. |
-| `randomInt(low Int, high Int) -> Int` | `random.read` | `fails`; `low <= n < high`. Not seedable yet. |
+| `timeNow() -> I64` | `time.read` | Milliseconds since 1970 UTC. |
+| `randomInt(low I64, high I64) -> I64` | `random.read` | `fails`; `low <= n < high`. Not seedable yet. |
 | `envGet(name Text) -> Text` | `process.env` | Empty text if unset. |
 | `envHas(name Text) -> Bool` | `process.env` | Tells "unset" from "empty". |
 

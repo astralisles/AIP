@@ -19,7 +19,7 @@ sealed partial class Checker
         var index = fn.Decreases is NameRef nr ? fn.Params.FindIndex(p => p.Name == nr.Name && IsInt(p.Type.Name)) : -1;
         if (index < 0)
         {
-            Error(line, "bad-decreases", "`decreases` must name a whole-number parameter of this function", "write `decreases n` where `n` is an Int parameter that shrinks in each recursive call");
+            Error(line, "bad-decreases", "`decreases` must name a whole-number parameter of this function", "write `decreases n` where `n` is an I64 parameter that shrinks in each recursive call");
             return;
         }
         var p = fn.Params[index];

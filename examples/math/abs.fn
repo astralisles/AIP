@@ -1,4 +1,4 @@
-fn abs(n Int) -> Int
+fn abs(n I64) -> I64
   "The distance of a number from zero."
   pure
   example abs(-5) == 5

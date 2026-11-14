@@ -1,4 +1,4 @@
-fn listRange(start Int, end Int) -> List<Int>
+fn listRange(start I64, end I64) -> List<I64>
   "The numbers from start up to (not including) end; empty when end <= start."
   pure
 extern
