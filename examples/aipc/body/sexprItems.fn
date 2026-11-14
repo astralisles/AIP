@@ -1,5 +1,6 @@
 fn sexprItems(items List<Expr>, i Int) -> Text
   "Each item from index i as a space and its s-expression."
   pure
+  fails
 body
   if i >= listLength(items) then "" else " {sexpr(listGet(items, i))}{sexprItems(items, i + 1)}"

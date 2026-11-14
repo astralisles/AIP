@@ -1,6 +1,7 @@
 fn parsePrimary(toks List<Text>, pos Int) -> ExprParsed
   "Read a number, text, name, call or parenthesised expression at pos."
   pure
+  fails
 body
   let t = tokAt(toks, pos)
   let kind = tokKind(t)

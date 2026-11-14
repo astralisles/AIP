@@ -1,6 +1,7 @@
 fn parseCall(toks List<Text>, name Text, pos Int) -> ExprParsed
   "Read the arguments of a call to name; pos is just after the `(`."
   pure
+  fails
 body
   let args = parseCallArgs(toks, pos, listEmpty())
   ExprParsed(CallFn(name, args.items), args.next)

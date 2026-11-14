@@ -1,5 +1,6 @@
 fn parseExprText(text Text) -> Expr
   "Parse the expression in a piece of source text."
   pure
+  fails
 body
   parseExpr(lexAll(text), 0, false).expr

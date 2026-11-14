@@ -1,6 +1,7 @@
 fn sexpr(e Expr) -> Text
   "Print an expression as one s-expression, for comparing with the C# parser's dump."
   pure
+  fails
 body
   match e
     IntNum(text) => "(int {text})"

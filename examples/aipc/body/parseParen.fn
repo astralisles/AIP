@@ -1,6 +1,7 @@
 fn parseParen(toks List<Text>, pos Int) -> ExprParsed
   "Read `expr )` after an opening parenthesis."
   pure
+  fails
 body
   let inner = parseExpr(toks, pos, false)
   ExprParsed(inner.expr, inner.next + 1)
