@@ -6,6 +6,7 @@ namespace Aip;
 /// <summary>A struct or variant value: which case, and its field values in declaration order.</summary>
 sealed record Val(Case Case, object?[] Fields);
 
+
 /// <summary>
 /// Tree-walking evaluator for pure functions. It runs `example` lines and checks `requires`, `ensures` and
 /// parameter/result ranges at every call. It follows the C# back end's rules (checked sized integers, truncating division, IEEE floats).
@@ -20,6 +21,9 @@ sealed partial class Interp(ProgramModel program)
     {
         public string Code = code;
     }
+
+    object? CallIndirect(Call ic, Dictionary<string, object?> env) =>
+        CallFn(((FnVal)env[ic.Name]!).Target, ic.Args.Select(a => Eval(a, env)).ToList());
 
     int _depth;
     const int MaxDepth = 100_000;
@@ -114,6 +118,8 @@ sealed partial class Interp(ProgramModel program)
                 return string.Concat(t.Parts.Select(p => p is string s ? s : Text(Eval((Expr)p, env))));
             case Call { Ctor: not null } c:
                 return new Val(program.Ctors[c.Name].Case, c.Args.Select(a => Eval(a, env)).ToArray());
+            case Call { Indirect: true } ic:
+                return CallIndirect(ic, env);
             case Call c:
                 return CallFn(program.Fns[c.Name], c.Args.Select(a => Eval(a, env)).ToList());
             case Assign a:

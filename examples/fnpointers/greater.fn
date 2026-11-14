@@ -1,0 +1,5 @@
+fn greater(a Int, b Int) -> Bool
+  "True when a is larger than b."
+  pure
+body
+  a > b

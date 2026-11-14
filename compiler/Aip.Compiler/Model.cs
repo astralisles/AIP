@@ -23,7 +23,7 @@ sealed class TextLit : Expr { public List<object> Parts = new(); }
 sealed class FnRef : Expr { public string Name = ""; public Fn? Target; }
 sealed class NameRef : Expr { public string Name = ""; public bool Erased; public bool Const; }
 /// <summary>A function call, or (when Ctor is set by the checker) the construction of a struct or variant case.</summary>
-sealed class Call : Expr { public string Name = ""; public List<Expr> Args = new(); public string? Ctor; public bool Erased; }
+sealed class Call : Expr { public string Name = ""; public List<Expr> Args = new(); public string? Ctor; public bool Erased; public bool Indirect; }
 /// <summary>`target.name`: reads a field of a struct.</summary>
 sealed class Field : Expr { public Expr Target = null!; public string Name = ""; public bool Erased; }
 /// <summary>`set target.name = value`: overwrites a field of a struct in place (needs the `mutate` effect). Unit.</summary>

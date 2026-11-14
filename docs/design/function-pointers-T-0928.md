@@ -16,5 +16,7 @@ keeps the promises of the language:
 - Reachability: `&name` counts as a call from the referencing function.
 - Back end: C# delegate (`Func<..>`); a back end without delegates may use a lookup table.
 
-Not implemented. Until then, use recursion over `List<T>`. Build it after `struct`/`variant`/`match`,
-then add std `listMap`, `listFilter`, `listFold`.
+Implemented (T-0976), with these limits: `&name` works only for a non-generic, pure, non-extern function (error
+`bad-fn-ref` otherwise); `Fn<..>` carries no effects. A function value is a boxed delegate in C# and a closure in the
+interpreter, so generic std functions need no per-type code. Fn values cannot be compared or put in a Text.
+Std: `listMap`, `listFilter`, `listFold(items, start, f)`, `listSort(items, less)` (stable). Example: `examples/fnpointers`.

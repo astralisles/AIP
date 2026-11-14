@@ -1,0 +1,5 @@
+fn add(total Int, n Int) -> Int
+  "The sum of two numbers."
+  pure
+body
+  total + n
