@@ -1,4 +1,4 @@
-fn fileWrite(path Text, content Bytes) -> Unit
+fn fileWrite(path Text, content List<U8>) -> Unit
   "Write bytes as a whole file, replacing it. Use bytesEncode for text."
   effects file.write
   fails

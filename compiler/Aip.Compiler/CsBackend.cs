@@ -131,7 +131,6 @@ sealed partial class CsBackend : IBackend
     {
         "Int" => "long", "F32" => "float", "F64" => "double", "I8" => "sbyte", "I16" => "short", "I32" => "int",
         "U8" => "byte", "U16" => "ushort", "U32" => "uint", "U64" => "ulong", "Text" => "string", "Bool" => "bool", "_" => "object",
-        "Bytes" => "byte[]",
         "TcpListener" or "TcpConn" or "UdpSocket" => "object", // handles, opened by effectful std functions
         _ when t.Length == 1 && char.IsAsciiLetterUpper(t[0]) => "object", // a type parameter: erased
         _ when t.StartsWith("List<", StringComparison.Ordinal) => "Aip.Persistent.PList",
