@@ -4,4 +4,4 @@ fn parseCall(toks List<Text>, name Text, pos I64) -> ExprParsed
   fails
 body
   let args = parseCallArgs(toks, pos, listEmpty())
-  ExprParsed(CallFn(name, args.items), args.next)
+  ExprParsed(callOf(name, args.items), args.next)
