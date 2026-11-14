@@ -78,4 +78,5 @@ File types and the parts of each file: `docs/design/file-anatomy-T-0948.md`. Con
 Logging and debugging: `docs/design/logging-T-0934.md`; profiling: `docs/design/profiling-T-0938.md`.
 OpenGL graphics (`gfx*` std functions, desktop and WebGL portable): `docs/design/opengl-T-0986.md`.
 Native shared libraries (`native "lib" "symbol"`, dll/so/dylib): `docs/design/native-libraries-T-0956.md`.
+Machine-code back end, Windows .exe without C# (`--backend native`, small subset): `docs/design/native-backend-T-1033.md`.
 A new decision is a new file there; do not append it to this README.
