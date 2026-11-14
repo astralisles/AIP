@@ -13,6 +13,8 @@ sealed partial class CsBackend
         d["tcpReceive"] = "Rt.FromByteArray(Rt.TcpReceive({0}, {1}))";
         d["tcpClose"] = "Rt.TcpClose({0})";
         d["tcpStop"] = "Rt.TcpClose({0})";
+        d["tlsConnect"] = "Rt.TlsConnect({0}, {1})";
+        d["tlsAccept"] = "Rt.TlsAccept({0}, {1}, {2})";
         d["udpOpen"] = "Rt.UdpOpen({0})";
         d["udpSend"] = "Rt.UdpSend({0}, {1}, {2}, Rt.ToByteArray({3}))";
         d["udpReceive"] = "Rt.FromByteArray(Rt.UdpReceive({0}, {1}))";

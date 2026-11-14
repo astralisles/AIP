@@ -196,16 +196,35 @@ sealed partial class CsBackend
         public static object TcpListen(long port) { var l = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Any, (int)port); l.Start(); return l; }
         public static object TcpAccept(object l) { var c = ((System.Net.Sockets.TcpListener)l).AcceptTcpClient(); c.NoDelay = true; return c; }
         public static object TcpConnect(string host, long port) { var c = new System.Net.Sockets.TcpClient(host, (int)port); c.NoDelay = true; return c; }
-        public static void TcpSend(object c, byte[] data) { var st = ((System.Net.Sockets.TcpClient)c).GetStream(); st.Write(data, 0, data.Length); st.Flush(); }
+        public static void TcpSend(object c, byte[] data) { var st = NetStream(c); st.Write(data, 0, data.Length); st.Flush(); }
         public static byte[] TcpReceive(object c, long max)
         {
             var buf = new byte[System.Math.Max(1, (int)max)];
-            int n = ((System.Net.Sockets.TcpClient)c).GetStream().Read(buf, 0, buf.Length);
+            int n = NetStream(c).Read(buf, 0, buf.Length);
             return buf[..n];
+        }
+        // A TLS connection: the same TcpConn handle type, so tcpSend/tcpReceive/tcpClose work on it unchanged.
+        sealed class TlsConn { public System.Net.Sockets.TcpClient Client = null!; public System.Net.Security.SslStream Stream = null!; }
+        static System.IO.Stream NetStream(object c) => c is TlsConn t ? t.Stream : ((System.Net.Sockets.TcpClient)c).GetStream();
+        public static object TlsConnect(string host, long port)
+        {
+            var c = (System.Net.Sockets.TcpClient)TcpConnect(host, port);
+            var ss = new System.Net.Security.SslStream(c.GetStream(), false);
+            try { ss.AuthenticateAsClient(host); } catch { ss.Dispose(); c.Dispose(); throw; }
+            return new TlsConn { Client = c, Stream = ss };
+        }
+        public static object TlsAccept(object conn, string pfxPath, string password)
+        {
+            var c = (System.Net.Sockets.TcpClient)conn;
+            var cert = System.Security.Cryptography.X509Certificates.X509CertificateLoader.LoadPkcs12FromFile(pfxPath, password);
+            var ss = new System.Net.Security.SslStream(c.GetStream(), false);
+            try { ss.AuthenticateAsServer(cert); } catch { ss.Dispose(); c.Dispose(); throw; }
+            return new TlsConn { Client = c, Stream = ss };
         }
         public static void TcpClose(object o)
         {
             if (o is System.Net.Sockets.TcpListener l) l.Stop();
+            else if (o is TlsConn t) { t.Stream.Dispose(); t.Client.Dispose(); }
             else ((System.IDisposable)o).Dispose();
         }
         public static object UdpOpen(long port) => new System.Net.Sockets.UdpClient((int)port);
