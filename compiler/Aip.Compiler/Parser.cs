@@ -212,8 +212,8 @@ sealed partial class Parser
     void CloseIf(IfExpr i, bool inElse)
     {
         _line = i.Line;
-        if (!inElse) throw Err("missing-else", "this `if` block has no `else`", "add a line `else` (indented 2 spaces) and the statements for the other case indented 4");
-        if (((BlockExpr)i.Then).Stmts.Count == 0 || ((BlockExpr)i.Else).Stmts.Count == 0)
+        i.NoElse = !inElse;
+        if (((BlockExpr)i.Then).Stmts.Count == 0 || (inElse && ((BlockExpr)i.Else).Stmts.Count == 0))
             throw Err("empty-branch", "a branch of this `if` block has no statements", "indent at least one statement (4 spaces) under `then` and under `else`");
     }
 

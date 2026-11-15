@@ -1,0 +1,5 @@
+fn countDown(n I64) -> Unit
+  "Print n down to 1; the one-line `if` has no `else`, so nothing happens at 0."
+  effects terminal.write
+body
+  if n > 0 then printAndRepeat(n)

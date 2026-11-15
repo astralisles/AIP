@@ -323,6 +323,11 @@ sealed partial class Checker
         var a = TypeOf(i.Then, env, used);
         if (i.Else is IfExpr chained) chained.InChain = true;
         var b = TypeOf(i.Else, env, used);
+        if (i.NoElse)
+        {
+            if (a != "" && a != "Unit") Error(i.Line, "missing-else", $"an `if` without `else` must give Unit, but `then` gives {a}", "add `else` and a value for the other case, or make the `then` part a Unit statement");
+            return "Unit";
+        }
         if (a != "" && b != "" && !Compat(a, b)) Error(i.Line, "type-mismatch", $"`then` gives {a} but `else` gives {b}");
         if (i.Then is not BlockExpr && !i.InChain && i.Else is not IfExpr && a == "Unit" && b == "Unit")
             Error(i.Line, "one-line-unit-if", "a one-line `if ... then ... else ...` must give a value, but both branches are Unit", "write an `if c then` block: statements indented 4 under `then`, a line `else` (indented 2), statements indented 4");

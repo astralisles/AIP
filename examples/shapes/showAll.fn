@@ -3,7 +3,4 @@ fn showAll(shapes List<Shape>, i I64) -> Unit
   effects terminal.write
   fails
 body
-  if i >= listLength(shapes) then
-    noop()
-  else
-    showOne(shapes, i)
+  if i < listLength(shapes) then showOne(shapes, i)

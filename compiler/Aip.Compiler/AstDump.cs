@@ -20,7 +20,7 @@ static class AstDump
             {
                 sb.Append("if ").Append(S(block.Cond)).Append('\n');
                 foreach (var s in thenBlock.Stmts) sb.Append("stmt ").Append(S(s)).Append('\n');
-                sb.Append("else\n");
+                if (!block.NoElse) sb.Append("else\n");
                 foreach (var s in elseBlock.Stmts) sb.Append("stmt ").Append(S(s)).Append('\n');
                 continue;
             }
@@ -54,6 +54,7 @@ static class AstDump
         Field f => $"(field {S(f.Target)} {f.Name})",
         Unary u => $"(unary {u.Op} {S(u.Operand)})",
         Binary b => $"(binary {b.Op} {S(b.Left)} {S(b.Right)})",
+        IfExpr { NoElse: true } i => $"(if {S(i.Cond)} {S(i.Then)} (skip))",
         IfExpr i => $"(if {S(i.Cond)} {S(i.Then)} {S(i.Else)})",
         MatchExpr m => $"(match {S(m.Subject)})",
         _ => throw new InvalidOperationException("unexpected expression " + e.GetType().Name),

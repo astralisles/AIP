@@ -1,0 +1,7 @@
+fn parseIfElse(cond ExprParsed, whenTrue ExprParsed, toks List<Text>) -> ExprParsed
+  "Read the `else` branch of an `if` expression; the `else` word is at whenTrue.next."
+  pure
+  fails
+body
+  let whenFalse = parseExpr(toks, whenTrue.next + 1, false)
+  ExprParsed(IfExpr(cond.expr, whenTrue.expr, whenFalse.expr), whenFalse.next)

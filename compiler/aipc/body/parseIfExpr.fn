@@ -1,9 +1,8 @@
 fn parseIfExpr(toks List<Text>, pos I64) -> ExprParsed
-  "Read `cond then a else b` at pos (after the `if`)."
+  "Read `cond then a else b` or `cond then a` at pos (after the `if`)."
   pure
   fails
 body
   let cond = parseExpr(toks, pos, false)
   let whenTrue = parseExpr(toks, cond.next + 1, false)
-  let whenFalse = parseExpr(toks, whenTrue.next + 1, false)
-  ExprParsed(IfExpr(cond.expr, whenTrue.expr, whenFalse.expr), whenFalse.next)
+  if tokAt(toks, whenTrue.next) == "Ident else" then parseIfElse(cond, whenTrue, toks) else ExprParsed(IfExpr(cond.expr, whenTrue.expr, NoElse()), whenTrue.next)

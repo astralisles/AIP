@@ -17,4 +17,5 @@ body
     BinaryOp(op, left, right) => if natIsLogic(op) then "Bool" else "I64"
     IfExpr(cond, whenTrue, whenFalse) => natTypeOf(whenTrue, ctx)
     MatchOn(subject) => ""
+    NoElse() => ""
     BadExpr(message) => ""

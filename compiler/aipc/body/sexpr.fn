@@ -17,4 +17,5 @@ body
     BinaryOp(op, left, right) => "(binary {op} {sexpr(left)} {sexpr(right)})"
     IfExpr(cond, whenTrue, whenFalse) => "(if {sexpr(cond)} {sexpr(whenTrue)} {sexpr(whenFalse)})"
     MatchOn(subject) => "(match {sexpr(subject)})"
+    NoElse() => "(skip)"
     BadExpr(message) => "(bad {message})"
