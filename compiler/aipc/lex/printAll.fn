@@ -3,4 +3,7 @@ fn printAll(tokens List<Text>, i I64) -> Unit
   effects terminal.write
   fails
 body
-  if i >= listLength(tokens) then noop() else printThenRest(tokens, i)
+  if i >= listLength(tokens) then
+    noop()
+  else
+    printThenRest(tokens, i)
