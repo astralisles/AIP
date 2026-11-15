@@ -1,0 +1,5 @@
+fn plus(a I64, b I64) -> I64
+  "The sum of a and b."
+  pure
+body
+  a + b

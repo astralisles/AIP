@@ -1,6 +1,0 @@
-fn callOf(name Text, args List<Expr>) -> Expr
-  "The call to name; listAppend with more than two arguments becomes nested two-argument calls, as in the C# parser."
-  pure
-  fails
-body
-  if name == "listAppend" and listLength(args) > 2 then appendChain(args, listGet(args, 0), 1) else CallFn(name, args)

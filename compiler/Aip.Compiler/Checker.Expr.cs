@@ -93,6 +93,7 @@ sealed partial class Checker
     string CallType(Call c, Dictionary<string, string> env, HashSet<string> used)
     {
         if (c.Name == "taskRun" && c.Args.Count > 0 && c.Args[0] is FnRef first) _taskTarget = first;
+        FoldExtraArgs(c, env);
         var argTypes = c.Args.Select(a => TypeOf(a, env, used)).ToList();
         if (env.TryGetValue(c.Name, out var localType) && IsFnType(localType)) { used.Add(c.Name); return IndirectCallType(c, localType, argTypes); }
         if (!program.Fns.TryGetValue(c.Name, out var target))

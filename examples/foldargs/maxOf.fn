@@ -1,0 +1,5 @@
+fn maxOf(a I64, b I64) -> I64
+  "The larger of a and b."
+  pure
+body
+  if a > b then a else b
