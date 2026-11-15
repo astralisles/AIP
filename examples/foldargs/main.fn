@@ -1,0 +1,5 @@
+fn main() -> Unit
+  "Extra arguments fold for any function shaped f(T, X) -> T, not only std ones."
+  effects terminal.write
+body
+  printLine("{plus(1, 2, 3, 4)} {maxOf(3, 9, 5)}")

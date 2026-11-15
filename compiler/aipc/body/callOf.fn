@@ -1,6 +1,0 @@
-fn callOf(name Text, args List<Expr>) -> Expr
-  "The call to name; a foldable function (see isFoldedCall) with more than two arguments becomes nested two-argument calls, as in the C# parser."
-  pure
-  fails
-body
-  if isFoldedCall(name) and listLength(args) > 2 then foldCall(name, args, listGet(args, 0), 1) else CallFn(name, args)

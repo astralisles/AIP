@@ -1,6 +1,0 @@
-fn foldCall(name Text, args List<Expr>, acc Expr, i I64) -> Expr
-  "Fold args[i..] onto acc as name(name(acc, args[i]), args[i + 1]) and so on."
-  pure
-  fails
-body
-  if i >= listLength(args) then acc else foldCall(name, args, CallFn(name, listAppend(listAppend(listEmpty(), acc), listGet(args, i))), i + 1)
