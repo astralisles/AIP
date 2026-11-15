@@ -22,6 +22,7 @@ FUNCTIONS `Fn<Int,Int>` is a function type; `&name` (pure, non-generic fn) is a 
           Unit statements, `else`, indented Unit statements (`else` may be left out). A case without fields is built `Nothing()`.
 LOOPS     there is no while/for and no list literal: recurse with an index or an accumulator (sumTo(n - 1, acc + n)),
           build lists with listEmpty() and listAppend(items, x).
+          listAppend takes any number of items: listAppend(listEmpty(), "pear", "apple").
 STD       names are <type><Verb>: printLine, textSplit, textToInt, listGet, listLength, mapHas, mapGet, sortedMapKeys, queuePop.
           `aip std` lists them all; `aip find <projectDir> split text` searches them (words separated by spaces).
 EFFECTS   a function may call only functions whose effects are in its own effects line. No globals, no mutation.

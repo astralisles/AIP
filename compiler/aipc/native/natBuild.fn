@@ -5,4 +5,7 @@ fn natBuild(dir Text, out Text) -> Unit
 body
   let fns = natLoadFns(dir, dirList(dir), 0, listEmpty())
   let problem = if natFnIndex(fns, "main", 0) < 0 then "there is no `main` function" else natCheckFns(fns, 0)
-  if problem == "" then natWriteExe(out, natCompile(fns)) else printLine("error native-unsupported: {problem}\n  fix: build this project with the cs back end, or use only I64, Bool, Text, calls, let, if and printLine")
+  if problem == "" then
+    natWriteExe(out, natCompile(fns))
+  else
+    printLine("error native-unsupported: {problem}\n  fix: build this project with the cs back end, or use only I64, Bool, Text, calls, let, if and printLine")

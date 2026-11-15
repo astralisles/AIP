@@ -1,0 +1,6 @@
+fn printHeader(lines List<Text>, i I64, prefix Text) -> Unit
+  "Print the header lines that start with prefix (`requires `, `ensures ` or `example `) as `prefix` and the expression."
+  effects terminal.write
+  fails
+body
+  if i < listLength(lines) and listGet(lines, i) != "body" and listGet(lines, i) != "extern" and textStartsWith(listGet(lines, i), "  {prefix}") then printHeaderLine(lines, i, prefix) else if i < listLength(lines) and listGet(lines, i) != "body" and listGet(lines, i) != "extern" then printHeader(lines, i + 1, prefix)

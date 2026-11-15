@@ -6,7 +6,7 @@ alone, and the AIP compiler can compile itself. Checked against the repo on 2026
 ## Already there
 I64/sized ints/floats/bits, Text, Bytes, List/Set/Map/SortedMap/SortedSet/Queue/PriorityQueue, structs, variants, generics,
 `match`, consts, contracts (`requires`/`ensures`/`example` run by `aip test`), lint, fuzz, logging, profiling, tcp/udp,
-native libraries, hash, `aip query/find/spec`, partial self-hosting (lexer, header and body parser in `examples/aipc`).
+native libraries, hash, `aip query/find/spec`, partial self-hosting (lexer, header and body parser in `compiler/aipc`).
 
 ## Missing, in order
 1. **Function pointers + `listMap`/`listFilter`/`listFold`/`listSort`.** **Done (T-0976 #2).** See `function-pointers-T-0928.md`.

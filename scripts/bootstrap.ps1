@@ -1,4 +1,4 @@
-# Bootstrap test: how far can the compiler written in AIP (examples\aipc) reproduce itself?
+# Bootstrap test: how far can the compiler written in AIP (compiler\aipc) reproduce itself?
 #   stage 1: the C# compiler builds aipc.
 #   self-read: stage 1 reads its OWN source (tokens, header index, bodies) exactly like the C# compiler does.
 #   stage 2: stage 1 builds aipc from its own source. Not possible until aipc has a checker and emitter
@@ -11,13 +11,13 @@ $aip = Join-Path $PSScriptRoot 'aip.ps1'
 $bad = 0
 function Fail($m) { $script:bad++; "FAIL  $m" }
 
-$build = (& $aip build examples\aipc | Out-String).Trim()
+$build = (& $aip build compiler\aipc | Out-String).Trim()
 if ($LASTEXITCODE -ne 0) { Fail "stage 1: C# compiler does not build aipc`n$build"; exit 1 }
 "PASS  stage 1: C# compiler built aipc"
-$aipc = Join-Path $root 'examples\aipc\build\bin\windows-x64\aipc.exe'
+$aipc = Join-Path $root 'compiler\aipc\build\bin\windows-x64\aipc.exe'
 $cs = Join-Path $root 'compiler\Aip.Compiler\bin\Release\net10.0\aip.exe'
 
-[string[]]$files = Get-ChildItem examples\aipc -Recurse -File -Include *.fn, *.const |
+[string[]]$files = Get-ChildItem compiler\aipc -Recurse -File -Include *.fn, *.const |
   Where-Object { $_.FullName -notmatch '[\/]build[\/]' } | ForEach-Object FullName
 [Array]::Sort($files, [StringComparer]::Ordinal)
 
@@ -32,9 +32,9 @@ foreach ($f in $files) {
   }
   $n++
 }
-$expected = @(& $cs index examples\aipc | ForEach-Object { $_ -replace ' \| checked, not proved$', '' }) | Sort-Object { $_ } -CaseSensitive
+$expected = @(& $cs index compiler\aipc | ForEach-Object { $_ -replace ' \| checked, not proved$', '' }) | Sort-Object { $_ } -CaseSensitive
 $actual = @(& $aipc index $files) | Sort-Object { $_ } -CaseSensitive
-if (($expected -join "`n") -ne ($actual -join "`n")) { Fail "self-read: index differs from 'aip index examples\aipc'" }
+if (($expected -join "`n") -ne ($actual -join "`n")) { Fail "self-read: index differs from 'aip index compiler\aipc'" }
 if ($bad -eq 0) { "PASS  self-read: stage 1 reads its own $n source files like the C# compiler (tokens, index, bodies)" }
 
 # stage 2 needs `aipc build`; the usage line lists the commands aipc has.

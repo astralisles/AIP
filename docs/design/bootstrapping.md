@@ -3,7 +3,7 @@
 Done: `struct`, `variant`, `match`; `List<T>` (type-erased at run time), text helpers (`textLength`, `textSlice`, `textCode`, ...), file and
 argument access, Unit `if` statements, deep recursion (512 MB stack), `.const` files (`docs/design/consts-T-0941.md`), `Map` and `Set`.
 
-The compiler written in AIP is `examples/aipc` (one project; one subfolder per stage):
+The compiler written in AIP is `compiler/aipc` (one project; one subfolder per stage):
 - `lex/`: the lexer. `aipc tokens <file>` prints the tokens; `scripts\compare-lexers.ps1` checks they equal the C# lexer's
   (`aip tokens <file>`) for every `.fn` and `.const` file, including its own source.
 - `parse/`: the header parser (function and constant headers into `FnHeader`: name, parameters with types and ranges,

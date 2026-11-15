@@ -1,7 +1,7 @@
 # Adds the header line `fails` to every function `aip lint` reports as `hidden-failure`, and repeats
 # until the project is clean (marking a function makes its unmarked callers the next ones reported).
 # Use after a merge where one branch added `fails` to std or project functions and another added callers.
-# Usage: scripts\fix-hidden-failure.ps1 examples\aipc [examples\scaling ...]   (prints one line per file changed)
+# Usage: scripts\fix-hidden-failure.ps1 compiler\aipc [examples\scaling ...]   (prints one line per file changed)
 param([Parameter(Mandatory = $true, ValueFromRemainingArguments = $true)][string[]]$Projects)
 $ErrorActionPreference = 'Continue'
 $aip = Join-Path $PSScriptRoot 'aip.ps1'

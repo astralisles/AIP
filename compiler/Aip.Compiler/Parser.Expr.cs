@@ -142,7 +142,7 @@ sealed partial class Parser
                         call.Args.Add(ParseExpr());
                     }
                     ExpectSym(")");
-                    return call;
+                    return FoldAppend(call);
                 }
                 return new NameRef { Line = _line, Name = t.Text };
             case T.Sym when t.Text == "(":
@@ -151,6 +151,16 @@ sealed partial class Parser
                 return inner;
         }
         throw Err("syntax", t.Kind == T.End ? "the line ends where an expression is expected" : $"unexpected `{t.Text}`");
+    }
+
+    /// <summary>`listAppend(items, a, b, c)` is shorthand for `listAppend(listAppend(listAppend(items, a), b), c)` (T-1037).</summary>
+    static Expr FoldAppend(Call call)
+    {
+        if (call.Name != "listAppend" || call.Args.Count <= 2) return call;
+        Expr acc = new Call { Line = call.Line, Name = call.Name, Args = { call.Args[0], call.Args[1] } };
+        for (int i = 2; i < call.Args.Count; i++)
+            acc = new Call { Line = call.Line, Name = call.Name, Args = { acc, call.Args[i] } };
+        return acc;
     }
 
     TextLit ParseText(string raw)
