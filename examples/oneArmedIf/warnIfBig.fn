@@ -1,7 +1,0 @@
-fn warnIfBig(n I64) -> Unit
-  "Print a warning for n over 10; an `if` block with no `else` line."
-  effects terminal.write
-body
-  if n > 10 then
-    printLine("big: {n}")
-    printLine("done warning")

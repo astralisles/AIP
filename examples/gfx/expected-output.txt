@@ -1,2 +1,0 @@
-center pixel: 255 0 0 255
-corner pixel: 0 0 255 255

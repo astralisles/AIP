@@ -1,6 +1,0 @@
-fn scanString(src Text, i I64) -> I64
-  "The position of the closing double quote, skipping backslash escapes."
-  pure
-  fails
-body
-  if i >= textLength(src) then i else if textCode(src, i) == charQuote then i else if textCode(src, i) == charBackslash then scanString(src, i + 2) else scanString(src, i + 1)

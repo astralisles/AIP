@@ -1,1 +1,0 @@
-error type-mismatch: argument `x` of `take` must be I32, found I64

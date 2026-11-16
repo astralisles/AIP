@@ -1,4 +1,0 @@
-fn envHas(name Text) -> Bool
-  "True if the environment variable is set."
-  effects process.env
-extern

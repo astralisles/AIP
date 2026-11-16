@@ -1,5 +1,0 @@
-fn double(n Int) -> Int
-  "The old name Int no longer exists."
-  pure
-body
-  n * 2

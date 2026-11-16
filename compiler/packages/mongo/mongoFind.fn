@@ -1,4 +1,0 @@
-fn mongoFind(conn MongoConn, collection Text, filter Text) -> List<Text>
-  "Find the documents matching a JSON filter (`{}` = all); returns one JSON text per document."
-  effects mongo.read
-extern

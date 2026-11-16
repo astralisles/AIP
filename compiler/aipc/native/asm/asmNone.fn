@@ -1,5 +1,0 @@
-fn asmNone() -> List<I64>
-  "No bytes."
-  pure
-body
-  listEmpty()

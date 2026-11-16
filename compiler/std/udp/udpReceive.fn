@@ -1,4 +1,0 @@
-fn udpReceive(socket UdpSocket, timeoutMs I64) -> List<U8>
-  "Wait for one datagram; empty bytes on timeout."
-  effects udp.receive
-extern

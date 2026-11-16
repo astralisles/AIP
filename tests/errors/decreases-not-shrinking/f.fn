@@ -1,7 +1,0 @@
-fn f(n I64 0..) -> I64
-  "Calls itself with the same n."
-  pure
-  decreases n
-  example f(0) == 0
-body
-  if n == 0 then 0 else f(n)

@@ -1,4 +1,0 @@
-fn numFromU16(value U16) -> I64
-  "Convert a U16 to I64 (64-bit signed); a U64 above 9223372036854775807 is a run-time error."
-  pure
-extern

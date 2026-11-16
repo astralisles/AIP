@@ -1,5 +1,0 @@
-fn main() -> Unit
-  "Print a constant that depends on itself."
-  effects terminal.write
-body
-  printLine("{width}")

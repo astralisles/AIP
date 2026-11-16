@@ -1,6 +1,0 @@
-fn main() -> Unit
-  "Unknown header line."
-  effects terminal.write
-  wibble
-body
-  printLine("hi")

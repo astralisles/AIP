@@ -1,4 +1,0 @@
-fn textToLower(text Text) -> Text
-  "The text in lower case (invariant culture)."
-  pure
-extern

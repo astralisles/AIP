@@ -1,4 +1,0 @@
-fn tcpAccept(listener TcpListener) -> TcpConn
-  "Wait for the next client and return its connection."
-  effects tcp.accept
-extern

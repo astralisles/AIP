@@ -1,4 +1,0 @@
-struct NamesParsed
-  "A list of names read from the tokens, and the position of the token after them."
-  names List<Text>
-  next I64

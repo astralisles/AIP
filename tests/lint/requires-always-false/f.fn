@@ -1,7 +1,0 @@
-fn f(low I64, high I64) -> I64
-  "The distance between two limits."
-  pure
-  requires low <= high
-  example f(1, 3) == 2
-body
-  high - low

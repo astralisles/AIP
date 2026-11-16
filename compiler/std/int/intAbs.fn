@@ -1,5 +1,0 @@
-fn intAbs(value I64) -> I64
-  "The number without its sign; fails for the smallest I64."
-  pure
-  fails
-extern

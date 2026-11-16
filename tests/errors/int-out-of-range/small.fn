@@ -1,5 +1,0 @@
-fn small(x U8) -> U8
-  "Identity."
-  pure
-body
-  x

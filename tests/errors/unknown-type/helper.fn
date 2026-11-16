@@ -1,5 +1,0 @@
-fn helper(x Foo) -> I64
-  "Unknown parameter type."
-  pure
-body
-  1

@@ -1,6 +1,0 @@
-variant Shape
-  "A shape: a circle, a rectangle, a single dot, or nothing."
-  Circle(center Point, radius I64)
-  Rect(corner Point, width I64, height I64)
-  Dot(at Point)
-  Nothing

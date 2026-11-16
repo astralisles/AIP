@@ -1,3 +1,0 @@
-const regRax I64
-  "x86-64 register number of rax."
-  value 0

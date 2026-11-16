@@ -1,3 +1,0 @@
-const regRsi I64
-  "x86-64 register number of rsi."
-  value 6

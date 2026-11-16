@@ -1,7 +1,0 @@
-fn f(n I64) -> I64
-  "Halve a positive number."
-  pure
-  requires n > 0
-  example f(0) == 0
-body
-  n / 2

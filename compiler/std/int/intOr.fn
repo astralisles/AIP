@@ -1,4 +1,0 @@
-fn intOr(a I64, b I64) -> I64
-  "Bitwise or."
-  pure
-extern

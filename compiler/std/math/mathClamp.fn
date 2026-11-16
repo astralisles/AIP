@@ -1,4 +1,0 @@
-fn mathClamp(x F64, low F64, high F64) -> F64
-  "x limited to the range low..high."
-  pure
-extern

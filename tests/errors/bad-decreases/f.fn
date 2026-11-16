@@ -1,8 +1,0 @@
-fn f(n I64 0..) -> I64
-  "Names a parameter that does not exist."
-  pure
-  cannot-fail
-  decreases m
-  example f(0) == 0
-body
-  if n == 0 then 0 else f(n - 1)

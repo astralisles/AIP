@@ -1,5 +1,0 @@
-fn main() -> Unit
-  "Pass too many arguments."
-  effects terminal.write
-body
-  printLine("a", "b")

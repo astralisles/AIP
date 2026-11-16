@@ -1,3 +1,0 @@
-const ccE I64
-  "Condition code `equal` (the low nibble of Jcc and SETcc)."
-  value 4

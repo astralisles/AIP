@@ -1,6 +1,0 @@
-fn f(n I64 0..150) -> I64
-  "Take an age."
-  pure
-  example f(200) == 200
-body
-  n

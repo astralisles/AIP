@@ -1,6 +1,0 @@
-fn main() -> I64
-  "A loop without a body line."
-  pure
-body
-  loop
-    i = 0

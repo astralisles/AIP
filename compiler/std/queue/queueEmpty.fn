@@ -1,4 +1,0 @@
-fn queueEmpty() -> Queue<T>
-  "A queue with nothing in it."
-  pure
-extern

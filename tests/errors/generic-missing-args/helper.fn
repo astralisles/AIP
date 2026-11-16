@@ -1,5 +1,0 @@
-fn helper(b Box) -> I64
-  "A generic type used without its type arguments."
-  pure
-body
-  1

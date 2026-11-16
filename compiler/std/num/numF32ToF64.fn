@@ -1,4 +1,0 @@
-fn numF32ToF64(value F32) -> F64
-  "Widen an F32 to F64 (exact)."
-  pure
-extern

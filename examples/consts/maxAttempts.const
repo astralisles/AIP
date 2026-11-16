@@ -1,3 +1,0 @@
-const maxAttempts I64
-  "The first try plus every retry; a constant built from another constant."
-  value maxRetries + 1

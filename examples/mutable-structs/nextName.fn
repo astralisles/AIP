@@ -1,7 +1,0 @@
-fn nextName(n Node) -> Text
-  "The name of the node n points to, or none."
-  pure
-body
-  match n.next
-    End() => "none"
-    To(other) => other.name

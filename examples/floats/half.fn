@@ -1,5 +1,0 @@
-fn half(x F64) -> F64
-  "Half of a 64-bit float."
-  pure
-body
-  x / 2.0

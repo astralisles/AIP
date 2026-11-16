@@ -1,6 +1,0 @@
-fn printAll(tokens List<Text>, i I64) -> Unit
-  "Print the tokens from position i on, one per line."
-  effects terminal.write
-  fails
-body
-  if i < listLength(tokens) then printThenRest(tokens, i)

@@ -1,6 +1,0 @@
-fn double(n I64) -> I64
-  "Twice a number."
-  pure
-  ensures result == n * 2
-body
-  n + n

@@ -1,4 +1,0 @@
-fn intAnd(a I64, b I64) -> I64
-  "Bitwise and."
-  pure
-extern

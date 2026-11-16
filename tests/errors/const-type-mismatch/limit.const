@@ -1,3 +1,0 @@
-const limit I64
-  "The limit."
-  value "ten"

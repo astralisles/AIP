@@ -1,7 +1,0 @@
-fn f(n I64) -> I64
-  "Divides by a parameter that may be 0."
-  pure
-  cannot-fail
-  example f(1) == 1
-body
-  10 / n

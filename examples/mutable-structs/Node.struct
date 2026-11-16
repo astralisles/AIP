@@ -1,4 +1,0 @@
-struct Node
-  "A named node that may point to another node."
-  name Text
-  next Link

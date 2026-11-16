@@ -1,5 +1,0 @@
-fn main() -> Unit
-  "Print a constant."
-  effects terminal.write
-body
-  printLine("{limit}")

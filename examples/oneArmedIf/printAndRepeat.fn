@@ -1,6 +1,0 @@
-fn printAndRepeat(n I64) -> Unit
-  "Print n, then count down from n - 1."
-  effects terminal.write
-body
-  printLine("{n}")
-  countDown(n - 1)

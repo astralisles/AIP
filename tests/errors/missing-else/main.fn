@@ -1,6 +1,0 @@
-fn main() -> Unit
-  "An if without else whose then part gives a value."
-  effects terminal.write
-body
-  let n = if 1 == 1 then 5
-  printLine("{n}")
