@@ -1,5 +1,0 @@
-fn bytesFromHex(hex Text) -> List<I64>
-  "Bytes from hex text; fails when the text is not an even number of hex digits."
-  pure
-  fails
-extern

@@ -1,7 +1,0 @@
-fn f(n I64 0..) -> I64
-  "Recursion without decreases."
-  pure
-  cannot-fail
-  example f(0) == 0
-body
-  if n == 0 then 0 else f(n - 1)

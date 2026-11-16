@@ -1,7 +1,0 @@
-fn same(x T) -> T
-  "Returns x."
-  pure
-  cannot-fail
-  example same(1) == 1
-body
-  x

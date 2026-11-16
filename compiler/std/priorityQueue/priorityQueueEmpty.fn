@@ -1,4 +1,0 @@
-fn priorityQueueEmpty() -> PriorityQueue<T>
-  "A priority queue with nothing in it."
-  pure
-extern

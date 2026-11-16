@@ -1,6 +1,0 @@
-fn f(a I64, b I64) -> I64
-  "Ignore b."
-  pure
-  example f(1, 2) == 1
-body
-  a

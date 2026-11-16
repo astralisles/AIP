@@ -1,8 +1,0 @@
-fn clamp(n I64, low I64, high I64) -> I64
-  "Keep a number between low and high."
-  pure
-  requires low <= high
-  example clamp(15, 0, 10) == 10
-  example clamp(-3, 0, 10) == 0
-body
-  min(max(n, low), high)

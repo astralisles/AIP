@@ -1,5 +1,0 @@
-fn numToU8(value I64) -> U8
-  "Convert an I64 to U8 (8-bit unsigned, 0 to 255); a value outside that range is a run-time error."
-  pure
-  fails
-extern

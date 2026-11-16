@@ -1,6 +1,0 @@
-fn f(a I64) -> I64
-  "A condition that never changes."
-  pure
-  example f(1) == 1
-body
-  if true then a else 0

@@ -1,2 +1,0 @@
-error unknown-name: there is no function `printLin`
-  fix: did you mean `printLine`?

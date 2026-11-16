@@ -1,3 +1,0 @@
-struct Fn
-  "A reserved name."
-  x I64

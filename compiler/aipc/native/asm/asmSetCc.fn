@@ -1,5 +1,0 @@
-fn asmSetCc(cc I64) -> List<I64>
-  "setcc al"
-  pure
-body
-  asmCat3(asmByte(15), asmByte(144 + cc), asmByte(192))

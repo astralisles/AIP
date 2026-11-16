@@ -1,4 +1,0 @@
-fn textToUpper(text Text) -> Text
-  "The text in upper case (invariant culture)."
-  pure
-extern

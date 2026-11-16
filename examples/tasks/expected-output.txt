@@ -1,5 +1,0 @@
-squares: 1 4 9 16
-evens: 2, first 2
-sum: 10
-parallel last: 16
-task: 144

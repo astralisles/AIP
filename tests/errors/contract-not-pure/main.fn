@@ -1,6 +1,0 @@
-fn main() -> Unit
-  "Use an effect in a contract."
-  effects terminal.write
-  example bytesDecode(fileRead("x")) == "y"
-body
-  printLine("hi")

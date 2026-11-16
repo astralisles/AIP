@@ -1,5 +1,0 @@
-fn absolute(n I64) -> I64
-  "Absolute value."
-  effects terminal.write
-  native "ucrtbase" "_abs64"
-extern

@@ -1,4 +1,0 @@
-# MongoDB: documents, filters and updates are JSON text.
-name mongo
-version 1.0.0
-handle MongoConn

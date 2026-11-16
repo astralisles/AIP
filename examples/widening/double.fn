@@ -1,5 +1,0 @@
-fn double(x I64) -> I64
-  "Twice x; callers may pass any smaller whole number."
-  pure
-body
-  x * 2

@@ -1,6 +1,0 @@
-fn tokAt(toks List<Text>, pos I64) -> Text
-  "The token at pos, or `End` past the last token."
-  pure
-  fails
-body
-  if pos < listLength(toks) then listGet(toks, pos) else "End"

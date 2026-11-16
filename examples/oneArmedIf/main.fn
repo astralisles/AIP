@@ -1,7 +1,0 @@
-fn main() -> Unit
-  "Show an `if` without `else`: the body must be Unit statements."
-  effects terminal.write
-body
-  countDown(3)
-  warnIfBig(5)
-  warnIfBig(50)

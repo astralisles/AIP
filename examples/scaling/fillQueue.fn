@@ -1,5 +1,0 @@
-fn fillQueue(q Queue<I64>, i I64, n I64) -> Queue<I64>
-  "Push the numbers i up to n - 1 onto the queue, one at a time."
-  pure
-body
-  if i >= n then q else fillQueue(queuePush(q, i), i + 1, n)

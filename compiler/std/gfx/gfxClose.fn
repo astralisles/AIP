@@ -1,4 +1,0 @@
-fn gfxClose(window GfxWindow) -> Unit
-  "Close the window and free its OpenGL context."
-  effects gfx.window
-extern

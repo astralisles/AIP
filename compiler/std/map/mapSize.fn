@@ -1,4 +1,0 @@
-fn mapSize(m Map<K,V>) -> I64
-  "How many entries the map has."
-  pure
-extern

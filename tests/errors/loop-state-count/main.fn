@@ -1,5 +1,0 @@
-fn main() -> Unit
-  "Calls f."
-  effects terminal.write
-body
-  printLine("{f()}")

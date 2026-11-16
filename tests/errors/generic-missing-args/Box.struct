@@ -1,3 +1,0 @@
-struct Box<T>
-  "A generic box."
-  value T

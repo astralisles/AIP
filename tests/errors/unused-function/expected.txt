@@ -1,1 +1,0 @@
-error unused-function: `double` is never used by `main`

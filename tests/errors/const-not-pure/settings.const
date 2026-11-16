@@ -1,3 +1,0 @@
-const settings Text
-  "The settings text."
-  value bytesDecode(fileRead("settings.txt"))

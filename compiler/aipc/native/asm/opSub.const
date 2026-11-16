@@ -1,3 +1,0 @@
-const opSub I64
-  "Opcode byte of `sub r/m64, r64`."
-  value 41

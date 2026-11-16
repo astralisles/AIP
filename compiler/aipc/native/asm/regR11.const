@@ -1,3 +1,0 @@
-const regR11 I64
-  "x86-64 register number of r11."
-  value 11

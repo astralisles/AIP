@@ -1,4 +1,0 @@
-﻿variant Step
-  "Whether the counting loop keeps going."
-  Go
-  Stop

@@ -1,6 +1,0 @@
-fn scanDigits(src Text, pos I64) -> I64
-  "The position after the run of digits that starts at pos."
-  pure
-  fails
-body
-  if pos < textLength(src) and isDigit(textCode(src, pos)) then scanDigits(src, pos + 1) else pos

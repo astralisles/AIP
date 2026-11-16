@@ -1,4 +1,0 @@
-struct Health
-  "Hit points and the tick of the last hit."
-  hp I64
-  lastHit I64

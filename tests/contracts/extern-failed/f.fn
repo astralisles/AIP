@@ -1,6 +1,0 @@
-fn f(n Text) -> I64
-  "Read a number from text."
-  pure
-  example f("abc") == 0
-body
-  textToInt(n)

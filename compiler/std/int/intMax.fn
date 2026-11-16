@@ -1,4 +1,0 @@
-fn intMax(a I64, b I64) -> I64
-  "The larger of two numbers."
-  pure
-extern

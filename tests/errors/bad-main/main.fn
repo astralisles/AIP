@@ -1,5 +1,0 @@
-fn main(x I64) -> Unit
-  "Print a greeting."
-  effects terminal.write
-body
-  printLine("hi")

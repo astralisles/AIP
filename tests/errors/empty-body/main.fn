@@ -1,4 +1,0 @@
-fn main() -> Unit
-  "No statements."
-  effects terminal.write
-body

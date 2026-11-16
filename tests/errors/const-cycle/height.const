@@ -1,3 +1,0 @@
-const height I64
-  "The height."
-  value width * 2

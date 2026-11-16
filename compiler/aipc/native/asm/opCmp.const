@@ -1,3 +1,0 @@
-const opCmp I64
-  "Opcode byte of `cmp r/m64, r64`."
-  value 57

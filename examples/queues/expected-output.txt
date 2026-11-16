@@ -1,2 +1,0 @@
-Queue front a, after pop b, size 2, original 3
-Priority: urgent urgent2 mid size 2

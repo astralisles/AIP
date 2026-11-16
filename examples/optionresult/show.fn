@@ -1,8 +1,0 @@
-fn show(r Result<I64,Text>) -> Text
-  "Print form of a division result."
-  pure
-body
-  let t = match r
-    Ok(v) => "ok {v}"
-    Err(e) => "error: {e}"
-  t

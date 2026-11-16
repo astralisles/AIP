@@ -1,8 +1,0 @@
-fn f(n I64) -> I64
-  "Two restraint lines."
-  pure
-  fails
-  fails
-  example f(1) == 1
-body
-  n

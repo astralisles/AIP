@@ -1,4 +1,0 @@
-fn bytesDecode(data List<U8>) -> Text
-  "Decode UTF-8 bytes as text."
-  pure
-extern

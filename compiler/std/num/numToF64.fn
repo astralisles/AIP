@@ -1,4 +1,0 @@
-fn numToF64(value I64) -> F64
-  "Convert an I64 to F64 (64-bit float); values above 2^53 lose low digits."
-  pure
-extern

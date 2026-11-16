@@ -1,3 +1,0 @@
-const opAdd I64
-  "Opcode byte of `add r/m64, r64`."
-  value 1

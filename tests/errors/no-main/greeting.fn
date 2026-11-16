@@ -1,5 +1,0 @@
-fn greeting(name Text) -> Text
-  "A friendly greeting for someone."
-  pure
-body
-  "Hello, {name}!"

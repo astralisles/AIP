@@ -1,4 +1,0 @@
-fn main() -> Unit
-  effects terminal.write
-body
-  printLine("Hello")

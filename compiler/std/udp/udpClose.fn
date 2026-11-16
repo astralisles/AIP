@@ -1,4 +1,0 @@
-fn udpClose(socket UdpSocket) -> Unit
-  "Close a UDP socket."
-  effects udp.close
-extern

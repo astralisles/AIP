@@ -1,3 +1,0 @@
-const natBssHeap I64
-  "Address where the heap starts."
-  value 8208

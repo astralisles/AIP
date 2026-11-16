@@ -1,4 +1,0 @@
-fn mathCeil(x F64) -> F64
-  "Smallest whole number not below x, as F64."
-  pure
-extern

@@ -1,4 +1,0 @@
-struct Point
-  "A position on a grid."
-  x I64
-  y I64

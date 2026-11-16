@@ -1,4 +1,0 @@
-fn intSign(value I64) -> I64
-  "-1, 0 or 1 for a negative, zero or positive number."
-  pure
-extern

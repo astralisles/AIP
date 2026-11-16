@@ -1,5 +1,0 @@
-fn fillPriority(q PriorityQueue<I64>, i I64, n I64) -> PriorityQueue<I64>
-  "Push the numbers i up to n - 1 with the highest number most urgent, one at a time."
-  pure
-body
-  if i >= n then q else fillPriority(priorityQueuePush(q, i, n - i), i + 1, n)

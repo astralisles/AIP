@@ -1,5 +1,0 @@
-fn main() -> Unit
-  "Use a range on a Bool."
-  effects terminal.write
-body
-  printLine("{helper(true)}")

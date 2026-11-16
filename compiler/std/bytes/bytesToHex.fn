@@ -1,4 +1,0 @@
-fn bytesToHex(data List<I64>) -> Text
-  "Lower-case hex text of bytes, two digits per byte."
-  pure
-extern
